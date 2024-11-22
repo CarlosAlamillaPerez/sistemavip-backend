@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Infrastructure.Persistence.Context;
+using SistemaVIP.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +40,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IComisionService, ComisionService>();
 
 var app = builder.Build();
 

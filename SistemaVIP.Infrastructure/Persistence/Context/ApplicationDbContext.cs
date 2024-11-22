@@ -19,13 +19,13 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
             base.OnModelCreating(builder);
 
             // Mover todas las tablas de Identity al esquema SistemaVIP
-            builder.Entity<IdentityUser>().ToTable("Users", "SistemaVIP");
-            builder.Entity<IdentityRole>().ToTable("Roles", "SistemaVIP");
-            builder.Entity<IdentityUserRole<string>>().ToTable("UserRoles", "SistemaVIP");
-            builder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims", "SistemaVIP");
-            builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins", "SistemaVIP");
-            builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims", "SistemaVIP");
-            builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens", "SistemaVIP");
+            builder.Entity<IdentityUser>().ToTable("AspNetUsers", "SistemaVIP");
+            builder.Entity<IdentityRole>().ToTable("AspNetRoles", "SistemaVIP");
+            builder.Entity<IdentityUserRole<string>>().ToTable("AspNetUserRoles", "SistemaVIP");
+            builder.Entity<IdentityUserClaim<string>>().ToTable("AspNetUserClaims", "SistemaVIP");
+            builder.Entity<IdentityUserLogin<string>>().ToTable("AspNetUserLogins", "SistemaVIP");
+            builder.Entity<IdentityRoleClaim<string>>().ToTable("AspNetRoleClaims", "SistemaVIP");
+            builder.Entity<IdentityUserToken<string>>().ToTable("AspNetUserTokens", "SistemaVIP");
         }
     }
 }
