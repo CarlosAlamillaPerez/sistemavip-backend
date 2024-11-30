@@ -1,11 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using SistemaVIP.Core.Models;
 
 namespace SistemaVIP.Infrastructure.Persistence.Context
 {
     public class ApplicationDbContext : IdentityDbContext
     {
+        public DbSet<TerapeutaModel> Terapeutas { get; set; }
+        public DbSet<PresentadorModel> Presentadores { get; set; }
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {

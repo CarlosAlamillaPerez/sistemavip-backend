@@ -35,13 +35,22 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
     // User settings
     options.User.AllowedUserNameCharacters =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ ";
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Configure Authentication & Authorization
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+
+// Register Services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<DbInitializerService>();
 builder.Services.AddScoped<IComisionService, ComisionService>();
+builder.Services.AddScoped<IPresentadorService, PresentadorService>();
+builder.Services.AddScoped<ITerapeutaService, TerapeutaService>();
 
 var app = builder.Build();
 
@@ -59,5 +68,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Initialize database
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<DbInitializerService>();
+    await initializer.InitializeAsync();
+}
 
 app.Run();
