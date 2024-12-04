@@ -46,11 +46,14 @@ builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 // Register Services
-builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<DbInitializerService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IComisionService, ComisionService>();
-builder.Services.AddScoped<IPresentadorService, PresentadorService>();
 builder.Services.AddScoped<ITerapeutaService, TerapeutaService>();
+builder.Services.AddScoped<IPresentadorService, PresentadorService>();
+builder.Services.AddScoped<ITerapeutasPresentadoresService, TerapeutasPresentadoresService>();
+builder.Services.AddScoped<IServicioService, ServicioService>();
+builder.Services.AddScoped<ILocationService, LocationService>();
 
 var app = builder.Build();
 

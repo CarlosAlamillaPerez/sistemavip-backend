@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NetTopologySuite.Geometries;
 
 namespace SistemaVIP.Core.Models
 {
@@ -13,8 +10,8 @@ namespace SistemaVIP.Core.Models
         public DateTime FechaAsignacion { get; set; }
         public DateTime? HoraInicio { get; set; }
         public DateTime? HoraFin { get; set; }
-        public object? UbicacionInicio { get; set; }  // Tipo GEOGRAPHY en SQL
-        public object? UbicacionFin { get; set; }     // Tipo GEOGRAPHY en SQL
+        public NetTopologySuite.Geometries.Point? UbicacionInicio { get; set; }
+        public NetTopologySuite.Geometries.Point? UbicacionFin { get; set; }
         public string Estado { get; set; }
         public decimal? MontoTerapeuta { get; set; }
         public Guid LinkConfirmacion { get; set; }
@@ -26,6 +23,7 @@ namespace SistemaVIP.Core.Models
         public string? UrlComprobanteTransferencia { get; set; }
         public string? IdPresentadorConfirmaPago { get; set; }
         public string? NotasPago { get; set; }
+        public string? Notas { get; set; }
 
         // Referencias a las entidades relacionadas
         public ServiciosModel Servicio { get; set; }

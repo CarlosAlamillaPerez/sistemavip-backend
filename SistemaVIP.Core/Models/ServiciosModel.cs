@@ -25,5 +25,6 @@ namespace SistemaVIP.Core.Models
         // Referencias a las entidades relacionadas
         public PresentadorModel Presentador { get; set; }
         public ApplicationUserModel? UsuarioCancelacion { get; set; }
+        public ICollection<ServiciosTerapeutasModel> ServiciosTerapeutas { get; set; }
     }
 }
