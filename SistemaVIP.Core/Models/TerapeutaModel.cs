@@ -17,6 +17,8 @@ namespace SistemaVIP.Core.Models
         public DateTime FechaNacimiento { get; set; }
         public DateTime FechaAlta { get; set; }
         public string Estado { get; set; }
+        public DateTime FechaCambioEstado { get; set; }
+        public string? MotivoEstado { get; set; }
         public string Estatura { get; set; }
         public string DocumentoIdentidad { get; set; }
         public string? FotoUrl { get; set; }

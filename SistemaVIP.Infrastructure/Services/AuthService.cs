@@ -3,18 +3,19 @@ using Microsoft.Extensions.Configuration;
 using SistemaVIP.Core.DTOs.Auth;
 using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
+using SistemaVIP.Core.Models;
 
 namespace SistemaVIP.Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<ApplicationUserModel> _userManager;
+        private readonly SignInManager<ApplicationUserModel> _signInManager;
         private readonly IConfiguration _configuration;
 
         public AuthService(
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
+            UserManager<ApplicationUserModel> userManager,
+            SignInManager<ApplicationUserModel> signInManager,
             IConfiguration configuration)
         {
             _userManager = userManager;
@@ -81,7 +82,7 @@ namespace SistemaVIP.Infrastructure.Services
             return await CreateUserDtoAsync(user);
         }
 
-        private async Task<UserDto> CreateUserDtoAsync(IdentityUser user)
+        private async Task<UserDto> CreateUserDtoAsync(ApplicationUserModel user)
         {
             var roles = await _userManager.GetRolesAsync(user);
             var role = roles.FirstOrDefault() ?? "User";
@@ -98,7 +99,7 @@ namespace SistemaVIP.Infrastructure.Services
             };
         }
 
-        private async Task<(string Nombre, string Apellido)> GetUserNameAndLastNameAsync(IdentityUser user, string role)
+        private async Task<(string Nombre, string Apellido)> GetUserNameAndLastNameAsync(ApplicationUserModel user, string role)
         {
             // Para administradores, obtener información de la configuración
             if (role == UserRoles.SUPER_ADMIN || role == UserRoles.ADMIN)

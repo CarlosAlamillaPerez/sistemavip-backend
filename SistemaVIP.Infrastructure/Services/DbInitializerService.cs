@@ -2,19 +2,20 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SistemaVIP.Core.Enums;
+using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
 
 namespace SistemaVIP.Infrastructure.Services
 {
     public class DbInitializerService
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
 
         public DbInitializerService(
-            UserManager<IdentityUser> userManager,
+            UserManager<ApplicationUserModel> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
             ApplicationDbContext context)
@@ -74,7 +75,7 @@ namespace SistemaVIP.Infrastructure.Services
             var adminUser = await _userManager.FindByEmailAsync(email);
             if (adminUser == null)
             {
-                adminUser = new IdentityUser
+                adminUser = new ApplicationUserModel  // Cambiado aquí también
                 {
                     UserName = username,
                     Email = email,

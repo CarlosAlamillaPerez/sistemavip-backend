@@ -12,6 +12,8 @@ namespace SistemaVIP.Core.Interfaces
         Task<ServicioDto> GetByIdAsync(int id);
         Task<ServicioDto> CreateAsync(CreateServicioDto createDto);
         Task<ServicioDto> UpdateAsync(int id, UpdateServicioDto updateDto);
+        //Task<List<ServicioDto>> GetServiciosActivosByPresentadorAsync(int presentadorId);
+        //Task<List<ServicioDto>> GetServiciosActivosByTerapeutaAsync(int terapeutaId);
 
         // Operaciones específicas de servicio
         Task<ServicioDto> CancelarServicioAsync(int id, CancelacionServicioDto cancelacionDto, string userId);

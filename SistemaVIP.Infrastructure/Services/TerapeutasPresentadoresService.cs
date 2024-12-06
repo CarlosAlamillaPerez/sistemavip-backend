@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SistemaVIP.Core.DTOs.TerapeutaPresentador;
+using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
@@ -42,7 +43,10 @@ namespace SistemaVIP.Infrastructure.Services
         {
             return await _context.TerapeutasPresentadores
                 .Include(tp => tp.Terapeuta)
-                .Where(tp => tp.PresentadorId == presentadorId)
+                .Where(tp =>
+                    tp.PresentadorId == presentadorId &&
+                    tp.Estado == EstadosEnum.General.ACTIVO &&
+                    tp.Terapeuta.Estado == EstadosEnum.General.ACTIVO)
                 .Select(tp => new TerapeutasPorPresentadorDto
                 {
                     TerapeutaId = tp.TerapeutaId,
@@ -57,13 +61,39 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<TerapeutaPresentadorDto> AsignarTerapeutaPresentadorAsync(AsignarTerapeutaPresentadorDto dto)
         {
+            // Validar que el terapeuta esté activo
+            var terapeuta = await _context.Terapeutas.FindAsync(dto.TerapeutaId);
+            if (terapeuta == null || terapeuta.Estado != EstadosEnum.General.ACTIVO)
+            {
+                throw new InvalidOperationException("El terapeuta no está activo o no existe");
+            }
+
+            // Validar que el presentador esté activo
+            var presentador = await _context.Presentadores.FindAsync(dto.PresentadorId);
+            if (presentador == null || presentador.Estado != EstadosEnum.General.ACTIVO)
+            {
+                throw new InvalidOperationException("El presentador no está activo o no existe");
+            }
+
             // Verificar si el terapeuta ya está asignado a otro presentador
             var asignacionExistente = await _context.TerapeutasPresentadores
-                .FirstOrDefaultAsync(tp => tp.TerapeutaId == dto.TerapeutaId && tp.Estado != "Finalizado");
+                .FirstOrDefaultAsync(tp =>
+                    tp.TerapeutaId == dto.TerapeutaId &&
+                    tp.Estado == EstadosEnum.General.ACTIVO);
 
             if (asignacionExistente != null)
             {
                 throw new InvalidOperationException($"El terapeuta ya está asignado al presentador {asignacionExistente.PresentadorId}");
+            }
+
+            // Desactivar asignaciones anteriores si existen
+            var asignacionesAnteriores = await _context.TerapeutasPresentadores
+                .Where(tp => tp.TerapeutaId == dto.TerapeutaId)
+                .ToListAsync();
+
+            foreach (var asignacion in asignacionesAnteriores)
+            {
+                asignacion.Estado = EstadosEnum.General.INACTIVO;
             }
 
             var nuevaAsignacion = new TerapeutasPresentadoresModel
@@ -71,29 +101,18 @@ namespace SistemaVIP.Infrastructure.Services
                 TerapeutaId = dto.TerapeutaId,
                 PresentadorId = dto.PresentadorId,
                 FechaAsignacion = DateTime.UtcNow,
-                Estado = "Pendiente"
+                Estado = EstadosEnum.General.ACTIVO
             };
 
             _context.TerapeutasPresentadores.Add(nuevaAsignacion);
             await _context.SaveChangesAsync();
 
-            // Cargar los datos relacionados para el DTO de respuesta
             var asignacionConDetalles = await _context.TerapeutasPresentadores
                 .Include(tp => tp.Terapeuta)
                 .Include(tp => tp.Presentador)
                 .FirstAsync(tp => tp.TerapeutaId == dto.TerapeutaId && tp.PresentadorId == dto.PresentadorId);
 
-            return new TerapeutaPresentadorDto
-            {
-                TerapeutaId = asignacionConDetalles.TerapeutaId,
-                PresentadorId = asignacionConDetalles.PresentadorId,
-                FechaAsignacion = asignacionConDetalles.FechaAsignacion,
-                Estado = asignacionConDetalles.Estado,
-                NombreTerapeuta = asignacionConDetalles.Terapeuta.Nombre,
-                ApellidoTerapeuta = asignacionConDetalles.Terapeuta.Apellido,
-                NombrePresentador = asignacionConDetalles.Presentador.Nombre,
-                ApellidoPresentador = asignacionConDetalles.Presentador.Apellido
-            };
+            return MapToDto(asignacionConDetalles);
         }
 
         public async Task<bool> UpdateEstadoAsync(int terapeutaId, int presentadorId, string estado)
@@ -103,8 +122,7 @@ namespace SistemaVIP.Infrastructure.Services
 
             if (asignacion == null) return false;
 
-            if (!new[] { "Pendiente", "Confirmado", "EnProceso", "Finalizado", "Cancelado", "NoRealizado" }
-                .Contains(estado))
+            if (!EstadosEnum.EstadosGenerales.Contains(estado))
             {
                 throw new InvalidOperationException("Estado no válido");
             }
@@ -117,9 +135,25 @@ namespace SistemaVIP.Infrastructure.Services
         public async Task<bool> ExisteAsignacionAsync(int terapeutaId, int presentadorId)
         {
             return await _context.TerapeutasPresentadores
-                .AnyAsync(tp => tp.TerapeutaId == terapeutaId &&
-                               tp.PresentadorId == presentadorId &&
-                               tp.Estado != "Finalizado");
+                .AnyAsync(tp =>
+                    tp.TerapeutaId == terapeutaId &&
+                    tp.PresentadorId == presentadorId &&
+                    tp.Estado == EstadosEnum.General.ACTIVO);
+        }
+
+        private static TerapeutaPresentadorDto MapToDto(TerapeutasPresentadoresModel model)
+        {
+            return new TerapeutaPresentadorDto
+            {
+                TerapeutaId = model.TerapeutaId,
+                PresentadorId = model.PresentadorId,
+                FechaAsignacion = model.FechaAsignacion,
+                Estado = model.Estado,
+                NombreTerapeuta = model.Terapeuta?.Nombre,
+                ApellidoTerapeuta = model.Terapeuta?.Apellido,
+                NombrePresentador = model.Presentador?.Nombre,
+                ApellidoPresentador = model.Presentador?.Apellido
+            };
         }
     }
 }

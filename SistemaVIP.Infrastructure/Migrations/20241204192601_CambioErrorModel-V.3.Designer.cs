@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using SistemaVIP.Infrastructure.Persistence.Context;
@@ -12,9 +13,11 @@ using SistemaVIP.Infrastructure.Persistence.Context;
 namespace SistemaVIP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241204192601_CambioErrorModel-V.3")]
+    partial class CambioErrorModelV3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -243,11 +246,14 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.Property<string>("IdUsuario")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Tabla")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ValoresAnteriores")
                         .HasColumnType("nvarchar(max)");
@@ -257,7 +263,7 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IdUsuario");
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Bitacora", "SistemaVIP");
                 });
@@ -282,7 +288,7 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.Property<string>("IdUsuarioRegistro")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Motivo")
                         .IsRequired()
@@ -298,9 +304,12 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UsuarioRegistroId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("IdUsuarioRegistro");
+                    b.HasIndex("UsuarioRegistroId");
 
                     b.ToTable("Blacklist", "SistemaVIP");
                 });
@@ -321,32 +330,25 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("MontoComisionEmpresa")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MontoComisionPresentador")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MontoComisionTotal")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MontoTerapeuta")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MontoTotal")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PorcentajeAplicadoEmpresa")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PorcentajeAplicadoPresentador")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("PresentadorId")
                         .HasColumnType("int");
@@ -378,7 +380,7 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.Property<string>("CreadoPor")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Estado")
                         .IsRequired()
@@ -394,20 +396,21 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("PorcentajeEmpresa")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PorcentajePresentador")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TipoComision")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("CreadoPor");
+                    b.HasIndex("UserId");
 
                     b.ToTable("ConfiguracionComisiones", "SistemaVIP");
                 });
@@ -432,14 +435,13 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.Property<string>("IdUsuarioRegistro")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IdUsuarioValidacion")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Monto")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("NotasValidacion")
                         .HasColumnType("nvarchar(max)");
@@ -453,13 +455,19 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.Property<string>("TipoTransferencia")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UsuarioRegistroId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UsuarioValidacionId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("IdUsuarioRegistro");
-
-                    b.HasIndex("IdUsuarioValidacion");
-
                     b.HasIndex("ServicioId");
+
+                    b.HasIndex("UsuarioRegistroId");
+
+                    b.HasIndex("UsuarioValidacionId");
 
                     b.ToTable("Pagos", "SistemaVIP");
                 });
@@ -491,13 +499,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.Property<DateTime>("FechaAlta")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaCambioEstado")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("FotoUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MotivoEstado")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
@@ -508,8 +510,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("PorcentajeComision")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Telefono")
                         .IsRequired()
@@ -554,11 +555,10 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("IdUsuarioCancelacion")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("MontoTotal")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("MotivoCancelacion")
                         .HasColumnType("nvarchar(max)");
@@ -576,11 +576,14 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UsuarioCancelacionId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("IdUsuarioCancelacion");
-
                     b.HasIndex("PresentadorId");
+
+                    b.HasIndex("UsuarioCancelacionId");
 
                     b.ToTable("Servicios", "SistemaVIP");
                 });
@@ -613,7 +616,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("IdPresentadorConfirmaPago")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("LinkConfirmacion")
                         .HasColumnType("uniqueidentifier");
@@ -622,8 +625,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("MontoTerapeuta")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Notas")
                         .HasColumnType("nvarchar(max)");
@@ -633,6 +635,9 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.Property<string>("NumeroMovimientoBancario")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PresentadorConfirmaPagoId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("TipoMovimiento")
                         .HasColumnType("nvarchar(max)");
@@ -648,7 +653,7 @@ namespace SistemaVIP.Infrastructure.Migrations
 
                     b.HasKey("ServicioId", "TerapeutaId");
 
-                    b.HasIndex("IdPresentadorConfirmaPago");
+                    b.HasIndex("PresentadorConfirmaPagoId");
 
                     b.HasIndex("TerapeutaId");
 
@@ -686,16 +691,10 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.Property<DateTime>("FechaAlta")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaCambioEstado")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("FechaNacimiento")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("FotoUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MotivoEstado")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
@@ -706,12 +705,10 @@ namespace SistemaVIP.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TarifaBase")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TarifaExtra")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Telefono")
                         .IsRequired()
@@ -807,9 +804,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                 {
                     b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "Usuario")
                         .WithMany()
-                        .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("UsuarioId");
 
                     b.Navigation("Usuario");
                 });
@@ -818,9 +813,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                 {
                     b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioRegistro")
                         .WithMany()
-                        .HasForeignKey("IdUsuarioRegistro")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("UsuarioRegistroId");
 
                     b.Navigation("UsuarioRegistro");
                 });
@@ -830,19 +823,19 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.HasOne("SistemaVIP.Core.Models.PresentadorModel", "Presentador")
                         .WithMany()
                         .HasForeignKey("PresentadorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SistemaVIP.Core.Models.ServiciosModel", "Servicio")
                         .WithMany()
                         .HasForeignKey("ServicioId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SistemaVIP.Core.Models.TerapeutaModel", "Terapeuta")
                         .WithMany()
                         .HasForeignKey("TerapeutaId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Presentador");
@@ -856,31 +849,26 @@ namespace SistemaVIP.Infrastructure.Migrations
                 {
                     b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "User")
                         .WithMany()
-                        .HasForeignKey("CreadoPor")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("SistemaVIP.Core.Models.PagosModel", b =>
                 {
-                    b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioRegistro")
-                        .WithMany()
-                        .HasForeignKey("IdUsuarioRegistro")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioValidacion")
-                        .WithMany()
-                        .HasForeignKey("IdUsuarioValidacion")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("SistemaVIP.Core.Models.ServiciosModel", "Servicio")
                         .WithMany()
                         .HasForeignKey("ServicioId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioRegistro")
+                        .WithMany()
+                        .HasForeignKey("UsuarioRegistroId");
+
+                    b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioValidacion")
+                        .WithMany()
+                        .HasForeignKey("UsuarioValidacionId");
 
                     b.Navigation("Servicio");
 
@@ -894,7 +882,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -902,16 +890,15 @@ namespace SistemaVIP.Infrastructure.Migrations
 
             modelBuilder.Entity("SistemaVIP.Core.Models.ServiciosModel", b =>
                 {
-                    b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioCancelacion")
-                        .WithMany()
-                        .HasForeignKey("IdUsuarioCancelacion")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("SistemaVIP.Core.Models.PresentadorModel", "Presentador")
                         .WithMany()
                         .HasForeignKey("PresentadorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "UsuarioCancelacion")
+                        .WithMany()
+                        .HasForeignKey("UsuarioCancelacionId");
 
                     b.Navigation("Presentador");
 
@@ -922,19 +909,18 @@ namespace SistemaVIP.Infrastructure.Migrations
                 {
                     b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "PresentadorConfirmaPago")
                         .WithMany()
-                        .HasForeignKey("IdPresentadorConfirmaPago")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PresentadorConfirmaPagoId");
 
                     b.HasOne("SistemaVIP.Core.Models.ServiciosModel", "Servicio")
                         .WithMany("ServiciosTerapeutas")
                         .HasForeignKey("ServicioId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SistemaVIP.Core.Models.TerapeutaModel", "Terapeuta")
                         .WithMany()
                         .HasForeignKey("TerapeutaId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("PresentadorConfirmaPago");
@@ -948,8 +934,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                 {
                     b.HasOne("SistemaVIP.Core.Models.ApplicationUserModel", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -959,13 +944,13 @@ namespace SistemaVIP.Infrastructure.Migrations
                     b.HasOne("SistemaVIP.Core.Models.PresentadorModel", "Presentador")
                         .WithMany()
                         .HasForeignKey("PresentadorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SistemaVIP.Core.Models.TerapeutaModel", "Terapeuta")
                         .WithMany()
                         .HasForeignKey("TerapeutaId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Presentador");

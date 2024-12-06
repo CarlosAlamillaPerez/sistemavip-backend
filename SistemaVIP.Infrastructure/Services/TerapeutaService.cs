@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Terapeuta;
+using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
@@ -17,6 +19,24 @@ namespace SistemaVIP.Infrastructure.Services
         public TerapeutaService(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<bool> CambiarEstadoAsync(int id, CambioEstadoDto cambioEstado)
+        {
+            var terapeuta = await _context.Terapeutas.FindAsync(id);
+            if (terapeuta == null)
+                return false;
+
+            if (!EstadosEnum.EstadosGenerales.Contains(cambioEstado.Estado))
+                throw new InvalidOperationException("Estado no válido");
+
+            terapeuta.Estado = cambioEstado.Estado;
+            terapeuta.FechaCambioEstado = DateTime.UtcNow;
+            terapeuta.MotivoEstado = cambioEstado.MotivoEstado;
+            terapeuta.UltimaActualizacion = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<List<TerapeutaDto>> GetAllAsync()
@@ -73,7 +93,8 @@ namespace SistemaVIP.Infrastructure.Services
                 TarifaExtra = dto.TarifaExtra,
                 FechaAlta = DateTime.UtcNow,
                 UltimaActualizacion = DateTime.UtcNow,
-                Estado = "Activo"
+                Estado = EstadosEnum.General.ACTIVO,
+                FechaCambioEstado = DateTime.UtcNow
             };
 
             _context.Terapeutas.Add(terapeuta);
@@ -147,14 +168,11 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<List<TerapeutaDto>> GetActivosAsync()
         {
-            var terapeutas = await _context.Terapeutas
+            return await _context.Terapeutas
                 .AsNoTracking()
-                .Where(t => t.Estado == "Activo")
-                .OrderByDescending(t => t.FechaAlta)
+                .Where(t => t.Estado == EstadosEnum.General.ACTIVO)
                 .Select(t => MapToDto(t))
                 .ToListAsync();
-
-            return terapeutas;
         }
 
         public async Task<bool> UpdateTarifasAsync(int id, decimal tarifaBase, decimal tarifaExtra)
@@ -184,6 +202,8 @@ namespace SistemaVIP.Infrastructure.Services
                 FechaNacimiento = model.FechaNacimiento,
                 FechaAlta = model.FechaAlta,
                 Estado = model.Estado,
+                FechaCambioEstado = model.FechaCambioEstado,
+                MotivoEstado = model.MotivoEstado,
                 Estatura = model.Estatura,
                 DocumentoIdentidad = model.DocumentoIdentidad,
                 FotoUrl = model.FotoUrl,

@@ -4,6 +4,7 @@ using SistemaVIP.Core.DTOs.Presentador;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Enums;
 using System.Threading.Tasks;
+using SistemaVIP.Core.DTOs;
 
 namespace SistemaVIP.API.Controllers
 {
@@ -54,7 +55,9 @@ namespace SistemaVIP.API.Controllers
                 return NotFound();
 
             // Verificar que el usuario actual solo pueda ver su propio perfil
-            if (User.FindFirst("sub")?.Value != userId && !User.IsInRole(UserRoles.SUPER_ADMIN) && !User.IsInRole(UserRoles.ADMIN))
+            if (User.FindFirst("sub")?.Value != userId &&
+                !User.IsInRole(UserRoles.SUPER_ADMIN) &&
+                !User.IsInRole(UserRoles.ADMIN))
                 return Forbid();
 
             return Ok(presentador);
@@ -93,26 +96,36 @@ namespace SistemaVIP.API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = UserRoles.SUPER_ADMIN)]
-        public async Task<ActionResult> Delete(int id)
-        {
-            var result = await _presentadorService.DeleteAsync(id);
-            if (!result)
-                return NotFound();
-
-            return NoContent();
-        }
-
         [HttpPatch("{id}/estado")]
         [Authorize(Roles = UserRoles.SUPER_ADMIN)]
-        public async Task<ActionResult> UpdateEstado(int id, [FromBody] string estado)
+        public async Task<ActionResult> CambiarEstado(int id, [FromBody] CambioEstadoDto cambioEstado)
         {
-            var result = await _presentadorService.UpdateEstadoAsync(id, estado);
-            if (!result)
-                return NotFound();
+            try
+            {
+                var result = await _presentadorService.CambiarEstadoAsync(id, cambioEstado);
+                if (!result)
+                    return NotFound(new { message = "Presentador no encontrado" });
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Retornamos un BadRequest con el mensaje específico de validación
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    code = "VALIDACION_ESTADO"  // Código para identificar el tipo de error en el frontend
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log del error general
+                return StatusCode(500, new
+                {
+                    message = "Error interno al procesar la solicitud",
+                    code = "ERROR_INTERNO"
+                });
+            }
         }
 
         [HttpPatch("{id}/comision")]

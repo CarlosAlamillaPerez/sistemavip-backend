@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SistemaVIP.Core.Interfaces;
+using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
 using SistemaVIP.Infrastructure.Services;
 
@@ -15,10 +16,13 @@ builder.Services.AddSwaggerGen();
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        x => x.UseNetTopologySuite() // Agrega esta línea
+    ));
 
 // Add Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUserModel, IdentityRole>(options =>
 {
     // Password settings
     options.Password.RequireDigit = true;
@@ -51,6 +55,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IComisionService, ComisionService>();
 builder.Services.AddScoped<ITerapeutaService, TerapeutaService>();
 builder.Services.AddScoped<IPresentadorService, PresentadorService>();
+builder.Services.AddScoped<IValidacionesPresentadorService, ValidacionesPresentadorService>();
 builder.Services.AddScoped<ITerapeutasPresentadoresService, TerapeutasPresentadoresService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
 builder.Services.AddScoped<ILocationService, LocationService>();

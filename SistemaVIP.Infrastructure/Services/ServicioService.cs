@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using SistemaVIP.Core.DTOs.Servicio;
+using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
@@ -49,9 +50,8 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<ServicioDto> CreateAsync(CreateServicioDto createDto)
         {
+            // Validar presentador y terapeutas
             var isValid = await ValidateServicioTerapeutasAsync(createDto.Terapeutas, createDto.PresentadorId);
-            if (!isValid)
-                throw new InvalidOperationException("Uno o más terapeutas no están asignados al presentador");
 
             var servicio = new ServiciosModel
             {
@@ -61,7 +61,7 @@ namespace SistemaVIP.Infrastructure.Services
                 TipoServicio = createDto.TipoServicio,
                 Direccion = createDto.Direccion,
                 MontoTotal = createDto.MontoTotal,
-                Estado = "Pendiente",
+                Estado = EstadosEnum.Servicio.PENDIENTE,
                 Notas = createDto.Notas
             };
 
@@ -76,7 +76,7 @@ namespace SistemaVIP.Infrastructure.Services
                     TerapeutaId = terapeutaDto.TerapeutaId,
                     FechaAsignacion = DateTime.Now,
                     MontoTerapeuta = terapeutaDto.MontoTerapeuta,
-                    Estado = "Pendiente",
+                    Estado = EstadosEnum.Servicio.PENDIENTE,
                     LinkConfirmacion = Guid.NewGuid(),
                     LinkFinalizacion = Guid.NewGuid()
                 };
@@ -195,16 +195,45 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<bool> ValidateServicioTerapeutasAsync(List<CreateServicioTerapeutaDto> terapeutas, int presentadorId)
         {
+            // Primero verificar que el presentador esté activo
+            var presentador = await _context.Presentadores
+                .FirstOrDefaultAsync(p => p.Id == presentadorId);
+
+            if (presentador == null || presentador.Estado != EstadosEnum.General.ACTIVO)
+                throw new InvalidOperationException("El presentador no está activo o no existe");
+
             foreach (var terapeuta in terapeutas)
             {
+                // Verificar que el terapeuta esté activo
+                var terapeutaEntity = await _context.Terapeutas
+                    .FirstOrDefaultAsync(t => t.Id == terapeuta.TerapeutaId);
+
+                if (terapeutaEntity == null || terapeutaEntity.Estado != EstadosEnum.General.ACTIVO)
+                    throw new InvalidOperationException($"El terapeuta con ID {terapeuta.TerapeutaId} no está activo o no existe");
+
+                // Verificar la asignación al presentador
                 var asignacion = await _context.TerapeutasPresentadores
                     .FirstOrDefaultAsync(tp =>
                         tp.TerapeutaId == terapeuta.TerapeutaId &&
                         tp.PresentadorId == presentadorId &&
-                        tp.Estado == "Activo");
+                        tp.Estado == EstadosEnum.General.ACTIVO);
 
-                if (asignacion == null) return false;
+                if (asignacion == null)
+                    throw new InvalidOperationException($"El terapeuta con ID {terapeuta.TerapeutaId} no está asignado al presentador");
+
+                // Verificar si el terapeuta ya tiene un servicio activo en el mismo horario
+                var serviciosActivos = await _context.ServiciosTerapeutas
+                    .Include(st => st.Servicio)
+                    .Where(st =>
+                        st.TerapeutaId == terapeuta.TerapeutaId &&
+                        st.Estado != EstadosEnum.Servicio.FINALIZADO &&
+                        st.Estado != EstadosEnum.Servicio.CANCELADO)
+                    .ToListAsync();
+
+                if (serviciosActivos.Any())
+                    throw new InvalidOperationException($"El terapeuta con ID {terapeuta.TerapeutaId} ya tiene servicios activos");
             }
+
             return true;
         }
 

@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Presentador;
+using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
@@ -13,10 +15,36 @@ namespace SistemaVIP.Infrastructure.Services
     public class PresentadorService : IPresentadorService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IValidacionesPresentadorService _validacionesService;
 
-        public PresentadorService(ApplicationDbContext context)
+        public PresentadorService(ApplicationDbContext context,IValidacionesPresentadorService validacionesService)
         {
             _context = context;
+            _validacionesService = validacionesService;
+        }
+        public async Task<bool> CambiarEstadoAsync(int id, CambioEstadoDto cambioEstado)
+        {
+            var presentador = await _context.Presentadores.FindAsync(id);
+            if (presentador == null)
+                return false;
+
+            if (!EstadosEnum.EstadosGenerales.Contains(cambioEstado.Estado))
+                throw new InvalidOperationException("Estado no válido");
+
+            // Validar el cambio de estado
+            var (isValid, errorMessage) = await _validacionesService.ValidarCambioEstado(id, cambioEstado.Estado);
+            if (!isValid)
+            {
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            presentador.Estado = cambioEstado.Estado;
+            presentador.FechaCambioEstado = DateTime.UtcNow;
+            presentador.MotivoEstado = cambioEstado.MotivoEstado;
+            presentador.UltimaActualizacion = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<List<PresentadorDto>> GetAllAsync()
@@ -50,7 +78,6 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<PresentadorDto> CreateAsync(CreatePresentadorDto dto)
         {
-            // Validar que no exista otro presentador con el mismo email o documento
             if (await _context.Presentadores.AnyAsync(p =>
                 p.Email == dto.Email ||
                 p.DocumentoIdentidad == dto.DocumentoIdentidad))
@@ -70,7 +97,8 @@ namespace SistemaVIP.Infrastructure.Services
                 Notas = dto.Notas,
                 FechaAlta = DateTime.UtcNow,
                 UltimaActualizacion = DateTime.UtcNow,
-                Estado = "Activo"
+                Estado = EstadosEnum.General.ACTIVO,
+                FechaCambioEstado = DateTime.UtcNow
             };
 
             _context.Presentadores.Add(presentador);
@@ -78,6 +106,7 @@ namespace SistemaVIP.Infrastructure.Services
 
             return MapToDto(presentador);
         }
+
 
         public async Task<PresentadorDto> UpdateAsync(int id, UpdatePresentadorDto dto)
         {
@@ -142,14 +171,11 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<List<PresentadorDto>> GetActivosAsync()
         {
-            var presentadores = await _context.Presentadores
+            return await _context.Presentadores
                 .AsNoTracking()
-                .Where(p => p.Estado == "Activo")
-                .OrderByDescending(p => p.FechaAlta)
+                .Where(p => p.Estado == EstadosEnum.General.ACTIVO)
                 .Select(p => MapToDto(p))
                 .ToListAsync();
-
-            return presentadores;
         }
 
         public async Task<bool> UpdateComisionAsync(int id, decimal nuevoPorcentaje)
@@ -178,11 +204,14 @@ namespace SistemaVIP.Infrastructure.Services
                 PorcentajeComision = model.PorcentajeComision,
                 FechaAlta = model.FechaAlta,
                 Estado = model.Estado,
+                FechaCambioEstado = model.FechaCambioEstado,
+                MotivoEstado = model.MotivoEstado,
                 DocumentoIdentidad = model.DocumentoIdentidad,
                 FotoUrl = model.FotoUrl,
                 UltimaActualizacion = model.UltimaActualizacion,
                 Notas = model.Notas
             };
         }
+
     }
 }

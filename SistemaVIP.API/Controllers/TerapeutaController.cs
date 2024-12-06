@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Terapeuta;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Enums;
-using System.Threading.Tasks;
 
 namespace SistemaVIP.API.Controllers
 {
@@ -53,7 +53,6 @@ namespace SistemaVIP.API.Controllers
             if (terapeuta == null)
                 return NotFound();
 
-            // Verificar que el usuario actual solo pueda ver su propio perfil
             if (User.FindFirst("sub")?.Value != userId &&
                 !User.IsInRole(UserRoles.SUPER_ADMIN) &&
                 !User.IsInRole(UserRoles.ADMIN))
@@ -95,26 +94,22 @@ namespace SistemaVIP.API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = UserRoles.SUPER_ADMIN)]
-        public async Task<ActionResult> Delete(int id)
-        {
-            var result = await _terapeutaService.DeleteAsync(id);
-            if (!result)
-                return NotFound();
-
-            return NoContent();
-        }
-
         [HttpPatch("{id}/estado")]
         [Authorize(Roles = UserRoles.SUPER_ADMIN)]
-        public async Task<ActionResult> UpdateEstado(int id, [FromBody] string estado)
+        public async Task<ActionResult> CambiarEstado(int id, [FromBody] CambioEstadoDto cambioEstado)
         {
-            var result = await _terapeutaService.UpdateEstadoAsync(id, estado);
-            if (!result)
-                return NotFound();
+            try
+            {
+                var result = await _terapeutaService.CambiarEstadoAsync(id, cambioEstado);
+                if (!result)
+                    return NotFound();
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPatch("{id}/tarifas")]
