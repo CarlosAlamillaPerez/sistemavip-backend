@@ -59,6 +59,8 @@ builder.Services.AddScoped<IValidacionesPresentadorService, ValidacionesPresenta
 builder.Services.AddScoped<ITerapeutasPresentadoresService, TerapeutasPresentadoresService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 var app = builder.Build();
 

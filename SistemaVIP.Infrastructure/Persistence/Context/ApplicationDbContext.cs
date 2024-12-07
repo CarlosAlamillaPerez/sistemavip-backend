@@ -14,8 +14,6 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
         public DbSet<ServiciosModel> Servicios { get; set; }
         public DbSet<ServiciosTerapeutasModel> ServiciosTerapeutas { get; set; }
         public DbSet<ComisionesModel> Comisiones { get; set; }
-        public DbSet<ConfiguracionComisionesModel> ConfiguracionComisiones { get; set; }
-        public DbSet<PagosModel> Pagos { get; set; }
         public DbSet<BlacklistModel> Blacklist { get; set; }
         public DbSet<BitacoraModel> Bitacora { get; set; }
 
@@ -36,23 +34,34 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
             {
                 entity.HasKey(e => e.Id);
 
+                // Relación con Servicio
                 entity.HasOne(c => c.Servicio)
                     .WithMany()
                     .HasForeignKey(c => c.ServicioId)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .IsRequired();
+                    .OnDelete(DeleteBehavior.Restrict);
 
+                // Relación con Terapeuta
                 entity.HasOne(c => c.Terapeuta)
                     .WithMany()
                     .HasForeignKey(c => c.TerapeutaId)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .IsRequired();
+                    .OnDelete(DeleteBehavior.Restrict);
 
+                // Relación con Presentador
                 entity.HasOne(c => c.Presentador)
                     .WithMany()
                     .HasForeignKey(c => c.PresentadorId)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .IsRequired();
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relaciones con usuarios para confirmación y liquidación
+                entity.HasOne(c => c.UsuarioConfirmacion)
+                    .WithMany()
+                    .HasForeignKey(c => c.IdUsuarioConfirmacion)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.UsuarioLiquidacion)
+                    .WithMany()
+                    .HasForeignKey(c => c.IdUsuarioLiquidacion)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 // Configurar las propiedades decimales
                 entity.Property(c => c.MontoTotal).HasPrecision(10, 2);
@@ -62,6 +71,20 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
                 entity.Property(c => c.MontoComisionPresentador).HasPrecision(10, 2);
                 entity.Property(c => c.PorcentajeAplicadoEmpresa).HasPrecision(5, 2);
                 entity.Property(c => c.PorcentajeAplicadoPresentador).HasPrecision(5, 2);
+
+                // Configurar las propiedades requeridas
+                entity.Property(c => c.Estado)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(c => c.NumeroTransaccion)
+                    .HasMaxLength(50);
+
+                entity.Property(c => c.ComprobanteUrl)
+                    .HasMaxLength(500);
+
+                entity.Property(c => c.NotasPago)
+                    .HasMaxLength(500);
             });
 
             // Configurar la relación TerapeutasPresentadores
@@ -135,41 +158,6 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
 
                 // Configurar propiedades decimales
                 entity.Property(p => p.PorcentajeComision).HasPrecision(5, 2);
-            });
-
-            // Configurar ConfiguracionComisionesModel
-            builder.Entity<ConfiguracionComisionesModel>(entity =>
-            {
-                entity.HasOne(c => c.User)
-                    .WithMany()
-                    .HasForeignKey(c => c.CreadoPor)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                // Configurar propiedades decimales
-                entity.Property(c => c.PorcentajeEmpresa).HasPrecision(5, 2);
-                entity.Property(c => c.PorcentajePresentador).HasPrecision(5, 2);
-            });
-
-            // Configurar PagosModel
-            builder.Entity<PagosModel>(entity =>
-            {
-                entity.HasOne(p => p.Servicio)
-                    .WithMany()
-                    .HasForeignKey(p => p.ServicioId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(p => p.UsuarioRegistro)
-                    .WithMany()
-                    .HasForeignKey(p => p.IdUsuarioRegistro)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(p => p.UsuarioValidacion)
-                    .WithMany()
-                    .HasForeignKey(p => p.IdUsuarioValidacion)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                // Configurar propiedades decimales
-                entity.Property(p => p.Monto).HasPrecision(10, 2);
             });
 
             // Configurar TerapeutaModel

@@ -43,5 +43,21 @@ namespace SistemaVIP.Core.Enums
             Servicio.FINALIZADO,
             Servicio.CANCELADO
         };
+
+        public static class Comision
+        {
+            public const string NO_PAGADO = "NO_PAGADO";
+            public const string PAGADO = "PAGADO";
+            public const string POR_CONFIRMAR = "POR_CONFIRMAR";
+            public const string LIQUIDADO = "LIQUIDADO";
+        }
+        public static readonly string[] EstadosComision = new[]
+        {
+            Comision.NO_PAGADO,
+            Comision.PAGADO,
+            Comision.POR_CONFIRMAR,
+            Comision.LIQUIDADO
+        };
+
     }
 }
