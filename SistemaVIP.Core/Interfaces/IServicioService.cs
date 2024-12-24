@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Servicio;
 
 namespace SistemaVIP.Core.Interfaces
@@ -33,5 +34,7 @@ namespace SistemaVIP.Core.Interfaces
         // Validaciones
         Task<bool> ValidateServicioTerapeutasAsync(List<CreateServicioTerapeutaDto> terapeutas, int presentadorId);
         Task<bool> ValidateLocationDistanceAsync(double startLat, double startLng, double endLat, double endLng);
+        Task<ServicioTerapeutaDto> AgregarComprobantePagoAsync(int servicioTerapeutaId, CreateComprobantePagoDto dto);
+        Task<ServicioTerapeutaDto> ActualizarEstadoComprobanteAsync(int servicioTerapeutaId, int comprobanteId, UpdateComprobanteEstadoDto dto);
     }
 }

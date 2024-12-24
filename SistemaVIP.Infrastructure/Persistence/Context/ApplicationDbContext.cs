@@ -16,6 +16,7 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
         public DbSet<ComisionesModel> Comisiones { get; set; }
         public DbSet<BlacklistModel> Blacklist { get; set; }
         public DbSet<BitacoraModel> Bitacora { get; set; }
+        public DbSet<ComprobantePagoModel> ComprobantesPago { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -129,10 +130,61 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
 
                 // Configurar propiedades decimales
                 entity.Property(st => st.MontoTerapeuta).HasPrecision(10, 2);
+                entity.Property(st => st.MontoEfectivo).HasPrecision(10, 2);
+                entity.Property(st => st.MontoTransferencia).HasPrecision(10, 2);
+                entity.Property(st => st.GastosTransporte)
+                    .HasPrecision(10, 2);
+
+                // Check constraint para validar gastos de transporte según tipo de ubicación
+                entity.HasCheckConstraint(
+                    "CK_ServiciosTerapeutas_GastosTransporte",
+                    "([GastosTransporte] IS NULL AND EXISTS (SELECT 1 FROM Servicios s WHERE s.Id = ServicioId AND s.TipoUbicacion = 'CONSULTORIO')) OR " +
+                    "([GastosTransporte] IS NOT NULL AND EXISTS (SELECT 1 FROM Servicios s WHERE s.Id = ServicioId AND s.TipoUbicacion = 'DOMICILIO'))");
             });
 
-            // Configurar ServiciosModel
-            builder.Entity<ServiciosModel>(entity =>
+            // Agregar configuración para ComprobantesPago
+            builder.Entity<ComprobantePagoModel>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+
+                entity.Property(c => c.TipoComprobante)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(c => c.NumeroOperacion)
+                    .HasMaxLength(50);
+
+                entity.Property(c => c.UrlComprobante)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(c => c.Estado)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(c => c.NotasComprobante)
+                    .HasMaxLength(500);
+
+                // Relación con ServiciosTerapeutas
+                entity.HasOne(c => c.ServicioTerapeuta)
+                    .WithMany(st => st.ComprobantesPago)
+                    .HasForeignKey(c => c.ServicioTerapeutaId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Usuario
+                entity.HasOne(c => c.UsuarioRegistro)
+                    .WithMany()
+                    .HasForeignKey(c => c.IdUsuarioRegistro)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice único para NumeroOperacion
+                entity.HasIndex(c => c.NumeroOperacion)
+                    .IsUnique()
+                    .HasFilter("[NumeroOperacion] IS NOT NULL");
+            });
+
+        // Configurar ServiciosModel
+        builder.Entity<ServiciosModel>(entity =>
             {
                 entity.HasOne(s => s.Presentador)
                     .WithMany()

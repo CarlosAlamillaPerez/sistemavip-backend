@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Servicio;
 using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
@@ -16,12 +17,17 @@ namespace SistemaVIP.Infrastructure.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILocationService _locationService;
+        private readonly ICurrentUserService _currentUserService;
         private readonly GeometryFactory _geometryFactory;
 
-        public ServicioService(ApplicationDbContext context, ILocationService locationService)
+        public ServicioService(
+            ApplicationDbContext context,
+            ILocationService locationService,
+            ICurrentUserService currentUserService)
         {
             _context = context;
             _locationService = locationService;
+            _currentUserService = currentUserService;
             _geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         }
 
@@ -48,27 +54,29 @@ namespace SistemaVIP.Infrastructure.Services
             return servicio == null ? null : MapToDto(servicio);
         }
 
-        public async Task<ServicioDto> CreateAsync(CreateServicioDto createDto)
+        public async Task<ServicioDto> CreateAsync(CreateServicioDto dto)
         {
-            // Validar presentador y terapeutas
-            var isValid = await ValidateServicioTerapeutasAsync(createDto.Terapeutas, createDto.PresentadorId);
+            // Validar el servicio
+            await ValidateServicioCreation(dto);
 
             var servicio = new ServiciosModel
             {
-                PresentadorId = createDto.PresentadorId,
+                PresentadorId = dto.PresentadorId,
                 FechaSolicitud = DateTime.Now,
-                FechaServicio = createDto.FechaServicio,
-                TipoServicio = createDto.TipoServicio,
-                Direccion = createDto.Direccion,
-                MontoTotal = createDto.MontoTotal,
+                FechaServicio = dto.FechaServicio,
+                TipoUbicacion = dto.TipoUbicacion, // Cambiar TipoServicio por TipoUbicacion
+                Direccion = dto.Direccion,
+                MontoTotal = dto.MontoTotal,
+                GastosTransporte = dto.GastosTransporte,
+                NotasTransporte = dto.NotasTransporte,
                 Estado = EstadosEnum.Servicio.PENDIENTE,
-                Notas = createDto.Notas
+                Notas = dto.Notas
             };
 
             _context.Servicios.Add(servicio);
             await _context.SaveChangesAsync();
 
-            foreach (var terapeutaDto in createDto.Terapeutas)
+            foreach (var terapeutaDto in dto.Terapeutas)
             {
                 var servicioTerapeuta = new ServiciosTerapeutasModel
                 {
@@ -250,7 +258,7 @@ namespace SistemaVIP.Infrastructure.Services
                 PresentadorId = servicio.PresentadorId,
                 FechaSolicitud = servicio.FechaSolicitud,
                 FechaServicio = servicio.FechaServicio,
-                TipoServicio = servicio.TipoServicio,
+                TipoUbicacion = servicio.TipoUbicacion,
                 Direccion = servicio.Direccion,
                 MontoTotal = servicio.MontoTotal,
                 Estado = servicio.Estado,
@@ -269,6 +277,7 @@ namespace SistemaVIP.Infrastructure.Services
         {
             return new ServicioTerapeutaDto
             {
+                Id = st.Id,  // Nuevo campo
                 ServicioId = st.ServicioId,
                 TerapeutaId = st.TerapeutaId,
                 NombreTerapeuta = $"{st.Terapeuta?.Nombre} {st.Terapeuta?.Apellido}".Trim(),
@@ -277,9 +286,23 @@ namespace SistemaVIP.Infrastructure.Services
                 HoraFin = st.HoraFin,
                 Estado = st.Estado,
                 MontoTerapeuta = st.MontoTerapeuta,
+                MontoEfectivo = st.MontoEfectivo,
+                MontoTransferencia = st.MontoTransferencia,
                 LinkConfirmacion = st.LinkConfirmacion,
                 LinkFinalizacion = st.LinkFinalizacion,
-                ComprobantePagoTerapeuta = st.ComprobantePagoTerapeuta
+                ComprobantesPago = st.ComprobantesPago?.Select(cp => new ComprobantePagoDto
+                {
+                    Id = cp.Id,
+                    ServicioTerapeutaId = cp.ServicioTerapeutaId,
+                    TipoComprobante = cp.TipoComprobante,
+                    NumeroOperacion = cp.NumeroOperacion,
+                    UrlComprobante = cp.UrlComprobante,
+                    FechaRegistro = cp.FechaRegistro,
+                    Estado = cp.Estado,
+                    NotasComprobante = cp.NotasComprobante,
+                    NombreUsuarioRegistro = cp.UsuarioRegistro?.UserName ?? "Sistema",
+                    Monto = cp.Monto
+                }).ToList() ?? new List<ComprobantePagoDto>()
             };
         }
 
@@ -287,12 +310,13 @@ namespace SistemaVIP.Infrastructure.Services
         {
             var servicioTerapeuta = await _context.ServiciosTerapeutas
                 .Include(st => st.Servicio)
+                .Include(st => st.ComprobantesPago)
                 .FirstOrDefaultAsync(st => st.LinkConfirmacion == confirmacionDto.LinkConfirmacion);
 
             if (servicioTerapeuta == null) return null;
 
             servicioTerapeuta.HoraInicio = DateTime.Now;
-            servicioTerapeuta.Estado = "EnProceso";
+            servicioTerapeuta.Estado = EstadosEnum.Servicio.EN_PROCESO;
             servicioTerapeuta.UbicacionInicio = _geometryFactory.CreatePoint(
                 new Coordinate(confirmacionDto.Longitud, confirmacionDto.Latitud));
 
@@ -304,33 +328,272 @@ namespace SistemaVIP.Infrastructure.Services
         {
             var servicioTerapeuta = await _context.ServiciosTerapeutas
                 .Include(st => st.Servicio)
+                .Include(st => st.ComprobantesPago)
                 .FirstOrDefaultAsync(st => st.LinkFinalizacion == finalizacionDto.LinkFinalizacion);
 
             if (servicioTerapeuta == null) return null;
 
             servicioTerapeuta.HoraFin = DateTime.Now;
-            servicioTerapeuta.Estado = "Finalizado";
+            servicioTerapeuta.Estado = EstadosEnum.Servicio.FINALIZADO;
             servicioTerapeuta.UbicacionFin = _geometryFactory.CreatePoint(
                 new Coordinate(finalizacionDto.Longitud, finalizacionDto.Latitud));
 
-            // Validar distancia si hay ubicación inicial
-            if (servicioTerapeuta.UbicacionInicio != null)
-            {
-                var distanciaValida = await ValidateLocationDistanceAsync(
-                    servicioTerapeuta.UbicacionInicio.Y, // Latitud
-                    servicioTerapeuta.UbicacionInicio.X, // Longitud
-                    finalizacionDto.Latitud,
-                    finalizacionDto.Longitud);
+            await _context.SaveChangesAsync();
+            return await GetServicioTerapeutaByLinkFinalizacionAsync(finalizacionDto.LinkFinalizacion);
+        }
 
-                if (!distanciaValida)
+        private async Task<bool> ValidarNumeroOperacionUnico(string numeroOperacion)
+        {
+            if (string.IsNullOrEmpty(numeroOperacion))
+                return true;
+
+            return !await _context.ServiciosTerapeutas
+                .Include(st => st.ComprobantesPago)
+                .AnyAsync(st => st.ComprobantesPago
+                    .Any(cp => cp.NumeroOperacion == numeroOperacion));
+        }
+
+        public async Task<ServicioTerapeutaDto> AgregarComprobantePagoAsync(int servicioTerapeutaId, CreateComprobantePagoDto dto)
+        {
+            var servicioTerapeuta = await _context.ServiciosTerapeutas
+                .Include(st => st.ComprobantesPago)
+                .FirstOrDefaultAsync(st => st.ServicioId == servicioTerapeutaId);
+
+            if (servicioTerapeuta == null)
+                throw new InvalidOperationException("Servicio no encontrado");
+
+            if (!string.IsNullOrEmpty(dto.NumeroOperacion))
+            {
+                var esUnico = await ValidarNumeroOperacionUnico(dto.NumeroOperacion);
+                if (!esUnico)
+                    throw new InvalidOperationException("El número de operación ya existe en el sistema");
+            }
+
+            var comprobante = new ComprobantePagoModel
+            {
+                ServicioTerapeutaId = servicioTerapeutaId,
+                TipoComprobante = dto.TipoComprobante,
+                NumeroOperacion = dto.NumeroOperacion,
+                UrlComprobante = dto.UrlComprobante,
+                NotasComprobante = dto.NotasComprobante,
+                Estado = PagosEnum.EstadoComprobante.PENDIENTE,
+                FechaRegistro = DateTime.Now,
+                IdUsuarioRegistro = _currentUserService.GetUserId()
+            };
+
+            servicioTerapeuta.ComprobantesPago.Add(comprobante);
+
+            // Actualizar estado del servicio si es el primer comprobante
+            if (servicioTerapeuta.Estado == EstadosEnum.Servicio.FINALIZADO)
+                servicioTerapeuta.Estado = EstadosEnum.Comision.POR_CONFIRMAR;
+
+            await _context.SaveChangesAsync();
+            return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
+        }
+
+        public async Task<ServicioTerapeutaDto> ActualizarEstadoComprobanteAsync(
+    int servicioTerapeutaId,
+    int comprobanteId,
+    string nuevoEstado)
+        {
+            if (!PagosEnum.EstadosComprobante.Contains(nuevoEstado))
+                throw new InvalidOperationException("Estado no válido");
+
+            var comprobante = await _context.ComprobantesPago
+                .FirstOrDefaultAsync(cp => cp.Id == comprobanteId &&
+                                         cp.ServicioTerapeutaId == servicioTerapeutaId);
+
+            if (comprobante == null)
+                throw new InvalidOperationException("Comprobante no encontrado");
+
+            comprobante.Estado = nuevoEstado;
+            await _context.SaveChangesAsync();
+
+            return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
+        }
+
+        private async Task<ServicioTerapeutaDto> GetServicioTerapeutaByIdAsync(int id)
+        {
+            var servicioTerapeuta = await _context.ServiciosTerapeutas
+                .Include(st => st.ComprobantesPago)
+                    .ThenInclude(cp => cp.UsuarioRegistro)
+                .Include(st => st.Terapeuta)
+                .FirstOrDefaultAsync(st => st.Id == id);
+
+            return servicioTerapeuta != null ? MapToServicioTerapeutaDto(servicioTerapeuta) : null;
+        }
+
+        private async Task ValidateServicioCreation(CreateServicioDto dto)
+        {
+            // Validar tipo de ubicación
+            if (!ServicioEnum.TiposUbicacion.Contains(dto.TipoUbicacion))
+            {
+                throw new InvalidOperationException("Tipo de ubicación no válido");
+            }
+
+            // Validaciones específicas para servicio a domicilio
+            if (dto.TipoUbicacion == ServicioEnum.TipoUbicacion.DOMICILIO)
+            {
+                if (string.IsNullOrEmpty(dto.Direccion))
                 {
-                    servicioTerapeuta.Notas = (servicioTerapeuta.Notas ?? "") +
-                        "\nAlerta: Posible discrepancia en ubicación de finalización";
+                    throw new InvalidOperationException("La dirección es requerida para servicios a domicilio");
+                }
+
+                // Validar gastos de transporte para servicio a domicilio
+                if (!dto.GastosTransporte.HasValue || dto.GastosTransporte < 0)
+                {
+                    throw new InvalidOperationException("Los gastos de transporte son requeridos y deben ser mayores a 0 para servicios a domicilio");
+                }
+            }
+            else // Si es CONSULTORIO
+            {
+                // Asegurar que no se envíen gastos de transporte para servicios en consultorio
+                if (dto.GastosTransporte.HasValue)
+                {
+                    throw new InvalidOperationException("No se permiten gastos de transporte para servicios en consultorio");
                 }
             }
 
+            // Validar que el monto total sea mayor que cero
+            if (dto.MontoTotal <= 0)
+            {
+                throw new InvalidOperationException("El monto total debe ser mayor que cero");
+            }
+        }
+
+        private async Task ValidateComprobante(int servicioTerapeutaId, CreateComprobantePagoDto dto)
+        {
+            var servicioTerapeuta = await _context.ServiciosTerapeutas
+                .Include(st => st.ComprobantesPago)
+                .Include(st => st.Servicio)
+                .FirstOrDefaultAsync(st => st.Id == servicioTerapeutaId);
+
+            if (servicioTerapeuta == null)
+            {
+                throw new InvalidOperationException("Servicio no encontrado");
+            }
+
+            // Validar que el tipo de comprobante sea válido
+            if (!PagosEnum.TiposComprobante.Contains(dto.TipoComprobante))
+            {
+                throw new InvalidOperationException("Tipo de comprobante no válido");
+            }
+
+            // Validar que el origen de pago sea válido
+            if (!PagosEnum.OrigenesComprobante.Contains(dto.OrigenPago))
+            {
+                throw new InvalidOperationException("Origen de pago no válido");
+            }
+
+            // Validar que las comisiones solo se registren después del pago del cliente
+            if (dto.OrigenPago == PagosEnum.OrigenPago.COMISION_TERAPEUTA)
+            {
+                var existePagoCliente = servicioTerapeuta.ComprobantesPago
+                    .Any(cp => cp.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE
+                           && cp.Estado == PagosEnum.EstadoComprobante.PAGADO);
+
+                if (!existePagoCliente)
+                {
+                    throw new InvalidOperationException("No se puede registrar la comisión hasta que el pago del cliente esté confirmado");
+                }
+            }
+
+            // Validar número de operación único si se proporciona
+            if (!string.IsNullOrEmpty(dto.NumeroOperacion))
+            {
+                var existeNumeroOperacion = await _context.ComprobantesPago
+                    .AnyAsync(cp => cp.NumeroOperacion == dto.NumeroOperacion);
+
+                if (existeNumeroOperacion)
+                {
+                    throw new InvalidOperationException("El número de operación ya existe en el sistema");
+                }
+            }
+
+            // Validar montos según el tipo de pago
+            var totalComprobantes = servicioTerapeuta.ComprobantesPago
+                .Where(cp => cp.OrigenPago == dto.OrigenPago
+                          && cp.Estado != PagosEnum.EstadoComprobante.RECHAZADO)
+                .Sum(cp => cp.Monto);
+
+            if (dto.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE
+                && (totalComprobantes + dto.Monto) > servicioTerapeuta.Servicio.MontoTotal)
+            {
+                throw new InvalidOperationException("La suma de los comprobantes excede el monto total del servicio");
+            }
+
+            // Validar que solo servicios a domicilio tengan gastos de transporte
+            if (servicioTerapeuta.GastosTransporte.HasValue &&
+                servicioTerapeuta.Servicio.TipoUbicacion != ServicioEnum.TipoUbicacion.DOMICILIO)
+            {
+                throw new InvalidOperationException("No se permiten gastos de transporte para servicios en consultorio");
+            }
+        }
+
+        public async Task<ServicioTerapeutaDto> ActualizarEstadoComprobanteAsync(
+            int servicioTerapeutaId,
+            int comprobanteId,
+            UpdateComprobanteEstadoDto dto)
+        {
+            if (!PagosEnum.EstadosComprobante.Contains(dto.Estado))
+                throw new InvalidOperationException("Estado no válido");
+
+            // Validar que si es rechazo, tenga motivo
+            if (dto.Estado == PagosEnum.EstadoComprobante.RECHAZADO && string.IsNullOrEmpty(dto.MotivoRechazo))
+                throw new InvalidOperationException("Debe proporcionar un motivo de rechazo");
+
+            var comprobante = await _context.ComprobantesPago
+                .Include(cp => cp.ServicioTerapeuta)  // Incluir ServicioTerapeuta
+                .FirstOrDefaultAsync(cp => cp.Id == comprobanteId &&
+                                         cp.ServicioTerapeutaId == servicioTerapeutaId);
+
+            if (comprobante == null)
+                throw new InvalidOperationException("Comprobante no encontrado");
+
+            comprobante.Estado = dto.Estado;
+            comprobante.MotivoRechazo = dto.MotivoRechazo;
+            comprobante.NotasComprobante = dto.NotasComprobante;
+
+            // Actualizar estado del servicio
+            await ActualizarEstadoServicioAsync(comprobante.ServicioTerapeuta);
+
             await _context.SaveChangesAsync();
-            return await GetServicioTerapeutaByLinkFinalizacionAsync(finalizacionDto.LinkFinalizacion);
+            return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
+        }
+
+        private async Task ActualizarEstadoServicioAsync(ServiciosTerapeutasModel servicioTerapeuta)
+        {
+            var comprobantes = await _context.ComprobantesPago
+                .Where(cp => cp.ServicioTerapeutaId == servicioTerapeuta.Id)
+                .ToListAsync();
+
+            // Verificar si hay algún comprobante de pago de cliente confirmado
+            var tienePagoClienteConfirmado = comprobantes
+                .Any(cp => cp.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE
+                        && cp.Estado == PagosEnum.EstadoComprobante.PAGADO);
+
+            // Verificar si todos los comprobantes están rechazados
+            var todosRechazados = comprobantes.All(cp => cp.Estado == PagosEnum.EstadoComprobante.RECHAZADO);
+
+            // Verificar si hay comprobantes por confirmar
+            var tienePorConfirmar = comprobantes
+                .Any(cp => cp.Estado == PagosEnum.EstadoComprobante.POR_CONFIRMAR);
+
+            // Actualizar el estado del servicio según las condiciones
+            if (todosRechazados)
+            {
+                servicioTerapeuta.Estado = EstadosEnum.Servicio.PENDIENTE;
+            }
+            else if (tienePagoClienteConfirmado)
+            {
+                servicioTerapeuta.Estado = EstadosEnum.Servicio.FINALIZADO;
+            }
+            else if (tienePorConfirmar)
+            {
+                servicioTerapeuta.Estado = EstadosEnum.Servicio.EN_PROCESO;
+            }
+
+            _context.ServiciosTerapeutas.Update(servicioTerapeuta);
         }
     }
 }

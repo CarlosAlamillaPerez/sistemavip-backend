@@ -12,14 +12,16 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public int PresentadorId { get; set; }
         public DateTime FechaSolicitud { get; set; }
         public DateTime FechaServicio { get; set; }
-        public string TipoServicio { get; set; }
-        public string Direccion { get; set; }
+        public string TipoUbicacion { get; set; }  
+        public string? Direccion { get; set; }
         public decimal MontoTotal { get; set; }
+        public decimal? GastosTransporte { get; set; }  
+        public string? NotasTransporte { get; set; }    
         public string Estado { get; set; }
         public DateTime? FechaCancelacion { get; set; }
-        public string MotivoCancelacion { get; set; }
-        public string NotasCancelacion { get; set; }
-        public string Notas { get; set; }
+        public string? MotivoCancelacion { get; set; }
+        public string? NotasCancelacion { get; set; }
+        public string? Notas { get; set; }
 
         // Propiedades de navegación
         public string NombrePresentador { get; set; }
@@ -35,24 +37,30 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public DateTime FechaServicio { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string TipoServicio { get; set; }
+        [StringLength(20)]
+        public string TipoUbicacion { get; set; }  // Nuevo campo
 
         [StringLength(500)]
-        public string Direccion { get; set; }
+        public string? Direccion { get; set; }
 
         [Required]
         [Range(0, 100000)]
         public decimal MontoTotal { get; set; }
 
+        [Range(0, 10000)]
+        public decimal? GastosTransporte { get; set; }  // Nuevo campo
+
+        public string? NotasTransporte { get; set; }    // Nuevo campo
+
         [Required]
         public List<CreateServicioTerapeutaDto> Terapeutas { get; set; }
 
-        public string Notas { get; set; }
+        public string? Notas { get; set; }
     }
 
     public class ServicioTerapeutaDto
     {
+        public int Id { get; set; }
         public int ServicioId { get; set; }
         public int TerapeutaId { get; set; }
         public string NombreTerapeuta { get; set; }
@@ -63,7 +71,9 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public decimal? MontoTerapeuta { get; set; }
         public Guid LinkConfirmacion { get; set; }
         public Guid LinkFinalizacion { get; set; }
-        public bool ComprobantePagoTerapeuta { get; set; }
+        public decimal? MontoEfectivo { get; set; }
+        public decimal? MontoTransferencia { get; set; }
+        public List<ComprobantePagoDto> ComprobantesPago { get; set; }
     }
 
     public class CreateServicioTerapeutaDto
@@ -72,8 +82,14 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public int TerapeutaId { get; set; }
 
         [Required]
-        [Range(0, 100000)]
+        [Range(0, 190000)]
         public decimal MontoTerapeuta { get; set; }
+
+        [Range(0, 190000)]
+        public decimal? MontoEfectivo { get; set; }
+
+        [Range(0, 190000)]
+        public decimal? MontoTransferencia { get; set; }
     }
 
     public class UpdateServicioDto

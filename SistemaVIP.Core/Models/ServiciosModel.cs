@@ -12,9 +12,11 @@ namespace SistemaVIP.Core.Models
         public int PresentadorId { get; set; }
         public DateTime FechaSolicitud { get; set; }
         public DateTime FechaServicio { get; set; }
-        public string TipoServicio { get; set; }
+        public string TipoUbicacion { get; set; }  
         public string? Direccion { get; set; }
         public decimal MontoTotal { get; set; }
+        public decimal? GastosTransporte { get; set; }  // Nuevo campo para servicios a domicilio
+        public string? NotasTransporte { get; set; }    // Nuevo campo para detalles de transporte
         public string Estado { get; set; }
         public DateTime? FechaCancelacion { get; set; }
         public string? MotivoCancelacion { get; set; }

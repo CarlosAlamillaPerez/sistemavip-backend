@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Servicio;
+using SistemaVIP.Core.Enums;
 using SistemaVIP.Core.Interfaces;
 
 namespace SistemaVIP.API.Controllers
@@ -152,5 +154,45 @@ namespace SistemaVIP.API.Controllers
             var servicios = await _servicioService.GetServiciosActivosAsync();
             return Ok(servicios);
         }
+
+        [HttpPost("{servicioTerapeutaId}/comprobantes")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantePago(
+            int servicioTerapeutaId,
+            [FromBody] CreateComprobantePagoDto dto)
+        {
+            try
+            {
+                var servicio = await _servicioService.AgregarComprobantePagoAsync(servicioTerapeutaId, dto);
+                return Ok(servicio);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        [HttpPatch("{servicioTerapeutaId}/comprobantes/{comprobanteId}/estado")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult<ServicioTerapeutaDto>> ActualizarEstadoComprobante(
+            int servicioTerapeutaId,
+            int comprobanteId,
+            [FromBody] UpdateComprobanteEstadoDto dto)
+        {
+            try
+            {
+                var servicio = await _servicioService.ActualizarEstadoComprobanteAsync(
+                    servicioTerapeutaId,
+                    comprobanteId,
+                    dto);
+                return Ok(servicio);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }

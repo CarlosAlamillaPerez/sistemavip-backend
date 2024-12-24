@@ -5,6 +5,7 @@ namespace SistemaVIP.Core.Models
 {
     public class ServiciosTerapeutasModel
     {
+        public int Id { get; set; }
         public int ServicioId { get; set; }
         public int TerapeutaId { get; set; }
         public DateTime FechaAsignacion { get; set; }
@@ -20,6 +21,13 @@ namespace SistemaVIP.Core.Models
         public string? NotasTransporte { get; set; }
         public decimal? MontoEfectivo { get; set; }
         public decimal? MontoTransferencia { get; set; }
+        public string? EvidenciaTransporte { get; set; } 
+        public DateTime? FechaRegistroGastosTransporte { get; set; }
+
+        public decimal? MontoTotalPagado { get => ComprobantesPago?.Sum(cp => cp.Monto) ?? 0; }
+        public bool PagoCompleto { get => MontoTotalPagado >= MontoTerapeuta; }
+
+        public List<CambioEstadoServicioModel> HistorialEstados { get; set; }
 
         public List<ComprobantePagoModel> ComprobantesPago { get; set; }
 
@@ -45,16 +53,34 @@ namespace SistemaVIP.Core.Models
     {
         public int Id { get; set; }
         public int ServicioTerapeutaId { get; set; }
-        public string TipoComprobante { get; set; } // "VENTANILLA", "TRANSFERENCIA", "OXXO"
+        public string TipoComprobante { get; set; }
+        public string OrigenPago { get; set; }  
         public string? NumeroOperacion { get; set; }
         public string UrlComprobante { get; set; }
         public DateTime FechaRegistro { get; set; }
-        public string IdUsuarioRegistro { get; set; }
-        public string Estado { get; set; } // "PENDIENTE", "CONFIRMADO", "RECHAZADO"
+        public string Estado { get; set; }
         public string? NotasComprobante { get; set; }
+        public string IdUsuarioRegistro { get; set; }
+        public decimal Monto { get; set; }
+        public string? MotivoRechazo { get; set; }  
 
-        // Referencias de navegación
+        // Referencias a las entidades relacionadas
         public ServiciosTerapeutasModel ServicioTerapeuta { get; set; }
         public ApplicationUserModel UsuarioRegistro { get; set; }
+    }
+
+    public class CambioEstadoServicioModel
+    {
+        public int Id { get; set; }
+        public int ServicioTerapeutaId { get; set; }
+        public string EstadoAnterior { get; set; }
+        public string EstadoNuevo { get; set; }
+        public DateTime FechaCambio { get; set; }
+        public string? MotivosCambio { get; set; }
+        public string IdUsuarioCambio { get; set; }
+
+        // Navegación
+        public ServiciosTerapeutasModel ServicioTerapeuta { get; set; }
+        public ApplicationUserModel UsuarioCambio { get; set; }
     }
 }
