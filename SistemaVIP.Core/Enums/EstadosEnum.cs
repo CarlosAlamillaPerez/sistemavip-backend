@@ -19,6 +19,7 @@ namespace SistemaVIP.Core.Enums
         {
             public const string PENDIENTE = "PENDIENTE";
             public const string EN_PROCESO = "EN_PROCESO";
+            public const string POR_CONFIRMAR = "POR_CONFIRMAR";
             public const string FINALIZADO = "FINALIZADO";
             public const string CANCELADO = "CANCELADO";
         }
@@ -40,6 +41,7 @@ namespace SistemaVIP.Core.Enums
         {
             Servicio.PENDIENTE,
             Servicio.EN_PROCESO,
+            Servicio.POR_CONFIRMAR,
             Servicio.FINALIZADO,
             Servicio.CANCELADO
         };

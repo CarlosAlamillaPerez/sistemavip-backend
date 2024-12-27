@@ -23,7 +23,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
         public async Task<ActionResult<List<ServicioDto>>> GetAll()
         {
             var servicios = await _servicioService.GetAllAsync();
@@ -31,7 +31,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<ServicioDto>> GetById(int id)
         {
             var servicio = await _servicioService.GetByIdAsync(id);
@@ -42,7 +42,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<ServicioDto>> Create(CreateServicioDto createDto)
         {
             try
@@ -57,7 +57,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<ServicioDto>> Update(int id, UpdateServicioDto updateDto)
         {
             var servicio = await _servicioService.UpdateAsync(id, updateDto);
@@ -68,7 +68,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpPost("{id}/cancelar")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<ServicioDto>> Cancelar(int id, CancelacionServicioDto cancelacionDto)
         {
             var userId = User.FindFirst("sub")?.Value;
@@ -124,7 +124,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpGet("presentador/{presentadorId}")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<List<ServicioDto>>> GetByPresentador(int presentadorId)
         {
             var servicios = await _servicioService.GetServiciosByPresentadorAsync(presentadorId);
@@ -132,7 +132,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpGet("terapeuta/{terapeutaId}")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<List<ServicioDto>>> GetByTerapeuta(int terapeutaId)
         {
             var servicios = await _servicioService.GetServiciosByTerapeutaAsync(terapeutaId);
@@ -140,7 +140,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpGet("fecha/{fecha}")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<List<ServicioDto>>> GetByFecha(DateTime fecha)
         {
             var servicios = await _servicioService.GetServiciosByFechaAsync(fecha);
@@ -148,7 +148,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpGet("activos")]
-        [Authorize(Roles = "Admin,SuperAdmin,Presentador")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult<List<ServicioDto>>> GetActivos()
         {
             var servicios = await _servicioService.GetServiciosActivosAsync();
@@ -193,6 +193,79 @@ namespace SistemaVIP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // Agregar estos endpoints al controlador existente
+
+        [HttpGet("{servicioTerapeutaId}/conciliacion")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> GetConciliacion(int servicioTerapeutaId)
+        {
+            try
+            {
+                var conciliacion = await _servicioService.GetConciliacionServicioAsync(servicioTerapeutaId);
+                return Ok(conciliacion);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{servicioTerapeutaId}/conciliacion")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> RealizarConciliacion(int servicioTerapeutaId)
+        {
+            try
+            {
+                var resultado = await _servicioService.RealizarConciliacionAsync(servicioTerapeutaId);
+
+                if (resultado.RequiereRevision)
+                {
+                    return BadRequest(new
+                    {
+                        message = "La conciliación requiere revisión",
+                        detalles = resultado
+                    });
+                }
+
+                return Ok(resultado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{servicioTerapeutaId}/conciliacion/validar")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> ValidarConciliacion(int servicioTerapeutaId)
+        {
+            try
+            {
+                var esValida = await _servicioService.ValidarConciliacionAsync(servicioTerapeutaId);
+                return Ok(new { esValida });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("notificar-cancelaciones")]
+        [AllowAnonymous] // Solo para llamadas internas
+        public async Task<ActionResult> NotificarCancelacionesSemanales()
+        {
+            try
+            {
+                await _servicioService.NotificarCancelacionesExcesivasAsync();
+                return Ok(new { message = "Notificaciones enviadas correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al enviar notificaciones", error = ex.Message });
+            }
+        }
+
 
     }
 }

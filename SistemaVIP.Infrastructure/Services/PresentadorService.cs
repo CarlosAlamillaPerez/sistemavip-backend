@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Presentador;
 using SistemaVIP.Core.Enums;
@@ -15,11 +16,13 @@ namespace SistemaVIP.Infrastructure.Services
     public class PresentadorService : IPresentadorService
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly IValidacionesPresentadorService _validacionesService;
 
-        public PresentadorService(ApplicationDbContext context,IValidacionesPresentadorService validacionesService)
+        public PresentadorService(ApplicationDbContext context,IValidacionesPresentadorService validacionesService, UserManager<ApplicationUserModel> userManager)
         {
             _context = context;
+            _userManager = userManager;
             _validacionesService = validacionesService;
         }
         public async Task<bool> CambiarEstadoAsync(int id, CambioEstadoDto cambioEstado)
@@ -78,6 +81,7 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<PresentadorDto> CreateAsync(CreatePresentadorDto dto)
         {
+            // Validar que no exista otro presentador con el mismo email o documento
             if (await _context.Presentadores.AnyAsync(p =>
                 p.Email == dto.Email ||
                 p.DocumentoIdentidad == dto.DocumentoIdentidad))
@@ -85,8 +89,28 @@ namespace SistemaVIP.Infrastructure.Services
                 throw new InvalidOperationException("Ya existe un presentador con el mismo email o documento de identidad.");
             }
 
+            // Crear usuario de Identity
+            var user = new ApplicationUserModel
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    "Error al crear el usuario: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            // Asignar rol de presentador
+            await _userManager.AddToRoleAsync(user, UserRoles.PRESENTADOR);
+
+            // Crear presentador
             var presentador = new PresentadorModel
             {
+                UserId = user.Id,  // Aquí asignamos el ID del usuario creado
                 Nombre = dto.Nombre,
                 Apellido = dto.Apellido,
                 Telefono = dto.Telefono,
@@ -106,7 +130,6 @@ namespace SistemaVIP.Infrastructure.Services
 
             return MapToDto(presentador);
         }
-
 
         public async Task<PresentadorDto> UpdateAsync(int id, UpdatePresentadorDto dto)
         {

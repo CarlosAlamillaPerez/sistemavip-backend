@@ -41,6 +41,12 @@ namespace SistemaVIP.Core.DTOs.Presentador
         [StringLength(100)]
         public string Email { get; set; }
 
+        [Required]
+        [StringLength(100)]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
+            ErrorMessage = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial")]
+        public string Password { get; set; }
+
         [Range(0, 100)]
         public decimal PorcentajeComision { get; set; }
 

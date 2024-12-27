@@ -56,6 +56,12 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public List<CreateServicioTerapeutaDto> Terapeutas { get; set; }
 
         public string? Notas { get; set; }
+
+        [Required]
+        [Range(1, 24)] // Máximo 24 horas por servicio
+        public int DuracionHoras { get; set; }
+
+        public List<ServicioExtraDto>? ServiciosExtra { get; set; }
     }
 
     public class ServicioTerapeutaDto
@@ -131,5 +137,13 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public string MotivoCancelacion { get; set; }
 
         public string NotasCancelacion { get; set; }
+    }
+
+    public class ServicioExtraDto
+    {
+        public int ServicioExtraCatalogoId { get; set; }
+        [Range(0, 100000)]
+        public decimal Monto { get; set; }
+        public string? Notas { get; set; }
     }
 }

@@ -1,10 +1,13 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 
 namespace SistemaVIP.Core.Models
 {
     public class ServiciosTerapeutasModel
     {
+        [Key]
         public int Id { get; set; }
         public int ServicioId { get; set; }
         public int TerapeutaId { get; set; }
@@ -14,6 +17,9 @@ namespace SistemaVIP.Core.Models
         public NetTopologySuite.Geometries.Point? UbicacionInicio { get; set; }
         public NetTopologySuite.Geometries.Point? UbicacionFin { get; set; }
         public string Estado { get; set; }
+
+        public virtual ServiciosModel Servicio { get; set; }
+        public virtual TerapeutaModel Terapeuta { get; set; }
 
         // Montos y pagos
         public decimal? MontoTerapeuta { get; set; }
@@ -44,9 +50,9 @@ namespace SistemaVIP.Core.Models
         public string? NotasPago { get; set; }
 
         // Referencias a las entidades relacionadas
-        public ServiciosModel Servicio { get; set; }
-        public TerapeutaModel Terapeuta { get; set; }
         public ApplicationUserModel? PresentadorConfirmaPago { get; set; }
+
+        public virtual ICollection<ServicioExtraModel> ServiciosExtra { get; set; }
     }
 
     public class ComprobantePagoModel

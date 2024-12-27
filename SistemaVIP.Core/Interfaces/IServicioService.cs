@@ -36,5 +36,9 @@ namespace SistemaVIP.Core.Interfaces
         Task<bool> ValidateLocationDistanceAsync(double startLat, double startLng, double endLat, double endLng);
         Task<ServicioTerapeutaDto> AgregarComprobantePagoAsync(int servicioTerapeutaId, CreateComprobantePagoDto dto);
         Task<ServicioTerapeutaDto> ActualizarEstadoComprobanteAsync(int servicioTerapeutaId, int comprobanteId, UpdateComprobanteEstadoDto dto);
+        Task<ConciliacionServicioDto> GetConciliacionServicioAsync(int servicioTerapeutaId);
+        Task<ResultadoConciliacionDto> RealizarConciliacionAsync(int servicioTerapeutaId);
+        Task<bool> ValidarConciliacionAsync(int servicioTerapeutaId);
+        Task NotificarCancelacionesExcesivasAsync();
     }
 }

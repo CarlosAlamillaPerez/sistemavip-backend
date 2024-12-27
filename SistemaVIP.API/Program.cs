@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SistemaVIP.Core.Configuration;
 using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
@@ -61,6 +62,12 @@ builder.Services.AddScoped<IServicioService, ServicioService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IBitacoraService, BitacoraService>();
+builder.Services.AddScoped<INotificacionService, NotificacionService>();
+builder.Services.AddScoped<IBlacklistService, BlacklistService>();
+builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
+builder.Services.AddHttpClient("CallMeBot", client =>{client.DefaultRequestHeaders.Add("User-Agent", "SistemaVIP-WhatsApp/1.0");});
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 
 var app = builder.Build();
 
