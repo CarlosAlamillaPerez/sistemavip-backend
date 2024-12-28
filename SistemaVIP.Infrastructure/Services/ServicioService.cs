@@ -80,7 +80,8 @@ namespace SistemaVIP.Infrastructure.Services
                 GastosTransporte = dto.GastosTransporte,
                 NotasTransporte = dto.NotasTransporte,
                 Estado = EstadosEnum.Servicio.PENDIENTE,
-                Notas = dto.Notas
+                Notas = dto.Notas,
+                DuracionHoras = dto.DuracionHoras
             };
 
             _context.Servicios.Add(servicio);
@@ -151,6 +152,14 @@ namespace SistemaVIP.Infrastructure.Services
                 servicio.MontoTotal = updateDto.MontoTotal.Value;
             if (!string.IsNullOrEmpty(updateDto.Notas))
                 servicio.Notas = updateDto.Notas;
+            if (updateDto.DuracionHoras.HasValue)
+            {
+                if (updateDto.DuracionHoras <= 0 || updateDto.DuracionHoras > 24)
+                {
+                    throw new InvalidOperationException("La duración del servicio debe ser entre 1 y 24 horas");
+                }
+                servicio.DuracionHoras = updateDto.DuracionHoras.Value;
+            }
 
             await _context.SaveChangesAsync();
             return await GetByIdAsync(id);
@@ -309,6 +318,7 @@ namespace SistemaVIP.Infrastructure.Services
                 NotasCancelacion = servicio.NotasCancelacion,
                 Notas = servicio.Notas,
                 NombrePresentador = $"{servicio.Presentador?.Nombre} {servicio.Presentador?.Apellido}".Trim(),
+                DuracionHoras = servicio.DuracionHoras,
                 Terapeutas = servicio.ServiciosTerapeutas?
                     .Select(MapToServicioTerapeutaDto)
                     .ToList() ?? new List<ServicioTerapeutaDto>()
@@ -337,6 +347,7 @@ namespace SistemaVIP.Infrastructure.Services
                     Id = cp.Id,
                     ServicioTerapeutaId = cp.ServicioTerapeutaId,
                     TipoComprobante = cp.TipoComprobante,
+                    OrigenPago = cp.OrigenPago,
                     NumeroOperacion = cp.NumeroOperacion,
                     UrlComprobante = cp.UrlComprobante,
                     FechaRegistro = cp.FechaRegistro,
@@ -350,6 +361,7 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<ServicioTerapeutaDto> ConfirmarInicioServicioAsync(ConfirmacionServicioDto confirmacionDto)
         {
+
             var servicioTerapeuta = await _context.ServiciosTerapeutas
                 .Include(st => st.Servicio)
                 .Include(st => st.ComprobantesPago)
@@ -581,6 +593,55 @@ namespace SistemaVIP.Infrastructure.Services
                 throw new InvalidOperationException("Tipo de ubicación no válido");
             }
 
+            // Validar duración del servicio
+            if (dto.DuracionHoras <= 0 || dto.DuracionHoras > 24)
+            {
+                throw new InvalidOperationException("La duración del servicio debe ser entre 1 y 24 horas");
+            }
+
+            // Validar monto total
+            if (dto.MontoTotal <= 0)
+            {
+                throw new InvalidOperationException("El monto total debe ser mayor que cero");
+            }
+
+            // Validar montos por hora
+            decimal montoPorHora = dto.MontoTotal / dto.DuracionHoras;
+            const decimal MONTO_MINIMO_POR_HORA = 1500;
+            if (montoPorHora < MONTO_MINIMO_POR_HORA)
+            {
+                throw new InvalidOperationException($"El monto por hora no puede ser menor a ${MONTO_MINIMO_POR_HORA}");
+            }
+
+            // Validar terapeutas
+            if (dto.Terapeutas == null || !dto.Terapeutas.Any())
+            {
+                throw new InvalidOperationException("Debe asignar al menos una chica al servicio");
+            }
+
+            foreach (var terapeuta in dto.Terapeutas)
+            {
+                // Validar monto de terapeuta
+                if (terapeuta.MontoTerapeuta < 1000)
+                {
+                    throw new InvalidOperationException("El monto de la chica no puede ser menor a $1,000");
+                }
+
+                // Validar monto mínimo por hora para terapeuta
+                decimal montoTerapeutaPorHora = terapeuta.MontoTerapeuta / dto.DuracionHoras;
+                const decimal MONTO_MINIMO_TERAPEUTA_HORA = 1000;
+                if (montoTerapeutaPorHora < MONTO_MINIMO_TERAPEUTA_HORA)
+                {
+                    throw new InvalidOperationException($"El monto para la chica no puede ser menor a ${MONTO_MINIMO_TERAPEUTA_HORA} por ${dto.DuracionHoras} horas");
+                }
+
+                // Validar que el monto de la terapeuta no exceda el monto total
+                if (terapeuta.MontoTerapeuta > dto.MontoTotal)
+                {
+                    throw new InvalidOperationException("El monto de la chica no puede ser mayor al monto total del servicio");
+                }
+            }
+
             // Validaciones específicas para servicio a domicilio
             if (dto.TipoUbicacion == ServicioEnum.TipoUbicacion.DOMICILIO)
             {
@@ -589,25 +650,28 @@ namespace SistemaVIP.Infrastructure.Services
                     throw new InvalidOperationException("La dirección es requerida para servicios a domicilio");
                 }
 
-                // Validar gastos de transporte para servicio a domicilio
-                if (!dto.GastosTransporte.HasValue || dto.GastosTransporte < 0)
+                if (!dto.GastosTransporte.HasValue)
                 {
-                    throw new InvalidOperationException("Los gastos de transporte son requeridos y deben ser mayores a 0 para servicios a domicilio");
+                    throw new InvalidOperationException("Debe especificar los gastos de transporte (incluso si son 0) para servicios a domicilio");
+                }
+
+                if (dto.GastosTransporte == 0 && string.IsNullOrEmpty(dto.NotasTransporte))
+                {
+                    throw new InvalidOperationException("Si los gastos de transporte son 0, debe especificar el motivo en las notas de transporte (ej: 'Cliente recoge a la terapeuta', 'Cliente paga transporte directamente')");
                 }
             }
             else // Si es CONSULTORIO
             {
-                // Asegurar que no se envíen gastos de transporte para servicios en consultorio
                 if (dto.GastosTransporte.HasValue)
                 {
                     throw new InvalidOperationException("No se permiten gastos de transporte para servicios en consultorio");
                 }
             }
 
-            // Validar que el monto total sea mayor que cero
-            if (dto.MontoTotal <= 0)
+            // Validar fecha del servicio
+            if (dto.FechaServicio < DateTime.Now)
             {
-                throw new InvalidOperationException("El monto total debe ser mayor que cero");
+                throw new InvalidOperationException("La fecha del servicio no puede ser en el pasado");
             }
         }
 
@@ -843,13 +907,87 @@ namespace SistemaVIP.Infrastructure.Services
                     throw new InvalidOperationException("El número de operación ya existe en el sistema");
             }
 
+            // Validar URL del comprobante según el tipo
+            if (dto.TipoComprobante != PagosEnum.TipoComprobante.EFECTIVO &&
+                string.IsNullOrEmpty(dto.UrlComprobante))
+            {
+                throw new InvalidOperationException("La URL del comprobante es requerida para pagos que no son en efectivo");
+            }
+
             // Validar que no exceda el monto total del servicio
             var totalExistente = servicioTerapeuta.ComprobantesPago
                 .Where(cp => cp.Estado != PagosEnum.EstadoComprobante.RECHAZADO)
                 .Sum(cp => cp.Monto);
 
-            if (totalExistente + dto.Monto > servicioTerapeuta.MontoTerapeuta)
-                throw new InvalidOperationException("La suma de los comprobantes excede el monto total permitido");
+            if (dto.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE)
+            {
+                if (totalExistente + dto.Monto > servicioTerapeuta.Servicio.MontoTotal)
+                    throw new InvalidOperationException("La suma de los comprobantes excede el monto total del servicio");
+            }
+            else // Si es pago de comisión
+            {
+                if (totalExistente + dto.Monto > servicioTerapeuta.MontoTerapeuta)
+                    throw new InvalidOperationException("La suma de los comprobantes excede el monto de la terapeuta");
+            }
+
+            // Validar URL del comprobante según el tipo de pago
+            if (dto.TipoComprobante != PagosEnum.TipoComprobante.EFECTIVO &&
+                string.IsNullOrEmpty(dto.UrlComprobante))
+            {
+                throw new InvalidOperationException("La URL del comprobante es requerida para pagos que no son en efectivo");
+            }
+        }
+
+        public async Task<ServicioTerapeutaDto> AgregarComprobantesMultiplesAsync(
+    int servicioTerapeutaId,
+    CreateComprobantesMultiplesDto dto)
+        {
+            var servicioTerapeuta = await _context.ServiciosTerapeutas
+                .Include(st => st.ComprobantesPago)
+                .Include(st => st.Servicio)
+                .FirstOrDefaultAsync(st => st.Id == servicioTerapeutaId);
+
+            if (servicioTerapeuta == null)
+                throw new InvalidOperationException("Servicio no encontrado");
+
+            // Validar monto total de todos los comprobantes
+            var montoTotalNuevosComprobantes = dto.Comprobantes.Sum(c => c.Monto);
+            var montoTotalExistente = servicioTerapeuta.ComprobantesPago
+                .Where(cp => cp.Estado != PagosEnum.EstadoComprobante.RECHAZADO)
+                .Sum(cp => cp.Monto);
+
+            if (montoTotalExistente + montoTotalNuevosComprobantes > servicioTerapeuta.Servicio.MontoTotal)
+                throw new InvalidOperationException("La suma de los comprobantes excede el monto total del servicio");
+
+            // Procesar todos los comprobantes
+            foreach (var comprobante in dto.Comprobantes)
+            {
+                // Validar comprobante individual
+                await ValidarComprobante(servicioTerapeutaId, comprobante);
+
+                var nuevoComprobante = new ComprobantePagoModel
+                {
+                    ServicioTerapeutaId = servicioTerapeutaId,
+                    TipoComprobante = comprobante.TipoComprobante,
+                    OrigenPago = comprobante.OrigenPago,
+                    NumeroOperacion = comprobante.NumeroOperacion,
+                    UrlComprobante = comprobante.UrlComprobante,
+                    NotasComprobante = comprobante.NotasComprobante,
+                    Estado = PagosEnum.EstadoComprobante.PENDIENTE,
+                    FechaRegistro = DateTime.Now,
+                    IdUsuarioRegistro = _currentUserService.GetUserId(),
+                    Monto = comprobante.Monto
+                };
+
+                servicioTerapeuta.ComprobantesPago.Add(nuevoComprobante);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Solo enviar una alerta si es necesario
+            await AlertarMontoInusualSiNecesario(servicioTerapeuta);
+
+            return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
         }
 
         private async Task<ResultadoConciliacionDto> ValidarMontosAsync(ServiciosTerapeutasModel servicioTerapeuta)
@@ -956,7 +1094,7 @@ namespace SistemaVIP.Infrastructure.Services
             // Registrar el proceso de conciliación en la bitácora
             await _bitacoraService.RegistrarAccionAsync(
                 _currentUserService.GetUserId(),
-                BitacoraEnum.TipoAccion.VALIDACION,
+                BitacoraEnum.TipoAccion.CONCILIACION,
                 BitacoraEnum.TablaMonitoreo.SERVICIOS_TERAPEUTAS,
                 servicioTerapeutaId.ToString(),
                 null,
@@ -972,7 +1110,7 @@ namespace SistemaVIP.Infrastructure.Services
 
                 await _bitacoraService.RegistrarAccionAsync(
                     _currentUserService.GetUserId(),
-                    "GENERACION_COMISION",
+                    BitacoraEnum.TipoAccion.GENERACION_COMISION,
                     BitacoraEnum.TablaMonitoreo.COMISIONES,
                     comision.Id.ToString(),
                     null,
@@ -1013,8 +1151,14 @@ namespace SistemaVIP.Infrastructure.Services
         private async Task<ComisionesModel> GenerarComisionAsync(ServiciosTerapeutasModel servicioTerapeuta)
         {
             // Cálculo de montos
-            var montoTotal = servicioTerapeuta.MontoTerapeuta ?? 0;
-            var montoComisionTotal = montoTotal - servicioTerapeuta.GastosTransporte ?? 0;
+            // El monto total del servicio es 1800
+            var montoTotal = servicioTerapeuta.Servicio.MontoTotal;
+
+            // El monto para la terapeuta es 1100
+            var montoTerapeuta = servicioTerapeuta.MontoTerapeuta ?? 0;
+
+            // La comisión total es la diferencia: 1800 - 1100 = 700
+            var montoComisionTotal = montoTotal - montoTerapeuta;
 
             var comision = new ComisionesModel
             {
@@ -1081,12 +1225,10 @@ namespace SistemaVIP.Infrastructure.Services
                 var exceso = duracionServicio - duracionEsperada;
                 await _whatsAppService.AlertarServicioExtendidoAsync(
                     servicioTerapeuta.ServicioId,
-                    $"⚠️ ALERTA: Servicio extendido\n" +
+                    $"⏱ Servicio extendido\n" +
                     $"Tiempo programado: {duracionEsperada.TotalHours:F1} horas\n" +
                     $"Tiempo real: {duracionServicio.TotalHours:F1} horas\n" +
-                    $"Exceso: {exceso.TotalMinutes:F0} minutos\n" +
-                    $"Terapeuta: {servicioTerapeuta.Terapeuta.Nombre}\n" +
-                    $"Presentador: {servicioTerapeuta.Servicio.Presentador.Nombre}");
+                    $"Exceso: {exceso.TotalMinutes:F0} minutos");
 
                 await _bitacoraService.RegistrarValidacionAsync(
                     _currentUserService.GetUserId(),
@@ -1102,12 +1244,10 @@ namespace SistemaVIP.Infrastructure.Services
                 var faltante = duracionEsperada - duracionServicio;
                 await _whatsAppService.AlertarServicioExtendidoAsync(
                     servicioTerapeuta.ServicioId,
-                    $"⚠️ ALERTA: Servicio corto\n" +
+                    $"⏱ Servicio corto\n" +
                     $"Tiempo programado: {duracionEsperada.TotalHours:F1} horas\n" +
                     $"Tiempo real: {duracionServicio.TotalHours:F1} horas\n" +
-                    $"Faltaron: {faltante.TotalMinutes:F0} minutos\n" +
-                    $"Terapeuta: {servicioTerapeuta.Terapeuta.Nombre}\n" +
-                    $"Presentador: {servicioTerapeuta.Servicio.Presentador.Nombre}");
+                    $"Faltaron: {faltante.TotalMinutes:F0} minutos");
 
                 await _bitacoraService.RegistrarValidacionAsync(
                     _currentUserService.GetUserId(),
@@ -1135,18 +1275,15 @@ namespace SistemaVIP.Infrastructure.Services
                     {
                         await _whatsAppService.AlertarAnomaliaUbicacionAsync(
                             servicioTerapeuta.ServicioId,
-                            "Ubicación Sospechosa",
-                            $"⚠️ ALERTA: Ubicación no cambió\n" +
-                            $"Servicio a domicilio finalizado en la misma ubicación que inició\n" +
-                            $"Terapeuta: {servicioTerapeuta.Terapeuta.Nombre}\n" +
-                            $"Presentador: {servicioTerapeuta.Servicio.Presentador.Nombre}");
+                            "📍 Ubicación Sospechosa",
+                            $"🚨 La ubicación no cambió. Servicio a domicilio finalizado en la misma ubicación que inició.");
 
                         await _bitacoraService.RegistrarValidacionAsync(
                             _currentUserService.GetUserId(),
                             BitacoraEnum.TablaMonitoreo.SERVICIOS_TERAPEUTAS,
                             servicioTerapeuta.Id.ToString(),
                             false,
-                            "Servicio a domicilio finalizado en la misma ubicación inicial"
+                            "Servicio a domicilio finalizado en la misma ubicación inicial."
                         );
                     }
                 }
@@ -1155,23 +1292,32 @@ namespace SistemaVIP.Infrastructure.Services
 
         private async Task ValidarComprobantePago(ServiciosTerapeutasModel servicioTerapeuta, CreateComprobantePagoDto dto)
         {
-            const decimal MONTO_MINIMO_ALERTA = 1500m;
+            const decimal MONTO_MINIMO_ALERTA_POR_HORA = 1500m;
 
-            // 1. Validar monto mínimo
-            if (dto.Monto < MONTO_MINIMO_ALERTA)
+            // Validación diferenciada según origen del pago
+            if (dto.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE)
             {
-                await _whatsAppService.AlertarMontoInusualAsync(
-                    servicioTerapeuta.ServicioId,
-                    dto.Monto
-                );
-
-                await _bitacoraService.RegistrarValidacionAsync(
-                    _currentUserService.GetUserId(),
-                    BitacoraEnum.TablaMonitoreo.COMPROBANTES_PAGO,
-                    servicioTerapeuta.Id.ToString(),
-                    false,
-                    $"Monto del comprobante menor al mínimo esperado: ${dto.Monto:N2}"
-                );
+                // Para pago de cliente, validamos el monto por hora del servicio completo
+                decimal montoPorHora = dto.Monto / servicioTerapeuta.Servicio.DuracionHoras;
+                if (montoPorHora < MONTO_MINIMO_ALERTA_POR_HORA)
+                {
+                    await _whatsAppService.AlertarMontoInusualAsync(
+                        servicioTerapeuta.ServicioId,
+                        montoPorHora
+                    );
+                }
+            }
+            else if (dto.OrigenPago == PagosEnum.OrigenPago.COMISION_TERAPEUTA)
+            {
+                // Para pago a terapeuta, validamos que no sea menor al mínimo por hora para terapeuta
+                decimal montoPorHora = dto.Monto / servicioTerapeuta.Servicio.DuracionHoras;
+                if (montoPorHora < 1000) // Monto mínimo por hora para terapeuta
+                {
+                    await _whatsAppService.AlertarMontoInusualAsync(
+                        servicioTerapeuta.ServicioId,
+                        montoPorHora
+                    );
+                }
             }
 
             // 2. Validar coherencia de montos
@@ -1231,6 +1377,115 @@ namespace SistemaVIP.Infrastructure.Services
             }
         }
 
+        public async Task<ServicioExtraDetalleDto> UpdateServicioExtraAsync(int servicioTerapeutaId, int servicioExtraId, UpdateServicioExtraDto dto)
+        {
+            var servicioExtra = await _context.ServiciosExtra
+                .Include(se => se.ServicioTerapeuta)
+                .Include(se => se.ServicioExtraCatalogo)
+                .FirstOrDefaultAsync(se =>
+                    se.Id == servicioExtraId &&
+                    se.ServicioTerapeutaId == servicioTerapeutaId);
 
+            if (servicioExtra == null)
+                throw new InvalidOperationException("Servicio extra no encontrado");
+
+            if (servicioExtra.ServicioTerapeuta.Estado == "PAGADO")
+                throw new InvalidOperationException("No se puede modificar un servicio extra cuando el servicio está pagado");
+
+            if (dto.Monto <= 0)
+                throw new InvalidOperationException("El monto debe ser mayor a 0");
+
+            servicioExtra.Monto = dto.Monto;
+            servicioExtra.Notas = dto.Notas;
+
+            await _context.SaveChangesAsync();
+
+            return new ServicioExtraDetalleDto
+            {
+                Id = servicioExtra.Id,
+                ServicioExtraCatalogoId = servicioExtra.ServicioExtraCatalogoId,
+                NombreServicio = servicioExtra.ServicioExtraCatalogo.Nombre,
+                Monto = servicioExtra.Monto,
+                FechaRegistro = servicioExtra.FechaRegistro,
+                Notas = servicioExtra.Notas
+            };
+        }
+
+        public async Task<bool> DeleteServicioExtraAsync(int servicioTerapeutaId, int servicioExtraId)
+        {
+            var servicioExtra = await _context.ServiciosExtra
+                .Include(se => se.ServicioTerapeuta)
+                .FirstOrDefaultAsync(se =>
+                    se.Id == servicioExtraId &&
+                    se.ServicioTerapeutaId == servicioTerapeutaId);
+
+            if (servicioExtra == null)
+                throw new InvalidOperationException("Servicio extra no encontrado");
+
+            if (servicioExtra.ServicioTerapeuta.Estado == "PAGADO")
+                throw new InvalidOperationException("No se puede eliminar un servicio extra cuando el servicio está pagado");
+
+            _context.ServiciosExtra.Remove(servicioExtra);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        private async Task AlertarMontoInusualSiNecesario(ServiciosTerapeutasModel servicioTerapeuta)
+        {
+            var montoTotalComprobantes = servicioTerapeuta.ComprobantesPago
+                .Where(cp => cp.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE &&
+                             cp.Estado != PagosEnum.EstadoComprobante.RECHAZADO)
+                .Sum(cp => cp.Monto);
+
+            if (montoTotalComprobantes > 0)
+            {
+                var montoPorHora = montoTotalComprobantes / servicioTerapeuta.Servicio.DuracionHoras;
+                await _whatsAppService.AlertarMontoInusualAsync(servicioTerapeuta.ServicioId, montoPorHora);
+            }
+        }
+
+        public async Task EliminarComprobantePagoAsync(int servicioTerapeutaId, int comprobanteId)
+        {
+            var comprobante = await _context.ComprobantesPago
+                .FirstOrDefaultAsync(cp => cp.Id == comprobanteId &&
+                                         cp.ServicioTerapeutaId == servicioTerapeutaId);
+
+            if (comprobante == null)
+                throw new InvalidOperationException("Comprobante no encontrado");
+
+            _context.ComprobantesPago.Remove(comprobante);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<ComprobantePagoDto>> GetComprobantesPagoByServicioAsync(int servicioTerapeutaId)
+        {
+            var servicioTerapeuta = await _context.ServiciosTerapeutas
+                .Include(st => st.ComprobantesPago)
+                    .ThenInclude(cp => cp.UsuarioRegistro)
+                .FirstOrDefaultAsync(st => st.Id == servicioTerapeutaId);
+
+            if (servicioTerapeuta == null)
+                throw new InvalidOperationException("Servicio no encontrado");
+
+            return servicioTerapeuta.ComprobantesPago
+                .Select(cp => new ComprobantePagoDto
+                {
+                    Id = cp.Id,
+                    ServicioTerapeutaId = cp.ServicioTerapeutaId,
+                    TipoComprobante = cp.TipoComprobante,
+                    OrigenPago = cp.OrigenPago,
+                    NumeroOperacion = cp.NumeroOperacion,
+                    UrlComprobante = cp.UrlComprobante,
+                    FechaRegistro = cp.FechaRegistro,
+                    Estado = cp.Estado,
+                    NotasComprobante = cp.NotasComprobante,
+                    MotivoRechazo = cp.MotivoRechazo,
+                    NombreUsuarioRegistro = cp.UsuarioRegistro?.UserName ?? "Sistema",
+                    Monto = cp.Monto
+                })
+                .OrderByDescending(cp => cp.FechaRegistro)
+                .ToList();
+        }
     }
 }

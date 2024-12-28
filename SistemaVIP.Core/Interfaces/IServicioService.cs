@@ -40,5 +40,8 @@ namespace SistemaVIP.Core.Interfaces
         Task<ResultadoConciliacionDto> RealizarConciliacionAsync(int servicioTerapeutaId);
         Task<bool> ValidarConciliacionAsync(int servicioTerapeutaId);
         Task NotificarCancelacionesExcesivasAsync();
+        Task<ServicioTerapeutaDto> AgregarComprobantesMultiplesAsync(int servicioTerapeutaId, CreateComprobantesMultiplesDto dto);
+        Task EliminarComprobantePagoAsync(int servicioTerapeutaId, int comprobanteId);
+        Task<List<ComprobantePagoDto>> GetComprobantesPagoByServicioAsync(int servicioTerapeutaId);
     }
 }

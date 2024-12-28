@@ -26,6 +26,7 @@ namespace SistemaVIP.Core.DTOs.Servicio
         // Propiedades de navegación
         public string NombrePresentador { get; set; }
         public List<ServicioTerapeutaDto> Terapeutas { get; set; }
+        public int DuracionHoras { get; set; }
     }
 
     public class CreateServicioDto
@@ -61,7 +62,6 @@ namespace SistemaVIP.Core.DTOs.Servicio
         [Range(1, 24)] // Máximo 24 horas por servicio
         public int DuracionHoras { get; set; }
 
-        public List<ServicioExtraDto>? ServiciosExtra { get; set; }
     }
 
     public class ServicioTerapeutaDto
@@ -101,9 +101,10 @@ namespace SistemaVIP.Core.DTOs.Servicio
     public class UpdateServicioDto
     {
         public DateTime? FechaServicio { get; set; }
-        public string Direccion { get; set; }
+        public string? Direccion { get; set; }  // Cambiado a opcional
         public decimal? MontoTotal { get; set; }
-        public string Notas { get; set; }
+        public string? Notas { get; set; }
+        public int? DuracionHoras { get; set; }  // Agregado como opcional
     }
 
     public class ConfirmacionServicioDto
@@ -139,10 +140,29 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public string NotasCancelacion { get; set; }
     }
 
-    public class ServicioExtraDto
+    public class CreateServicioExtraDto
+    {
+        public List<ServicioExtraItemDto> ServiciosExtra { get; set; }
+    }
+
+    public class ServicioExtraItemDto
     {
         public int ServicioExtraCatalogoId { get; set; }
-        [Range(0, 100000)]
+        public decimal Monto { get; set; }
+        public string? Notas { get; set; }
+    }
+    public class ServicioExtraDetalleDto
+    {
+        public int Id { get; set; }
+        public int ServicioExtraCatalogoId { get; set; }
+        public string NombreServicio { get; set; }
+        public decimal Monto { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public string Notas { get; set; }
+    }
+
+    public class UpdateServicioExtraDto
+    {
         public decimal Monto { get; set; }
         public string? Notas { get; set; }
     }

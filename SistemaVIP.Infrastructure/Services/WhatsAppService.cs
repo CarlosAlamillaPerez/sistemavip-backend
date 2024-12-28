@@ -91,10 +91,10 @@ namespace SistemaVIP.Infrastructure.Services
             if (servicio == null)
                 return;
 
-            var mensaje = $"⚠️ ALERTA: Servicio\n" +
+            var mensaje = $"⚠️ ALERTA: Servicio ⚠️\n" +
                          $"ID Servicio: {servicioId}\n" +
-                         $"Presentador: {servicio.Presentador.Nombre}\n" +
-                         $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre}\n" +
+                         $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\\n" +
+                         $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre} {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Apellido}\n" +
                          $"Motivo: {motivo}";
 
             await EnviarMensajeAsync(mensaje);
@@ -111,13 +111,14 @@ namespace SistemaVIP.Infrastructure.Services
             if (servicio == null)
                 return;
 
+            var horasTexto = servicio.DuracionHoras == 1 ? "hora" : "horas";
             var mensaje = $"🟢 INICIO DE SERVICIO\n" +
-                         $"ID: {servicioId}\n" +
-                         $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
-                         $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre} {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Apellido}\n" +
-                         $"Horas: {servicio.DuracionHoras}\n" +
-                         $"Tipo: {servicio.TipoUbicacion}\n" +
-                         $"Monto: ${servicio.MontoTotal:N2}";
+                          $"ID: {servicioId}\n" +
+                          $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
+                          $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre} {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Apellido}\n" +
+                          $"Tipo: {servicio.TipoUbicacion}\n" +
+                          $"Monto: ${servicio.MontoTotal:N2}\n" +
+                          $"Duración:{servicio.DuracionHoras} {horasTexto}";
 
             await EnviarMensajeAsync(mensaje);
         }
@@ -152,10 +153,11 @@ namespace SistemaVIP.Infrastructure.Services
             if (servicio == null)
                 return;
 
-            var mensaje = $"⚠️ ALERTA DE UBICACIÓN\n" +
-                         $"Tipo: {tipoAnomalia}\n" +
+            var mensaje = $"⚠️ ALERTA DE UBICACIÓN ⚠️\n" +
                          $"Servicio: {servicioId}\n" +
-                         $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre}\n" +
+                         $"Tipo: {tipoAnomalia}\n" +
+                         $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
+                         $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre} {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Apellido}\n" +
                          $"Detalles: {detalles}";
 
             await EnviarMensajeAsync(mensaje);
@@ -205,7 +207,7 @@ namespace SistemaVIP.Infrastructure.Services
 
             var mensaje = $"💰 ALERTA DE PAGO PENDIENTE\n" +
                          $"Servicio: {servicioId}\n" +
-                         $"Presentador: {servicio.Presentador.Nombre}\n" +
+                         $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
                          $"Horas sin comprobante: {horasSinComprobante}\n" +
                          $"Monto: ${servicio.MontoTotal:N2}";
 
@@ -214,8 +216,19 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task AlertarMontoInusualAsync(int servicioId, decimal montoPorHora)
         {
+            // Primero verificamos si ya se ha enviado una alerta para este servicio
+            var yaSeNotificoBajoMonto = await _context.Bitacora
+                .AnyAsync(b => b.Tabla == BitacoraEnum.TablaMonitoreo.SERVICIOS &&
+                              b.IdRegistro == servicioId.ToString() &&
+                              b.Accion == "ALERTA_MONTO_BAJO");
+
+            if (yaSeNotificoBajoMonto)
+                return;
+
             var servicio = await _context.Servicios
                 .Include(s => s.Presentador)
+                .Include(s => s.ServiciosTerapeutas)
+                    .ThenInclude(st => st.ComprobantesPago)
                 .Include(s => s.ServiciosTerapeutas)
                     .ThenInclude(st => st.Terapeuta)
                 .FirstOrDefaultAsync(s => s.Id == servicioId);
@@ -223,16 +236,48 @@ namespace SistemaVIP.Infrastructure.Services
             if (servicio == null)
                 return;
 
-            var terapeuta = servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta;
+            // Calcular el monto total de todos los comprobantes
+            var montoTotalComprobantes = servicio.ServiciosTerapeutas
+                .SelectMany(st => st.ComprobantesPago)
+                .Where(cp => cp.OrigenPago == PagosEnum.OrigenPago.PAGO_CLIENTE &&
+                             cp.Estado != PagosEnum.EstadoComprobante.RECHAZADO)
+                .Sum(cp => cp.Monto);
 
-            var mensaje = $"⚠️ ALERTA: Monto por hora bajo\n" +
-                         $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
-                         $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre}\n" +
-                         $"Monto por hora: ${montoPorHora:N2}\n" +
-                         $"Horas: {servicio.DuracionHoras}\n" +
-                         $"Monto total: ${servicio.MontoTotal:N2}";
+            // Solo alertar si ya hay al menos un comprobante y el monto por hora es bajo
+            if (montoTotalComprobantes > 0)
+            {
+                var montoPorHoraReal = montoTotalComprobantes / servicio.DuracionHoras;
+                const decimal MONTO_MINIMO_POR_HORA = 1500;
 
-            await EnviarMensajeAsync(mensaje);
+                if (montoPorHoraReal < MONTO_MINIMO_POR_HORA)
+                {
+                    var mensaje = $"⚠️ ALERTA: Monto por hora bajo\n" +
+                                 $"ID Servicio: {servicio.Id}\n" +
+                                 $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
+                                 $"Terapeuta: {servicio.ServiciosTerapeutas.FirstOrDefault()?.Terapeuta.Nombre}\n" +
+                                 $"Monto por hora: ${montoPorHoraReal:N2}\n" +
+                                 $"Horas: {servicio.DuracionHoras}\n" +
+                                 $"Monto total actual: ${montoTotalComprobantes:N2}\n" +
+                                 $"Monto total esperado: ${servicio.MontoTotal:N2}";
+
+                    await EnviarMensajeAsync(mensaje);
+
+                    // Registrar que ya se envió la alerta
+                    await _bitacoraService.RegistrarAccionAsync(
+                        "SYSTEM",
+                        "ALERTA_MONTO_BAJO",
+                        BitacoraEnum.TablaMonitoreo.SERVICIOS,
+                        servicioId.ToString(),
+                        null,
+                        JsonSerializer.Serialize(new
+                        {
+                            MontoPorHora = montoPorHoraReal,
+                            MontoTotalActual = montoTotalComprobantes,
+                            MontoTotalEsperado = servicio.MontoTotal
+                        })
+                    );
+                }
+            }
         }
 
         public async Task AlertarErrorConciliacionAsync(int servicioId, string detallesError)

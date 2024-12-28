@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Servicio;
 using SistemaVIP.Core.Enums;
@@ -16,10 +17,12 @@ namespace SistemaVIP.API.Controllers
     public class ServicioController : ControllerBase
     {
         private readonly IServicioService _servicioService;
+        private readonly IServicioExtraService _servicioExtraService;
 
-        public ServicioController(IServicioService servicioService)
+        public ServicioController(IServicioService servicioService, IServicioExtraService servicioExtraService)
         {
             _servicioService = servicioService;
+            _servicioExtraService = servicioExtraService;
         }
 
         [HttpGet]
@@ -155,47 +158,6 @@ namespace SistemaVIP.API.Controllers
             return Ok(servicios);
         }
 
-        [HttpPost("{servicioTerapeutaId}/comprobantes")]
-        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
-        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantePago(
-            int servicioTerapeutaId,
-            [FromBody] CreateComprobantePagoDto dto)
-        {
-            try
-            {
-                var servicio = await _servicioService.AgregarComprobantePagoAsync(servicioTerapeutaId, dto);
-                return Ok(servicio);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-
-        [HttpPatch("{servicioTerapeutaId}/comprobantes/{comprobanteId}/estado")]
-        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
-        public async Task<ActionResult<ServicioTerapeutaDto>> ActualizarEstadoComprobante(
-            int servicioTerapeutaId,
-            int comprobanteId,
-            [FromBody] UpdateComprobanteEstadoDto dto)
-        {
-            try
-            {
-                var servicio = await _servicioService.ActualizarEstadoComprobanteAsync(
-                    servicioTerapeutaId,
-                    comprobanteId,
-                    dto);
-                return Ok(servicio);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        // Agregar estos endpoints al controlador existente
-
         [HttpGet("{servicioTerapeutaId}/conciliacion")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
         public async Task<ActionResult> GetConciliacion(int servicioTerapeutaId)
@@ -266,6 +228,184 @@ namespace SistemaVIP.API.Controllers
             }
         }
 
+        [HttpGet("servicios-extra/catalogo")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<List<ServicioExtraCatalogoDto>>> GetServiciosExtraCatalogo()
+        {
+            try
+            {
+                var catalogo = await _servicioExtraService.GetCatalogoActivoAsync();
+                return Ok(catalogo);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener el catálogo de servicios extra", error = ex.Message });
+            }
+        }
 
+        [HttpPost("{servicioTerapeutaId}/servicios-extra")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult> AgregarServiciosExtra(int servicioTerapeutaId, [FromBody] CreateServicioExtraDto dto)
+        {
+            try
+            {
+                await _servicioExtraService.AgregarServiciosExtraAsync(servicioTerapeutaId, dto);
+                return Ok(new { message = "Servicios extra agregados correctamente" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al agregar servicios extra", error = ex.Message });
+            }
+        }
+
+        [HttpGet("{servicioTerapeutaId}/servicios-extra")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<List<ServicioExtraDetalleDto>>> GetServiciosExtra(int servicioTerapeutaId)
+        {
+            try
+            {
+                var serviciosExtra = await _servicioExtraService.GetServiciosExtraByServicioAsync(servicioTerapeutaId);
+                return Ok(serviciosExtra);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener los servicios extra", error = ex.Message });
+            }
+        }
+
+        [HttpPut("{servicioTerapeutaId}/servicios-extra/{servicioExtraId}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<ServicioExtraDetalleDto>> UpdateServicioExtra(
+    int servicioTerapeutaId,
+    int servicioExtraId,
+    [FromBody] UpdateServicioExtraDto dto)
+        {
+            try
+            {
+                var resultado = await _servicioExtraService.UpdateServicioExtraAsync(servicioTerapeutaId, servicioExtraId, dto);
+                return Ok(resultado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al actualizar el servicio extra", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("{servicioTerapeutaId}/servicios-extra/{servicioExtraId}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult> DeleteServicioExtra(int servicioTerapeutaId, int servicioExtraId)
+        {
+            try
+            {
+                await _servicioExtraService.DeleteServicioExtraAsync(servicioTerapeutaId, servicioExtraId);
+                return Ok(new { message = "Servicio extra eliminado correctamente" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al eliminar el servicio extra", error = ex.Message });
+            }
+        }
+
+        [HttpGet("{servicioTerapeutaId}/comprobantes")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<List<ComprobantePagoDto>>> GetComprobantesPago(int servicioTerapeutaId)
+        {
+            try
+            {
+                var comprobantes = await _servicioService.GetComprobantesPagoByServicioAsync(servicioTerapeutaId);
+                return Ok(comprobantes);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{servicioTerapeutaId}/comprobantes")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantePago(
+    int servicioTerapeutaId,
+    [FromBody] CreateComprobantePagoDto dto)
+        {
+            try
+            {
+                var servicio = await _servicioService.AgregarComprobantePagoAsync(servicioTerapeutaId, dto);
+                return Ok(servicio);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log del error
+                return StatusCode(500, new { message = "Error interno del servidor" });
+            }
+        }
+
+        [HttpPost("{servicioTerapeutaId}/comprobantes/multiple")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantesMultiples(
+    int servicioTerapeutaId,
+    [FromBody] CreateComprobantesMultiplesDto dto)
+        {
+            try
+            {
+                var servicio = await _servicioService.AgregarComprobantesMultiplesAsync(servicioTerapeutaId, dto);
+                return Ok(servicio);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{servicioTerapeutaId}/comprobantes/{comprobanteId}/estado")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult<ServicioTerapeutaDto>> ActualizarEstadoComprobante(
+            int servicioTerapeutaId,
+            int comprobanteId,
+            [FromBody] UpdateComprobanteEstadoDto dto)
+        {
+            try
+            {
+                var servicio = await _servicioService.ActualizarEstadoComprobanteAsync(
+                    servicioTerapeutaId,
+                    comprobanteId,
+                    dto);
+                return Ok(servicio);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{servicioTerapeutaId}/comprobantes/{comprobanteId}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> DeleteComprobante(int servicioTerapeutaId, int comprobanteId)
+        {
+            try
+            {
+                await _servicioService.EliminarComprobantePagoAsync(servicioTerapeutaId, comprobanteId);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

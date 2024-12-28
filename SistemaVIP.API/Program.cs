@@ -68,6 +68,7 @@ builder.Services.AddScoped<IBlacklistService, BlacklistService>();
 builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
 builder.Services.AddHttpClient("CallMeBot", client =>{client.DefaultRequestHeaders.Add("User-Agent", "SistemaVIP-WhatsApp/1.0");});
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<IServicioExtraService, ServicioExtraService>();
 
 var app = builder.Build();
 

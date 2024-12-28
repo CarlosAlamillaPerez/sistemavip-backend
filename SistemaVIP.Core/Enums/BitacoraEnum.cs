@@ -12,6 +12,8 @@
             public const string CONFIRMACION_PAGO = "CONFIRMACION_PAGO";
             public const string RECHAZO_PAGO = "RECHAZO_PAGO";
             public const string VALIDACION_UBICACION = "VALIDACION_UBICACION";
+            public const string CONCILIACION = "CONCILIACION";
+            public const string GENERACION_COMISION = "GENERACION_COMISION";
         }
 
         public static class TablaMonitoreo
@@ -34,7 +36,9 @@
             TipoAccion.REGISTRO_PAGO,
             TipoAccion.CONFIRMACION_PAGO,
             TipoAccion.RECHAZO_PAGO,
-            TipoAccion.VALIDACION_UBICACION
+            TipoAccion.VALIDACION_UBICACION,
+            TipoAccion.CONCILIACION,
+            TipoAccion.GENERACION_COMISION
         };
 
         public static readonly string[] TablasMonitoreo = new[]

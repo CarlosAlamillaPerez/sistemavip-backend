@@ -64,7 +64,7 @@ namespace SistemaVIP.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = UserRoles.SUPER_ADMIN)]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
         public async Task<ActionResult> Create([FromBody] CreatePresentadorDto dto)
         {
             try

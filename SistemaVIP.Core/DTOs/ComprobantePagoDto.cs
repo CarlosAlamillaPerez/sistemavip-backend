@@ -19,25 +19,28 @@ namespace SistemaVIP.Core.DTOs
         public decimal Monto { get; set; }
     }
 
-    public class CreateComprobantePagoDto
+    public class CreateComprobantesMultiplesDto
     {
         [Required]
-        public int ServicioTerapeutaId { get; set; }
+        [MinLength(1, ErrorMessage = "Debe incluir al menos un comprobante")]
+        public List<CreateComprobantePagoDto> Comprobantes { get; set; }
+    }
 
+    public class CreateComprobantePagoDto
+    {
         [Required]
         [StringLength(20)]
         public string TipoComprobante { get; set; }
 
         [Required]
         [StringLength(20)]
-        public string OrigenPago { get; set; }  // Nuevo campo requerido
+        public string OrigenPago { get; set; }
 
         [StringLength(50)]
         public string? NumeroOperacion { get; set; }
 
-        [Required]
         [StringLength(500)]
-        public string UrlComprobante { get; set; }
+        public string? UrlComprobante { get; set; }
 
         [StringLength(500)]
         public string? NotasComprobante { get; set; }
