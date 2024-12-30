@@ -19,9 +19,7 @@ namespace SistemaVIP.Core.Interfaces
 
         // Gestión de estados
         Task<ComisionDto> RegistrarPagoTerapeutaAsync(int comisionId, RegistroPagoComisionDto dto);
-        Task<ComisionDto> ConfirmarPagoAsync(int comisionId, ConfirmacionPagoComisionDto dto);
-        Task<ComisionDto> LiquidarPagoAsync(int comisionId, LiquidacionComisionDto dto);
-
+        Task<ComisionDto> CambiarEstadoPagoAsync(int comisionId, string nuevoEstado, string? notas = null);
         // Reportes
         Task<List<ComisionDto>> GetComisionesPendientesLiquidacionAsync(int presentadorId);
         Task<List<ComisionDto>> GetComisionesLiquidadasAsync(DateTime fechaInicio, DateTime fechaFin);

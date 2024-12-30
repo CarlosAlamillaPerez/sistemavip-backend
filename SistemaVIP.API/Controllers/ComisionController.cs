@@ -63,7 +63,7 @@ namespace SistemaVIP.API.Controllers
             return Ok(resumen);
         }
 
-        [HttpPost("registrar-pago/{comisionId}")]
+        [HttpPost("liquidar-pago/{comisionId}")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult> RegistrarPago(int comisionId, [FromBody] RegistroPagoComisionDto dto)
         {
@@ -78,13 +78,13 @@ namespace SistemaVIP.API.Controllers
             }
         }
 
-        [HttpPost("confirmar-pago/{comisionId}")]
+        [HttpPatch("{comisionId}/estado")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
-        public async Task<ActionResult> ConfirmarPago(int comisionId, [FromBody] ConfirmacionPagoComisionDto dto)
+        public async Task<ActionResult<ComisionDto>> CambiarEstadoPago(int comisionId, [FromBody] CambioEstadoComisionDto dto)
         {
             try
             {
-                var comision = await _comisionService.ConfirmarPagoAsync(comisionId, dto);
+                var comision = await _comisionService.CambiarEstadoPagoAsync(comisionId, dto.Estado, dto.Notas);
                 return Ok(comision);
             }
             catch (InvalidOperationException ex)
@@ -92,22 +92,6 @@ namespace SistemaVIP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-        [HttpPost("liquidar-pago/{comisionId}")]
-        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
-        public async Task<ActionResult> LiquidarPago(int comisionId, [FromBody] LiquidacionComisionDto dto)
-        {
-            try
-            {
-                var comision = await _comisionService.LiquidarPagoAsync(comisionId, dto);
-                return Ok(comision);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
         [HttpGet("pendientes-liquidacion/{presentadorId}")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
         public async Task<ActionResult> GetComisionesPendientesLiquidacion(int presentadorId)

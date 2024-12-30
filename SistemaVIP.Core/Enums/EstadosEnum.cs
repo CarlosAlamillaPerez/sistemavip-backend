@@ -22,6 +22,7 @@ namespace SistemaVIP.Core.Enums
             public const string POR_CONFIRMAR = "POR_CONFIRMAR";
             public const string FINALIZADO = "FINALIZADO";
             public const string CANCELADO = "CANCELADO";
+            public const string LIQUIDADO = "LIQUIDADO";
         }
 
         public static class TipoEntidad

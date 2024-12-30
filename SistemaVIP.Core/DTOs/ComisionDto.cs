@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace SistemaVIP.Core.DTOs
 {
@@ -45,24 +46,16 @@ namespace SistemaVIP.Core.DTOs
 
     public class RegistroPagoComisionDto
     {
-        public int ComisionId { get; set; }
         public string NumeroTransaccion { get; set; }
         public string ComprobanteUrl { get; set; }
         public string? NotasPago { get; set; }
     }
-
-    public class ConfirmacionPagoComisionDto
+    public class CambioEstadoComisionDto
     {
-        public int ComisionId { get; set; }
-        public string? NotasConfirmacion { get; set; }
+        [Required]
+        public string Estado { get; set; }
+        public string? Notas { get; set; }
     }
-
-    public class LiquidacionComisionDto
-    {
-        public int ComisionId { get; set; }
-        public string? NotasLiquidacion { get; set; }
-    }
-
     public class ResumenComisionesDto
     {
         public int PresentadorId { get; set; }

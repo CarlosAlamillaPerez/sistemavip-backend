@@ -75,25 +75,15 @@ namespace SistemaVIP.Infrastructure.Services
                 throw new InvalidOperationException("El presentador no está activo o no existe");
             }
 
-            // Verificar si el terapeuta ya está asignado a otro presentador
+            // Verificar si ya existe esta asignación específica
             var asignacionExistente = await _context.TerapeutasPresentadores
                 .FirstOrDefaultAsync(tp =>
                     tp.TerapeutaId == dto.TerapeutaId &&
-                    tp.Estado == EstadosEnum.General.ACTIVO);
+                    tp.PresentadorId == dto.PresentadorId);
 
             if (asignacionExistente != null)
             {
-                throw new InvalidOperationException($"El terapeuta ya está asignado al presentador {asignacionExistente.PresentadorId}");
-            }
-
-            // Desactivar asignaciones anteriores si existen
-            var asignacionesAnteriores = await _context.TerapeutasPresentadores
-                .Where(tp => tp.TerapeutaId == dto.TerapeutaId)
-                .ToListAsync();
-
-            foreach (var asignacion in asignacionesAnteriores)
-            {
-                asignacion.Estado = EstadosEnum.General.INACTIVO;
+                throw new InvalidOperationException("Esta terapeuta ya está asignada a este presentador");
             }
 
             var nuevaAsignacion = new TerapeutasPresentadoresModel
@@ -155,5 +145,30 @@ namespace SistemaVIP.Infrastructure.Services
                 ApellidoPresentador = model.Presentador?.Apellido
             };
         }
+
+        public async Task<bool> EliminarAsignacionAsync(int terapeutaId, int presentadorId)
+        {
+            var asignacion = await _context.TerapeutasPresentadores
+                .FirstOrDefaultAsync(tp =>
+                    tp.TerapeutaId == terapeutaId &&
+                    tp.PresentadorId == presentadorId);
+
+            if (asignacion == null)
+                return false;
+
+            _context.TerapeutasPresentadores.Remove(asignacion); // Eliminación física
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+
     }
 }

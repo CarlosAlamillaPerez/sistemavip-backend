@@ -184,53 +184,28 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<ComisionDto> RegistrarPagoTerapeutaAsync(int comisionId, RegistroPagoComisionDto dto)
         {
-            var comision = await _context.Comisiones.FindAsync(comisionId);
+            var comision = await _context.Comisiones
+                .Include(c => c.Servicio)
+                .FirstOrDefaultAsync(c => c.Id == comisionId);
+
             if (comision == null)
                 throw new InvalidOperationException("Comisión no encontrada");
 
-            if (comision.Estado != EstadosEnum.Comision.NO_PAGADO)
+            if (comision.Estado != EstadosEnum.Comision.NO_PAGADO &&
+                comision.Estado != EstadosEnum.Comision.PAGADO)
                 throw new InvalidOperationException("La comisión no está en estado pendiente de pago");
 
-            comision.Estado = EstadosEnum.Comision.POR_CONFIRMAR;
+            comision.Estado = EstadosEnum.Comision.LIQUIDADO;  // Cambiado de POR_CONFIRMAR a LIQUIDADO
             comision.NumeroTransaccion = dto.NumeroTransaccion;
             comision.ComprobanteUrl = dto.ComprobanteUrl;
             comision.NotasPago = dto.NotasPago;
             comision.FechaPagoTerapeuta = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return await GetByIdAsync(comisionId);
-        }
-
-        public async Task<ComisionDto> ConfirmarPagoAsync(int comisionId, ConfirmacionPagoComisionDto dto)
-        {
-            var comision = await _context.Comisiones.FindAsync(comisionId);
-            if (comision == null)
-                throw new InvalidOperationException("Comisión no encontrada");
-
-            if (comision.Estado != EstadosEnum.Comision.POR_CONFIRMAR)
-                throw new InvalidOperationException("La comisión no está en estado por confirmar");
-
-            comision.Estado = EstadosEnum.Comision.PAGADO;
-            comision.IdUsuarioConfirmacion = _currentUserService.GetUserId(); // Necesitarás implementar ICurrentUserService
-            comision.FechaConfirmacion = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return await GetByIdAsync(comisionId);
-        }
-
-        public async Task<ComisionDto> LiquidarPagoAsync(int comisionId, LiquidacionComisionDto dto)
-        {
-            var comision = await _context.Comisiones.FindAsync(comisionId);
-            if (comision == null)
-                throw new InvalidOperationException("Comisión no encontrada");
-
-            if (comision.Estado != EstadosEnum.Comision.PAGADO)
-                throw new InvalidOperationException("La comisión no está en estado pagado");
-
-            comision.Estado = EstadosEnum.Comision.LIQUIDADO;
-            comision.IdUsuarioLiquidacion = _currentUserService.GetUserId(); // Necesitarás implementar ICurrentUserService
-            comision.FechaLiquidacion = DateTime.UtcNow;
-            comision.FechaLiquidacionPresentador = DateTime.UtcNow;
+            comision.FechaLiquidacionPresentador = DateTime.UtcNow;  // Agregado
+            comision.IdUsuarioConfirmacion = _currentUserService.GetUserId();  // Agregado
+            comision.FechaConfirmacion = DateTime.UtcNow;  // Agregado
+            comision.IdUsuarioLiquidacion = _currentUserService.GetUserId();  // Agregado
+            comision.FechaLiquidacion = DateTime.UtcNow;  // Agregado
+            comision.Servicio.Estado = EstadosEnum.Servicio.LIQUIDADO;
 
             await _context.SaveChangesAsync();
             return await GetByIdAsync(comisionId);
@@ -248,6 +223,36 @@ namespace SistemaVIP.Infrastructure.Services
                 .ToListAsync();
 
             return comisiones.Select(MapToDto).ToList();
+        }
+
+        public async Task<ComisionDto> CambiarEstadoPagoAsync(int comisionId, string nuevoEstado, string? notas = null)
+        {
+            var comision = await _context.Comisiones.FindAsync(comisionId);
+            if (comision == null)
+                throw new InvalidOperationException("Comisión no encontrada");
+
+            if (!EstadosEnum.EstadosComision.Contains(nuevoEstado))
+                throw new InvalidOperationException("Estado no válido");
+
+            // Solo permitir cambio a PAGADO si está en POR_CONFIRMAR
+            if (nuevoEstado == EstadosEnum.Comision.PAGADO &&
+                comision.Estado != EstadosEnum.Comision.POR_CONFIRMAR)
+            {
+                throw new InvalidOperationException("Solo se puede cambiar a PAGADO desde el estado POR_CONFIRMAR");
+            }
+
+            var estadoAnterior = comision.Estado;
+            comision.Estado = nuevoEstado;
+
+            if (nuevoEstado == EstadosEnum.Comision.PAGADO)
+            {
+                comision.IdUsuarioConfirmacion = _currentUserService.GetUserId();
+                comision.FechaConfirmacion = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return await GetByIdAsync(comisionId);
         }
 
         public async Task<List<ComisionDto>> GetComisionesLiquidadasAsync(DateTime fechaInicio, DateTime fechaFin)

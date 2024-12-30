@@ -11,5 +11,6 @@ namespace SistemaVIP.Core.Interfaces
         Task<TerapeutaPresentadorDto> AsignarTerapeutaPresentadorAsync(AsignarTerapeutaPresentadorDto dto);
         Task<bool> UpdateEstadoAsync(int terapeutaId, int presentadorId, string estado);
         Task<bool> ExisteAsignacionAsync(int terapeutaId, int presentadorId);
+        Task<bool> EliminarAsignacionAsync(int terapeutaId, int presentadorId);
     }
 }

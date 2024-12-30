@@ -63,7 +63,6 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IBitacoraService, BitacoraService>();
-builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddScoped<IBlacklistService, BlacklistService>();
 builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
 builder.Services.AddHttpClient("CallMeBot", client =>{client.DefaultRequestHeaders.Add("User-Agent", "SistemaVIP-WhatsApp/1.0");});

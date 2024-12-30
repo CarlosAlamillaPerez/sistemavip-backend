@@ -74,5 +74,23 @@ namespace SistemaVIP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpDelete("{terapeutaId}/{presentadorId}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> EliminarAsignacion(int terapeutaId, int presentadorId)
+        {
+            try
+            {
+                var result = await _service.EliminarAsignacionAsync(terapeutaId, presentadorId);
+                if (!result)
+                    return NotFound(new { message = "No se encontró la asignación activa especificada" });
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

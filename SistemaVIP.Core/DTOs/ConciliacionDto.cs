@@ -16,6 +16,8 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public string Estado { get; set; }
         public string ResultadoConciliacion { get; set; }
         public List<string> Discrepancias { get; set; }
+        public decimal MontoServiciosExtra { get; set; }
+        public List<ServicioExtraDetalleDto> ServiciosExtra { get; set; }
     }
 
     public class ComprobanteConciliacionDto
