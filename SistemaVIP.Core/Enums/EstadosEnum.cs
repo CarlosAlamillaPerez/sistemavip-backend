@@ -18,6 +18,7 @@ namespace SistemaVIP.Core.Enums
         public static class Servicio
         {
             public const string PENDIENTE = "PENDIENTE";
+            public const string PAGADO = "PAGADO";
             public const string EN_PROCESO = "EN_PROCESO";
             public const string POR_CONFIRMAR = "POR_CONFIRMAR";
             public const string FINALIZADO = "FINALIZADO";

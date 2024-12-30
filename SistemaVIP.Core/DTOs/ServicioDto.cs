@@ -91,11 +91,6 @@ namespace SistemaVIP.Core.DTOs.Servicio
         [Range(0, 190000)]
         public decimal MontoTerapeuta { get; set; }
 
-        [Range(0, 190000)]
-        public decimal? MontoEfectivo { get; set; }
-
-        [Range(0, 190000)]
-        public decimal? MontoTransferencia { get; set; }
     }
 
     public class UpdateServicioDto

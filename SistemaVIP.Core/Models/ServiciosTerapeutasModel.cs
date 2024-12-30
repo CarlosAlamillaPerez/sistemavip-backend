@@ -23,35 +23,12 @@ namespace SistemaVIP.Core.Models
 
         // Montos y pagos
         public decimal? MontoTerapeuta { get; set; }
-        public decimal? GastosTransporte { get; set; }
-        public string? NotasTransporte { get; set; }
-        public decimal? MontoEfectivo { get; set; }
-        public decimal? MontoTransferencia { get; set; }
-        public string? EvidenciaTransporte { get; set; } 
-        public DateTime? FechaRegistroGastosTransporte { get; set; }
-
-        public decimal? MontoTotalPagado { get => ComprobantesPago?.Sum(cp => cp.Monto) ?? 0; }
-        public bool PagoCompleto { get => MontoTotalPagado >= MontoTerapeuta; }
-
-        public List<CambioEstadoServicioModel> HistorialEstados { get; set; }
 
         public List<ComprobantePagoModel> ComprobantesPago { get; set; }
 
         // Links y confirmaciones
         public Guid LinkConfirmacion { get; set; }
         public Guid LinkFinalizacion { get; set; }
-
-        // Comprobantes y evidencias de pago
-        public DateTime? FechaComprobantePago { get; set; }
-        public string? UrlComprobantePago { get; set; }  // Para múltiples URLs separadas por coma
-
-        // Confirmación del presentador
-        public string? IdPresentadorConfirmaPago { get; set; }
-        public string? NotasPago { get; set; }
-
-        // Referencias a las entidades relacionadas
-        public ApplicationUserModel? PresentadorConfirmaPago { get; set; }
-
         public virtual ICollection<ServicioExtraModel> ServiciosExtra { get; set; }
     }
 
@@ -73,20 +50,5 @@ namespace SistemaVIP.Core.Models
         // Referencias a las entidades relacionadas
         public ServiciosTerapeutasModel ServicioTerapeuta { get; set; }
         public ApplicationUserModel UsuarioRegistro { get; set; }
-    }
-
-    public class CambioEstadoServicioModel
-    {
-        public int Id { get; set; }
-        public int ServicioTerapeutaId { get; set; }
-        public string EstadoAnterior { get; set; }
-        public string EstadoNuevo { get; set; }
-        public DateTime FechaCambio { get; set; }
-        public string? MotivosCambio { get; set; }
-        public string IdUsuarioCambio { get; set; }
-
-        // Navegación
-        public ServiciosTerapeutasModel ServicioTerapeuta { get; set; }
-        public ApplicationUserModel UsuarioCambio { get; set; }
     }
 }

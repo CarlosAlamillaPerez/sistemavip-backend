@@ -129,20 +129,12 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
                     .HasForeignKey(st => st.TerapeutaId)
                     .OnDelete(DeleteBehavior.NoAction);
 
-                entity.HasOne(st => st.PresentadorConfirmaPago)
-                    .WithMany()
-                    .HasForeignKey(st => st.IdPresentadorConfirmaPago)
-                    .OnDelete(DeleteBehavior.Restrict);
-
                 // Mantener configuraciones de geografía
                 entity.Property(st => st.UbicacionInicio).HasColumnType("geography");
                 entity.Property(st => st.UbicacionFin).HasColumnType("geography");
 
                 // Mantener configuraciones decimales
                 entity.Property(st => st.MontoTerapeuta).HasPrecision(10, 2);
-                entity.Property(st => st.MontoEfectivo).HasPrecision(10, 2);
-                entity.Property(st => st.MontoTransferencia).HasPrecision(10, 2);
-                entity.Property(st => st.GastosTransporte).HasPrecision(10, 2);
 
                 // Mantener constraint de validación
                 entity.HasCheckConstraint(

@@ -59,6 +59,9 @@ namespace SistemaVIP.Infrastructure.Services
                 .Include(s => s.Presentador)
                 .Include(s => s.ServiciosTerapeutas)
                     .ThenInclude(st => st.Terapeuta)
+                .Include(s => s.ServiciosTerapeutas)
+                    .ThenInclude(st => st.ComprobantesPago)
+                        .ThenInclude(cp => cp.UsuarioRegistro)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             return servicio == null ? null : MapToDto(servicio);
@@ -333,8 +336,6 @@ namespace SistemaVIP.Infrastructure.Services
                         HoraFin = st.HoraFin,
                         Estado = st.Estado,
                         MontoTerapeuta = st.MontoTerapeuta,
-                        MontoEfectivo = st.MontoEfectivo,
-                        MontoTransferencia = st.MontoTransferencia,
                         LinkConfirmacion = st.LinkConfirmacion,
                         LinkFinalizacion = st.LinkFinalizacion,
                         ComprobantesPago = st.ComprobantesPago?
@@ -371,8 +372,6 @@ namespace SistemaVIP.Infrastructure.Services
                 HoraFin = st.HoraFin,
                 Estado = st.Estado,
                 MontoTerapeuta = st.MontoTerapeuta,
-                MontoEfectivo = st.MontoEfectivo,
-                MontoTransferencia = st.MontoTransferencia,
                 LinkConfirmacion = st.LinkConfirmacion,
                 LinkFinalizacion = st.LinkFinalizacion,
                 ComprobantesPago = st.ComprobantesPago?.Select(cp => new ComprobantePagoDto
@@ -569,17 +568,18 @@ namespace SistemaVIP.Infrastructure.Services
                 })
             );
 
-            // Si es el primer comprobante, actualizar estado del servicio
-            if (servicioTerapeuta.Estado == EstadosEnum.Servicio.FINALIZADO)
+            // Si es el primer comprobante, actualizar estado del servicio general
+            if (servicioTerapeuta.Servicio.Estado == EstadosEnum.Servicio.FINALIZADO)
             {
-                servicioTerapeuta.Estado = EstadosEnum.Servicio.POR_CONFIRMAR;
+                var estadoAnteriorServicio = servicioTerapeuta.Servicio.Estado;
+                servicioTerapeuta.Servicio.Estado = EstadosEnum.Servicio.POR_CONFIRMAR;
 
-                // Registrar cambio de estado del servicio
+                // Registrar cambio de estado del servicio general
                 await _bitacoraService.RegistrarCambioEstadoAsync(
                     _currentUserService.GetUserId(),
-                    BitacoraEnum.TablaMonitoreo.SERVICIOS_TERAPEUTAS,
-                    servicioTerapeuta.Id.ToString(),
-                    estadoAnterior,
+                    BitacoraEnum.TablaMonitoreo.SERVICIOS,
+                    servicioTerapeuta.ServicioId.ToString(),
+                    estadoAnteriorServicio,
                     EstadosEnum.Servicio.POR_CONFIRMAR,
                     "Registro de primer comprobante de pago"
                 );
@@ -792,30 +792,26 @@ namespace SistemaVIP.Infrastructure.Services
             var tienePorConfirmar = comprobantes
                 .Any(cp => cp.Estado == PagosEnum.EstadoComprobante.POR_CONFIRMAR);
 
-            // Actualizar estado del ServiciosTerapeutas
-            if (todosRechazados)
-            {
-                servicioTerapeuta.Estado = EstadosEnum.Servicio.PENDIENTE;
-            }
-            else if (tienePagoClienteConfirmado)
-            {
-                servicioTerapeuta.Estado = EstadosEnum.Servicio.FINALIZADO;
-            }
-            else if (tienePorConfirmar)
-            {
-                servicioTerapeuta.Estado = EstadosEnum.Servicio.EN_PROCESO;
-            }
-
-            // Actualizar el estado del servicio principal
+            // Actualizar SOLO el estado del servicio principal
             var servicio = await _context.Servicios.FindAsync(servicioTerapeuta.ServicioId);
             if (servicio != null)
             {
-                servicio.Estado = servicioTerapeuta.Estado;
-                _context.Servicios.Update(servicio);
-            }
+                if (todosRechazados)
+                {
+                    servicio.Estado = EstadosEnum.Servicio.PENDIENTE;
+                }
+                else if (tienePagoClienteConfirmado)
+                {
+                    servicio.Estado = EstadosEnum.Servicio.FINALIZADO;
+                }
+                else if (tienePorConfirmar)
+                {
+                    servicio.Estado = EstadosEnum.Servicio.POR_CONFIRMAR;
+                }
 
-            _context.ServiciosTerapeutas.Update(servicioTerapeuta);
-            await _context.SaveChangesAsync();
+                _context.Servicios.Update(servicio);
+                await _context.SaveChangesAsync();
+            }
         }
 
         private async Task ValidarComprobante(int servicioTerapeutaId, CreateComprobantePagoDto dto)
@@ -934,12 +930,9 @@ namespace SistemaVIP.Infrastructure.Services
                 servicioTerapeuta.ComprobantesPago.Add(nuevoComprobante);
             }
 
-            // Actualizar estado del ServicioTerapeuta
-            if (servicioTerapeuta.Estado == EstadosEnum.Servicio.FINALIZADO)
+            // Actualizar solo el estado del servicio principal
+            if (servicioTerapeuta.Servicio.Estado == EstadosEnum.Servicio.FINALIZADO)
             {
-                servicioTerapeuta.Estado = EstadosEnum.Servicio.POR_CONFIRMAR;
-
-                // Actualizar también el estado del servicio principal
                 servicioTerapeuta.Servicio.Estado = EstadosEnum.Servicio.POR_CONFIRMAR;
                 _context.Servicios.Update(servicioTerapeuta.Servicio);
                 await _bitacoraService.RegistrarCambioEstadoAsync(
@@ -1075,7 +1068,6 @@ namespace SistemaVIP.Infrastructure.Services
                 TipoUbicacion = servicioTerapeuta.Servicio.TipoUbicacion,
                 MontoTotal = servicioTerapeuta.Servicio.MontoTotal,
                 MontoTerapeuta = servicioTerapeuta.MontoTerapeuta ?? 0,
-                GastosTransporte = servicioTerapeuta.GastosTransporte,
                 Estado = servicioTerapeuta.Estado,
                 ResultadoConciliacion = resultadoConciliacion.Exitoso ? "EXITOSO" : "REQUIERE_REVISION",
                 Discrepancias = resultadoConciliacion.Observaciones,

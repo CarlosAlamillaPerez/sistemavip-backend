@@ -227,7 +227,12 @@ namespace SistemaVIP.Infrastructure.Services
 
         public async Task<ComisionDto> CambiarEstadoPagoAsync(int comisionId, string nuevoEstado, string? notas = null)
         {
-            var comision = await _context.Comisiones.FindAsync(comisionId);
+            var comision = await _context.Comisiones
+                .Include(c => c.Servicio)
+                    .ThenInclude(s => s.ServiciosTerapeutas)
+                        .ThenInclude(st => st.ComprobantesPago)
+                .FirstOrDefaultAsync(c => c.Id == comisionId);
+
             if (comision == null)
                 throw new InvalidOperationException("Comisión no encontrada");
 
@@ -243,6 +248,28 @@ namespace SistemaVIP.Infrastructure.Services
 
             var estadoAnterior = comision.Estado;
             comision.Estado = nuevoEstado;
+
+            // Si se está marcando como PAGADO, actualizar el estado del servicio y sus comprobantes
+            if (nuevoEstado == EstadosEnum.Comision.PAGADO && comision.Servicio != null)
+            {
+                var estadoAnteriorServicio = comision.Servicio.Estado;
+                comision.Servicio.Estado = EstadosEnum.Servicio.PAGADO;
+
+                // Actualizar estado de todos los comprobantes
+                foreach (var servicioTerapeuta in comision.Servicio.ServiciosTerapeutas)
+                {
+                    foreach (var comprobante in servicioTerapeuta.ComprobantesPago)
+                    {
+                        if (comprobante.Estado == PagosEnum.EstadoComprobante.PENDIENTE)
+                        {
+                            var estadoAnteriorComprobante = comprobante.Estado;
+                            comprobante.Estado = PagosEnum.EstadoComprobante.PAGADO;
+
+                        }
+                    }
+                }
+
+            }
 
             if (nuevoEstado == EstadosEnum.Comision.PAGADO)
             {
