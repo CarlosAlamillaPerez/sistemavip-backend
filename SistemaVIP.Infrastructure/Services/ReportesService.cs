@@ -46,32 +46,95 @@ namespace SistemaVIP.Infrastructure.Services
             return reportes;
         }
 
-        public async Task<ReportePresentadorDto> GetReportePresentadorAsync(
-            int presentadorId,
-            DateTime fechaInicio,
-            DateTime fechaFin)
+        public async Task<ReportePresentadorDto> GetReportePresentadorAsync(int presentadorId,DateTime fechaInicio,DateTime fechaFin)
         {
+            // Primero validar que el presentador exista
             var presentador = await _context.Presentadores
-                .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.Id == presentadorId);
 
-            if (presentador == null)
-                throw new InvalidOperationException("Presentador no encontrado");
+            if (presentador == null) throw new InvalidOperationException("Presentador no encontrado");
 
-            return await GenerarReportePresentador(
-                presentador.Id,
-                presentador.Nombre,
-                presentador.Apellido,
-                fechaInicio,
-                fechaFin);
+            // Obtener servicios pero solo LIQUIDADOS o PAGADOS
+            var servicios = await _context.Servicios
+                .Include(s => s.ServiciosTerapeutas)
+                    .ThenInclude(st => st.ServiciosExtra)
+                .Include(s => s.ServiciosTerapeutas)
+                    .ThenInclude(st => st.ComprobantesPago)
+                .Where(s => s.PresentadorId == presentadorId &&
+                           s.FechaServicio >= fechaInicio &&
+                           s.FechaServicio <= fechaFin &&
+                           (s.Estado == EstadosEnum.Servicio.LIQUIDADO ||
+                            s.Estado == EstadosEnum.Servicio.PAGADO))
+                .OrderByDescending(s => s.FechaServicio)
+                .ToListAsync();
+
+            // Calcular totales
+            decimal totalIngresosGenerados = 0;
+            decimal totalComisiones = 0;
+            var serviciosPorDia = new List<ServiciosPorDiaDto>();
+            var serviciosAgrupados = servicios.GroupBy(s => s.FechaServicio.Date);
+
+            foreach (var grupo in serviciosAgrupados)
+            {
+                var serviciosDia = grupo.ToList();
+                var montoDia = 0m;
+                var comisionesDia = 0m;
+
+                foreach (var servicio in serviciosDia)
+                {
+                    // Sumar monto base del servicio
+                    montoDia += servicio.MontoTotal;
+
+                    // Sumar servicios extra si existen
+                    var serviciosExtra = servicio.ServiciosTerapeutas
+                        .SelectMany(st => st.ServiciosExtra)
+                        .Sum(se => se.Monto);
+                    montoDia += serviciosExtra;
+
+                    // Calcular comisión (30% del margen)
+                    var montoTerapeuta = servicio.ServiciosTerapeutas
+                        .Sum(st => st.MontoTerapeuta ?? 0);
+                    var margen = servicio.MontoTotal - montoTerapeuta;
+                    var comision = margen * 0.30m; // 30% para el presentador
+                    comisionesDia += comision;
+                }
+
+                totalIngresosGenerados += montoDia;
+                totalComisiones += comisionesDia;
+
+                serviciosPorDia.Add(new ServiciosPorDiaDto
+                {
+                    Fecha = grupo.Key,
+                    CantidadServicios = serviciosDia.Count,
+                    MontoTotal = montoDia,
+                    Comisiones = comisionesDia
+                });
+            }
+
+            return new ReportePresentadorDto
+            {
+                PresentadorId = presentadorId,
+                NombrePresentador = $"{presentador.Nombre} {presentador.Apellido}".Trim(),
+                TotalIngresosGenerados = totalIngresosGenerados,
+                TotalComisiones = totalComisiones,
+                CantidadServicios = servicios.Count,
+                TotalPagosEfectivo = servicios
+                    .SelectMany(s => s.ServiciosTerapeutas)
+                    .SelectMany(st => st.ComprobantesPago)
+                    .Where(cp => cp.TipoComprobante == PagosEnum.TipoComprobante.EFECTIVO &&
+                                cp.Estado == PagosEnum.EstadoComprobante.PAGADO)
+                    .Sum(cp => cp.Monto),
+                TotalPagosTransferencia = servicios
+                    .SelectMany(s => s.ServiciosTerapeutas)
+                    .SelectMany(st => st.ComprobantesPago)
+                    .Where(cp => cp.TipoComprobante == PagosEnum.TipoComprobante.TRANSFERENCIA &&
+                                cp.Estado == PagosEnum.EstadoComprobante.PAGADO)
+                    .Sum(cp => cp.Monto),
+                ServiciosPorDia = serviciosPorDia
+            };
         }
 
-        private async Task<ReportePresentadorDto> GenerarReportePresentador(
-            int presentadorId,
-            string nombre,
-            string apellido,
-            DateTime fechaInicio,
-            DateTime fechaFin)
+        private async Task<ReportePresentadorDto> GenerarReportePresentador(int presentadorId,string nombre,string apellido,DateTime fechaInicio,DateTime fechaFin)
         {
             // Obtener servicios del presentador en el rango de fechas
             var servicios = await _context.Servicios
@@ -137,7 +200,6 @@ namespace SistemaVIP.Infrastructure.Services
             };
         }
 
-        // ReportesService.cs - Agregar estos métodos
         public async Task<List<ReporteTerapeutaDto>> GetReporteTerapeutasAsync(ReporteTerapeutaFiltroDto filtro)
         {
             var query = _context.Terapeutas.AsQueryable();
@@ -165,31 +227,67 @@ namespace SistemaVIP.Infrastructure.Services
             return reportes;
         }
 
-        public async Task<ReporteTerapeutaDto> GetReporteTerapeutaAsync(
-            int terapeutaId,
-            DateTime fechaInicio,
-            DateTime fechaFin)
+        public async Task<ReporteTerapeutaDto> GetReporteTerapeutaAsync(int terapeutaId,DateTime fechaInicio,DateTime fechaFin)
         {
             var terapeuta = await _context.Terapeutas
                 .FirstOrDefaultAsync(t => t.Id == terapeutaId);
 
             if (terapeuta == null)
-                throw new InvalidOperationException("Terapeuta no encontrada");
+                throw new InvalidOperationException("Terapeuta no encontrado");
 
-            return await GenerarReporteTerapeuta(
-                terapeuta.Id,
-                terapeuta.Nombre,
-                terapeuta.Apellido,
-                fechaInicio,
-                fechaFin);
+            // Obtener servicios liquidados o pagados
+            var serviciosTerapeuta = await _context.ServiciosTerapeutas
+                .Include(st => st.Servicio)
+                .Include(st => st.ServiciosExtra)
+                    .ThenInclude(se => se.ServicioExtraCatalogo)
+                .Where(st => st.TerapeutaId == terapeutaId &&
+                            st.Servicio.FechaServicio >= fechaInicio &&
+                            st.Servicio.FechaServicio <= fechaFin &&
+                            (st.Servicio.Estado == EstadosEnum.Servicio.LIQUIDADO ||
+                             st.Servicio.Estado == EstadosEnum.Servicio.PAGADO))
+                .OrderBy(st => st.Servicio.FechaServicio)
+                .ToListAsync();
+
+            // Agrupar por día
+            var serviciosPorDia = serviciosTerapeuta
+                .GroupBy(st => st.Servicio.FechaServicio.Date)
+                .Select(grupo => {
+                    var serviciosDia = grupo.ToList();
+
+                    return new ServicioTerapeutaDiaDto
+                    {
+                        Fecha = grupo.Key,
+                        CantidadServicios = serviciosDia.Count,
+                        HorasTrabajadas = serviciosDia.Sum(st =>
+                            st.HoraFin.HasValue && st.HoraInicio.HasValue ?
+                            (int)(st.HoraFin.Value - st.HoraInicio.Value).TotalHours : 0),
+                        MontoServiciosBase = serviciosDia.Sum(st => st.MontoTerapeuta ?? 0),
+                        MontoServiciosExtra = serviciosDia.Sum(st =>
+                            st.ServiciosExtra?.Sum(se => se.Monto) ?? 0)
+                    };
+                })
+                .OrderBy(d => d.Fecha)
+                .ToList();
+
+            // Calcular totales
+            var totalHorasTrabajadas = serviciosPorDia.Sum(d => d.HorasTrabajadas);
+            var ingresosServiciosBase = serviciosPorDia.Sum(d => d.MontoServiciosBase);
+            var ingresosServiciosExtra = serviciosPorDia.Sum(d => d.MontoServiciosExtra);
+
+            return new ReporteTerapeutaDto
+            {
+                TerapeutaId = terapeutaId,
+                NombreTerapeuta = $"{terapeuta.Nombre} {terapeuta.Apellido}".Trim(),
+                TotalServicios = serviciosTerapeuta.Count,
+                TotalHorasTrabajadas = totalHorasTrabajadas,
+                IngresosServiciosBase = ingresosServiciosBase,
+                IngresosServiciosExtra = ingresosServiciosExtra,
+                TotalIngresos = ingresosServiciosBase + ingresosServiciosExtra,
+                ServiciosPorDia = serviciosPorDia
+            };
         }
 
-        private async Task<ReporteTerapeutaDto> GenerarReporteTerapeuta(
-            int terapeutaId,
-            string nombre,
-            string apellido,
-            DateTime fechaInicio,
-            DateTime fechaFin)
+        private async Task<ReporteTerapeutaDto> GenerarReporteTerapeuta(int terapeutaId,string nombre,string apellido,DateTime fechaInicio,DateTime fechaFin)
         {
             var serviciosTerapeuta = await _context.ServiciosTerapeutas
                 .Include(st => st.Servicio)
@@ -238,25 +336,30 @@ namespace SistemaVIP.Infrastructure.Services
             };
         }
 
-        public async Task<ReporteServiciosDto> GetReporteServiciosAsync(
-            DateTime fechaInicio,
-            DateTime fechaFin)
+        public async Task<ReporteServiciosDto> GetReporteServiciosAsync(DateTime fechaInicio,DateTime fechaFin)
         {
             var servicios = await _context.Servicios
                 .Include(s => s.ServiciosTerapeutas)
+                    .ThenInclude(st => st.ServiciosExtra)
                 .Where(s => s.FechaServicio >= fechaInicio &&
-                            s.FechaServicio <= fechaFin)
+                           s.FechaServicio <= fechaFin &&
+                           (s.Estado == EstadosEnum.Servicio.LIQUIDADO ||
+                            s.Estado == EstadosEnum.Servicio.PAGADO))
                 .ToListAsync();
 
-            // Distribuición por tipo de ubicación
+            // Distribución por tipo de ubicación
             var distribucion = new DistribucionServiciosDto
             {
-                TotalConsultorio = servicios.Count(s => s.TipoUbicacion == ServicioEnum.TipoUbicacion.CONSULTORIO),
-                TotalDomicilio = servicios.Count(s => s.TipoUbicacion == ServicioEnum.TipoUbicacion.DOMICILIO),
-                MontoConsultorio = servicios.Where(s => s.TipoUbicacion == ServicioEnum.TipoUbicacion.CONSULTORIO)
-                                           .Sum(s => s.MontoTotal),
-                MontoDomicilio = servicios.Where(s => s.TipoUbicacion == ServicioEnum.TipoUbicacion.DOMICILIO)
-                                         .Sum(s => s.MontoTotal)
+                TotalConsultorio = servicios.Count(s =>
+                    s.TipoUbicacion == ServicioEnum.TipoUbicacion.CONSULTORIO),
+                TotalDomicilio = servicios.Count(s =>
+                    s.TipoUbicacion == ServicioEnum.TipoUbicacion.DOMICILIO),
+                MontoConsultorio = servicios
+                    .Where(s => s.TipoUbicacion == ServicioEnum.TipoUbicacion.CONSULTORIO)
+                    .Sum(s => s.MontoTotal),
+                MontoDomicilio = servicios
+                    .Where(s => s.TipoUbicacion == ServicioEnum.TipoUbicacion.DOMICILIO)
+                    .Sum(s => s.MontoTotal)
             };
 
             // Análisis de horarios
@@ -271,9 +374,11 @@ namespace SistemaVIP.Infrastructure.Services
                 .OrderBy(h => h.Hora)
                 .ToList();
 
-            // Análisis de tipos de servicio (individual vs múltiple)
-            var serviciosIndividuales = servicios.Where(s => s.ServiciosTerapeutas.Count == 1).ToList();
-            var serviciosMultiples = servicios.Where(s => s.ServiciosTerapeutas.Count > 1).ToList();
+            // Análisis de tipos (individual vs múltiple)
+            var serviciosIndividuales = servicios
+                .Where(s => s.ServiciosTerapeutas.Count == 1).ToList();
+            var serviciosMultiples = servicios
+                .Where(s => s.ServiciosTerapeutas.Count > 1).ToList();
 
             var tiposServicio = new TiposServicioDto
             {
