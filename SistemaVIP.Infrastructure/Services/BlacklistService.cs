@@ -253,9 +253,7 @@ namespace SistemaVIP.Infrastructure.Services
             return true;
         }
 
-        public async Task<Dictionary<string, int>> GetEstadisticasRegistrosAsync(
-            DateTime fechaInicio,
-            DateTime fechaFin)
+        public async Task<Dictionary<string, int>> GetEstadisticasRegistrosAsync(DateTime fechaInicio,DateTime fechaFin)
         {
             var registros = await _context.Blacklist
                 .Where(b => b.FechaRegistro >= fechaInicio && b.FechaRegistro <= fechaFin)
@@ -290,9 +288,7 @@ namespace SistemaVIP.Infrastructure.Services
             return !await ExisteRegistroActivoAsync(dto.Telefono, dto.Email);
         }
 
-        public async Task<(bool isValid, string errorMessage)> ValidarActualizacionAsync(
-            int id,
-            UpdateBlacklistDto dto)
+        public async Task<(bool isValid, string errorMessage)> ValidarActualizacionAsync(int id,UpdateBlacklistDto dto)
         {
             var registro = await _context.Blacklist.FindAsync(id);
             if (registro == null)

@@ -43,5 +43,6 @@ namespace SistemaVIP.Core.Interfaces
         Task<ServicioTerapeutaDto> AgregarComprobantesMultiplesAsync(int servicioTerapeutaId, CreateComprobantesMultiplesDto dto);
         Task EliminarComprobantePagoAsync(int servicioTerapeutaId, int comprobanteId);
         Task<List<ComprobantePagoDto>> GetComprobantesPagoByServicioAsync(int servicioTerapeutaId);
+        Task<bool> DeleteServicioAsync(int id);
     }
 }

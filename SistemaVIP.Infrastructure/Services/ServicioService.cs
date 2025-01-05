@@ -23,12 +23,7 @@ namespace SistemaVIP.Infrastructure.Services
         private readonly IBitacoraService _bitacoraService;
         private readonly IWhatsAppService _whatsAppService;
 
-        public ServicioService(
-            ApplicationDbContext context,
-            ILocationService locationService,
-            ICurrentUserService currentUserService,
-            IBitacoraService bitacoraService,
-            IWhatsAppService whatsAppService)
+        public ServicioService(ApplicationDbContext context,ILocationService locationService,ICurrentUserService currentUserService,IBitacoraService bitacoraService,IWhatsAppService whatsAppService)
         {
             _context = context;
             _locationService = locationService;
@@ -506,17 +501,6 @@ namespace SistemaVIP.Infrastructure.Services
             return await GetServicioTerapeutaByLinkFinalizacionAsync(finalizacionDto.LinkFinalizacion);
         }
 
-        private async Task<bool> ValidarNumeroOperacionUnico(string numeroOperacion)
-        {
-            if (string.IsNullOrEmpty(numeroOperacion))
-                return true;
-
-            return !await _context.ServiciosTerapeutas
-                .Include(st => st.ComprobantesPago)
-                .AnyAsync(st => st.ComprobantesPago
-                    .Any(cp => cp.NumeroOperacion == numeroOperacion));
-        }
-
         public async Task<ServicioTerapeutaDto> AgregarComprobantePagoAsync(int servicioTerapeutaId, CreateComprobantePagoDto dto)
         {
             var servicioTerapeuta = await _context.ServiciosTerapeutas
@@ -586,24 +570,6 @@ namespace SistemaVIP.Infrastructure.Services
             }
 
             await _context.SaveChangesAsync();
-            return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
-        }
-
-        public async Task<ServicioTerapeutaDto> ActualizarEstadoComprobanteAsync(int servicioTerapeutaId,int comprobanteId,string nuevoEstado)
-        {
-            if (!PagosEnum.EstadosComprobante.Contains(nuevoEstado))
-                throw new InvalidOperationException("Estado no válido");
-
-            var comprobante = await _context.ComprobantesPago
-                .FirstOrDefaultAsync(cp => cp.Id == comprobanteId &&
-                                         cp.ServicioTerapeutaId == servicioTerapeutaId);
-
-            if (comprobante == null)
-                throw new InvalidOperationException("Comprobante no encontrado");
-
-            comprobante.Estado = nuevoEstado;
-            await _context.SaveChangesAsync();
-
             return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
         }
 
@@ -881,9 +847,7 @@ namespace SistemaVIP.Infrastructure.Services
             }
         }
 
-        public async Task<ServicioTerapeutaDto> AgregarComprobantesMultiplesAsync(
-            int servicioTerapeutaId,
-            CreateComprobantesMultiplesDto dto)
+        public async Task<ServicioTerapeutaDto> AgregarComprobantesMultiplesAsync(int servicioTerapeutaId,CreateComprobantesMultiplesDto dto)
         {
             var servicioTerapeuta = await _context.ServiciosTerapeutas
                 .Include(st => st.ComprobantesPago)
@@ -961,7 +925,6 @@ namespace SistemaVIP.Infrastructure.Services
 
             return await GetServicioTerapeutaByIdAsync(servicioTerapeutaId);
         }
-
 
         private async Task<ResultadoConciliacionDto> ValidarMontosAsync(ServiciosTerapeutasModel servicioTerapeuta)
         {
@@ -1414,60 +1377,6 @@ namespace SistemaVIP.Infrastructure.Services
             }
         }
 
-        public async Task<ServicioExtraDetalleDto> UpdateServicioExtraAsync(int servicioTerapeutaId, int servicioExtraId, UpdateServicioExtraDto dto)
-        {
-            var servicioExtra = await _context.ServiciosExtra
-                .Include(se => se.ServicioTerapeuta)
-                .Include(se => se.ServicioExtraCatalogo)
-                .FirstOrDefaultAsync(se =>
-                    se.Id == servicioExtraId &&
-                    se.ServicioTerapeutaId == servicioTerapeutaId);
-
-            if (servicioExtra == null)
-                throw new InvalidOperationException("Servicio extra no encontrado");
-
-            if (servicioExtra.ServicioTerapeuta.Estado == "PAGADO")
-                throw new InvalidOperationException("No se puede modificar un servicio extra cuando el servicio está pagado");
-
-            if (dto.Monto <= 0)
-                throw new InvalidOperationException("El monto debe ser mayor a 0");
-
-            servicioExtra.Monto = dto.Monto;
-            servicioExtra.Notas = dto.Notas;
-
-            await _context.SaveChangesAsync();
-
-            return new ServicioExtraDetalleDto
-            {
-                Id = servicioExtra.Id,
-                ServicioExtraCatalogoId = servicioExtra.ServicioExtraCatalogoId,
-                NombreServicio = servicioExtra.ServicioExtraCatalogo.Nombre,
-                Monto = servicioExtra.Monto,
-                FechaRegistro = servicioExtra.FechaRegistro,
-                Notas = servicioExtra.Notas
-            };
-        }
-
-        public async Task<bool> DeleteServicioExtraAsync(int servicioTerapeutaId, int servicioExtraId)
-        {
-            var servicioExtra = await _context.ServiciosExtra
-                .Include(se => se.ServicioTerapeuta)
-                .FirstOrDefaultAsync(se =>
-                    se.Id == servicioExtraId &&
-                    se.ServicioTerapeutaId == servicioTerapeutaId);
-
-            if (servicioExtra == null)
-                throw new InvalidOperationException("Servicio extra no encontrado");
-
-            if (servicioExtra.ServicioTerapeuta.Estado == "PAGADO")
-                throw new InvalidOperationException("No se puede eliminar un servicio extra cuando el servicio está pagado");
-
-            _context.ServiciosExtra.Remove(servicioExtra);
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-
         private async Task AlertarMontoInusualSiNecesario(ServiciosTerapeutasModel servicioTerapeuta)
         {
             var montoTotalComprobantes = servicioTerapeuta.ComprobantesPago
@@ -1523,6 +1432,33 @@ namespace SistemaVIP.Infrastructure.Services
                 })
                 .OrderByDescending(cp => cp.FechaRegistro)
                 .ToList();
+        }
+
+        public async Task<bool> DeleteServicioAsync(int id)
+        {
+            var servicio = await _context.Servicios
+                .Include(s => s.ServiciosTerapeutas)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (servicio == null)
+                return false;
+
+            // Validar que el servicio esté en estado PENDIENTE
+            if (servicio.Estado != EstadosEnum.Servicio.PENDIENTE)
+                throw new InvalidOperationException("Solo se pueden eliminar servicios en estado PENDIENTE");
+
+            // Validar que no haya sido confirmado por la terapeuta
+            if (servicio.ServiciosTerapeutas.Any(st => st.HoraInicio.HasValue))
+                throw new InvalidOperationException("No se puede eliminar un servicio que ya ha sido confirmado por la terapeuta");
+
+            // Eliminar los servicios_terapeutas asociados
+            _context.ServiciosTerapeutas.RemoveRange(servicio.ServiciosTerapeutas);
+
+            // Eliminar el servicio
+            _context.Servicios.Remove(servicio);
+
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

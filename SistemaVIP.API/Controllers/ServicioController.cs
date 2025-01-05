@@ -279,10 +279,7 @@ namespace SistemaVIP.API.Controllers
 
         [HttpPut("{servicioTerapeutaId}/servicios-extra/{servicioExtraId}")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
-        public async Task<ActionResult<ServicioExtraDetalleDto>> UpdateServicioExtra(
-    int servicioTerapeutaId,
-    int servicioExtraId,
-    [FromBody] UpdateServicioExtraDto dto)
+        public async Task<ActionResult<ServicioExtraDetalleDto>> UpdateServicioExtra(int servicioTerapeutaId,int servicioExtraId,[FromBody] UpdateServicioExtraDto dto)
         {
             try
             {
@@ -335,9 +332,7 @@ namespace SistemaVIP.API.Controllers
 
         [HttpPost("{servicioTerapeutaId}/comprobantes")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
-        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantePago(
-    int servicioTerapeutaId,
-    [FromBody] CreateComprobantePagoDto dto)
+        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantePago(int servicioTerapeutaId,[FromBody] CreateComprobantePagoDto dto)
         {
             try
             {
@@ -357,9 +352,7 @@ namespace SistemaVIP.API.Controllers
 
         [HttpPost("{servicioTerapeutaId}/comprobantes/multiple")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
-        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantesMultiples(
-    int servicioTerapeutaId,
-    [FromBody] CreateComprobantesMultiplesDto dto)
+        public async Task<ActionResult<ServicioTerapeutaDto>> AgregarComprobantesMultiples(int servicioTerapeutaId,[FromBody] CreateComprobantesMultiplesDto dto)
         {
             try
             {
@@ -374,10 +367,7 @@ namespace SistemaVIP.API.Controllers
 
         [HttpPatch("{servicioTerapeutaId}/comprobantes/{comprobanteId}/estado")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
-        public async Task<ActionResult<ServicioTerapeutaDto>> ActualizarEstadoComprobante(
-            int servicioTerapeutaId,
-            int comprobanteId,
-            [FromBody] UpdateComprobanteEstadoDto dto)
+        public async Task<ActionResult<ServicioTerapeutaDto>> ActualizarEstadoComprobante(int servicioTerapeutaId,int comprobanteId,[FromBody] UpdateComprobanteEstadoDto dto)
         {
             try
             {
@@ -400,6 +390,24 @@ namespace SistemaVIP.API.Controllers
             try
             {
                 await _servicioService.EliminarComprobantePagoAsync(servicioTerapeutaId, comprobanteId);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            try
+            {
+                var result = await _servicioService.DeleteServicioAsync(id);
+                if (!result)
+                    return NotFound(new { message = "Servicio no encontrado o no puede ser eliminado" });
+
                 return NoContent();
             }
             catch (InvalidOperationException ex)

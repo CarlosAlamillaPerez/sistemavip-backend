@@ -21,13 +21,7 @@ namespace SistemaVIP.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<bool> RegistrarAccionAsync(
-            string idUsuario,
-            string accion,
-            string tabla,
-            string idRegistro,
-            string valoresAnteriores = null,
-            string valoresNuevos = null)
+        public async Task<bool> RegistrarAccionAsync(string idUsuario,string accion,string tabla,string idRegistro,string valoresAnteriores = null,string valoresNuevos = null)
         {
             if (!BitacoraEnum.TiposAccion.Contains(accion))
                 throw new InvalidOperationException("Tipo de acción no válido");
@@ -51,13 +45,7 @@ namespace SistemaVIP.Infrastructure.Services
             return true;
         }
 
-        public async Task<bool> RegistrarCambioEstadoAsync(
-            string idUsuario,
-            string tabla,
-            string idRegistro,
-            string estadoAnterior,
-            string estadoNuevo,
-            string motivo = null)
+        public async Task<bool> RegistrarCambioEstadoAsync(string idUsuario,string tabla,string idRegistro,string estadoAnterior,string estadoNuevo,string motivo = null)
         {
             var valoresAnteriores = new { Estado = estadoAnterior };
             var valoresNuevos = new { Estado = estadoNuevo, Motivo = motivo };
@@ -72,12 +60,7 @@ namespace SistemaVIP.Infrastructure.Services
             );
         }
 
-        public async Task<bool> RegistrarValidacionAsync(
-            string idUsuario,
-            string tabla,
-            string idRegistro,
-            bool exitosa,
-            string detalles)
+        public async Task<bool> RegistrarValidacionAsync(string idUsuario,string tabla,string idRegistro,bool exitosa,string detalles)
         {
             var valores = new { Exitosa = exitosa, Detalles = detalles };
 
@@ -102,11 +85,7 @@ namespace SistemaVIP.Infrastructure.Services
             return registros.Select(MapToDto).ToList();
         }
 
-        public async Task<List<BitacoraDto>> GetByFiltroAsync(
-            DateTime fechaInicio,
-            DateTime fechaFin,
-            string tabla = null,
-            string idUsuario = null)
+        public async Task<List<BitacoraDto>> GetByFiltroAsync(DateTime fechaInicio,DateTime fechaFin,string tabla = null,string idUsuario = null)
         {
             var query = _context.Bitacora
                 .Include(b => b.Usuario)

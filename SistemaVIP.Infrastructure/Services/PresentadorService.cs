@@ -166,32 +166,6 @@ namespace SistemaVIP.Infrastructure.Services
             return MapToDto(presentador);
         }
 
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var presentador = await _context.Presentadores.FindAsync(id);
-            if (presentador == null)
-                return false;
-
-            presentador.Estado = "Inactivo";
-            presentador.UltimaActualizacion = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> UpdateEstadoAsync(int id, string estado)
-        {
-            var presentador = await _context.Presentadores.FindAsync(id);
-            if (presentador == null)
-                return false;
-
-            presentador.Estado = estado;
-            presentador.UltimaActualizacion = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
         public async Task<List<PresentadorDto>> GetActivosAsync()
         {
             return await _context.Presentadores

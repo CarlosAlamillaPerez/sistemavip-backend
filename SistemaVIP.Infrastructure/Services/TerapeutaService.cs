@@ -140,32 +140,6 @@ namespace SistemaVIP.Infrastructure.Services
             return MapToDto(terapeuta);
         }
 
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var terapeuta = await _context.Terapeutas.FindAsync(id);
-            if (terapeuta == null)
-                return false;
-
-            terapeuta.Estado = "Inactivo";
-            terapeuta.UltimaActualizacion = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> UpdateEstadoAsync(int id, string estado)
-        {
-            var terapeuta = await _context.Terapeutas.FindAsync(id);
-            if (terapeuta == null)
-                return false;
-
-            terapeuta.Estado = estado;
-            terapeuta.UltimaActualizacion = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
         public async Task<List<TerapeutaDto>> GetActivosAsync()
         {
             return await _context.Terapeutas

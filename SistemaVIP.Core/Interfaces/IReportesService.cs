@@ -9,14 +9,15 @@ namespace SistemaVIP.Core.Interfaces
 {
     public interface IReportesService
     {
+        // Reportes de Presentadores (mantienen su implementación anterior)
         Task<List<ReportePresentadorDto>> GetReportePresentadoresAsync(ReportesPresentadorFiltroDto filtro);
-        Task<ReportePresentadorDto> GetReportePresentadorAsync(int presentadorId, DateTime fechaInicio, DateTime fechaFin);
-        
-        //Métodos para terapeutas
-        Task<List<ReporteTerapeutaDto>> GetReporteTerapeutasAsync(ReporteTerapeutaFiltroDto filtro);
-        Task<ReporteTerapeutaDto> GetReporteTerapeutaAsync(int terapeutaId, DateTime fechaInicio, DateTime fechaFin);
+        Task<ReportePresentadorDetalladoDto> GetReportePresentadorAsync(int presentadorId, DateTime fechaInicio, DateTime fechaFin);
 
-        //Métodos para análisis de servicios
+        // Reportes de Terapeutas (actualizados con los nuevos tipos)
+        Task<List<ReporteTerapeutaResumenDto>> GetReporteTerapeutasAsync(ReporteTerapeutaFiltroDto filtro);
+        Task<ReporteTerapeutaDetalladoDto> GetReporteTerapeutaAsync(int terapeutaId, DateTime fechaInicio, DateTime fechaFin);
+
+        // Reporte de Servicios (se mantiene igual)
         Task<ReporteServiciosDto> GetReporteServiciosAsync(DateTime fechaInicio, DateTime fechaFin);
     }
 }

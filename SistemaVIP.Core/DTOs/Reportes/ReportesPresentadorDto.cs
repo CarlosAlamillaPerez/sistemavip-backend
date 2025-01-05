@@ -33,4 +33,72 @@ namespace SistemaVIP.Core.DTOs.Reportes
         public int? PresentadorId { get; set; }
     }
 
+    // En ReportePresentadorDto.cs, agregaremos:
+    public class ReportePresentadorDetalladoDto
+    {
+        public int PresentadorId { get; set; }
+        public string NombrePresentador { get; set; }
+        public decimal TotalIngresosGenerados { get; set; }
+        public decimal TotalComisiones { get; set; }
+        public int CantidadServicios { get; set; }
+        public decimal TotalPagosEfectivo { get; set; }
+        public decimal TotalPagosTransferencia { get; set; }
+        public List<ServicioPorEstadoDto> ServiciosPorEstado { get; set; }
+        public List<ServicioPorDiaDetalladoDto> ServiciosPorDia { get; set; }
+        public ResumenDiarioDto ResumenHoy { get; set; }
+    }
+
+    public class ServicioPorEstadoDto
+    {
+        public string Estado { get; set; }
+        public int CantidadServicios { get; set; }
+        public decimal MontoTotal { get; set; }
+        public List<ServicioDetalladoDto> Servicios { get; set; }
+    }
+
+    public class ServicioExtraResumenDto
+    {
+        public string Nombre { get; set; }
+        public decimal Monto { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public string? Notas { get; set; }
+    }
+
+    public class ComprobantePagoResumenDto
+    {
+        public string TipoComprobante { get; set; }
+        public decimal Monto { get; set; }
+        public string Estado { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public string? NumeroOperacion { get; set; }
+    }
+
+    public class ServicioDetalladoDto
+    {
+        public int ServicioId { get; set; }
+        public DateTime FechaServicio { get; set; }
+        public string TipoUbicacion { get; set; }
+        public decimal MontoTotal { get; set; }
+        public string Estado { get; set; }
+        public List<ServicioExtraResumenDto> ServiciosExtra { get; set; }
+        public List<ComprobantePagoResumenDto> Comprobantes { get; set; }
+    }
+
+    public class ServicioPorDiaDetalladoDto : ServiciosPorDiaDto
+    {
+        public List<string> Estados { get; set; }
+        public int ServiciosEnProceso { get; set; }
+        public int ServiciosPendientes { get; set; }
+        public int ServiciosFinalizados { get; set; }
+        public decimal MontoServiciosExtra { get; set; }
+    }
+
+    public class ResumenDiarioDto
+    {
+        public int ServiciosActivos { get; set; }
+        public int ServiciosPendientesVerificacion { get; set; }
+        public decimal MontoTotalDia { get; set; }
+        public decimal MontoServiciosExtra { get; set; }
+        public List<ServicioDetalladoDto> ServiciosEnProceso { get; set; }
+    }
 }

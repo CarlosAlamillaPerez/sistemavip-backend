@@ -77,8 +77,6 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public decimal? MontoTerapeuta { get; set; }
         public Guid LinkConfirmacion { get; set; }
         public Guid LinkFinalizacion { get; set; }
-        public decimal? MontoEfectivo { get; set; }
-        public decimal? MontoTransferencia { get; set; }
         public List<ComprobantePagoDto> ComprobantesPago { get; set; }
     }
 

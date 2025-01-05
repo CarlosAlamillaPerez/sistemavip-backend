@@ -15,12 +15,4 @@ namespace SistemaVIP.Core.DTOs
         public string ValoresNuevos { get; set; }
     }
 
-    public class BitacoraFiltroDto
-    {
-        public DateTime? FechaInicio { get; set; }
-        public DateTime? FechaFin { get; set; }
-        public string Tabla { get; set; }
-        public string IdUsuario { get; set; }
-        public string Accion { get; set; }
-    }
 }
