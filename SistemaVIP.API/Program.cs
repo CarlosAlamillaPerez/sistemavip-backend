@@ -5,6 +5,9 @@ using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
 using SistemaVIP.Infrastructure.Services;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

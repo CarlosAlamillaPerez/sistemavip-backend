@@ -5,6 +5,7 @@
         public static class TipoAccion
         {
             public const string CREACION = "CREACION";
+            public const string CANCELACION = "CANCELACION";
             public const string MODIFICACION = "MODIFICACION";
             public const string CAMBIO_ESTADO = "CAMBIO_ESTADO";
             public const string VALIDACION = "VALIDACION";
@@ -31,6 +32,7 @@
         public static readonly string[] TiposAccion = new[]
         {
             TipoAccion.CREACION,
+            TipoAccion.CANCELACION,
             TipoAccion.MODIFICACION,
             TipoAccion.CAMBIO_ESTADO,
             TipoAccion.VALIDACION,

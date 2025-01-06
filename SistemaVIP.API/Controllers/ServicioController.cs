@@ -70,18 +70,6 @@ namespace SistemaVIP.API.Controllers
             return Ok(servicio);
         }
 
-        [HttpPost("{id}/cancelar")]
-        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
-        public async Task<ActionResult<ServicioDto>> Cancelar(int id, CancelacionServicioDto cancelacionDto)
-        {
-            var userId = User.FindFirst("sub")?.Value;
-            var servicio = await _servicioService.CancelarServicioAsync(id, cancelacionDto, userId);
-            if (servicio == null)
-                return NotFound();
-
-            return Ok(servicio);
-        }
-
         [HttpGet("confirmar/{linkConfirmacion}")]
         [AllowAnonymous]
         public async Task<ActionResult<ServicioTerapeutaDto>> GetByLinkConfirmacion(Guid linkConfirmacion)
@@ -415,5 +403,22 @@ namespace SistemaVIP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPost("{id}/cancelar")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
+        public async Task<ActionResult> CancelarServicio(int id, [FromBody] CancelacionServicioDto dto)
+        {
+            try
+            {
+                var resultado = await _servicioService.CancelarServicioAsync(id, dto);
+                return Ok(resultado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
     }
 }

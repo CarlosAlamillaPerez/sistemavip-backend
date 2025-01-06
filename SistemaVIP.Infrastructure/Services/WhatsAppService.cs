@@ -381,5 +381,46 @@ namespace SistemaVIP.Infrastructure.Services
                 JsonSerializer.Serialize(datos)
             );
         }
+
+        public async Task AlertarServicioCanceladoAsync(int servicioId, decimal? montoComision)
+        {
+            var servicio = await _context.Servicios
+                .Include(s => s.Presentador)
+                .Include(s => s.ServiciosTerapeutas)
+                    .ThenInclude(st => st.Terapeuta)
+                .FirstOrDefaultAsync(s => s.Id == servicioId);
+
+            if (servicio == null)
+                return;
+
+            var mensaje = $"🚫 SERVICIO CANCELADO 🚫\n" +
+                          $"ID: {servicioId}\n" +
+                          $"Presentador: {servicio.Presentador.Nombre} {servicio.Presentador.Apellido}\n" +
+                          $"Motivo: {servicio.MotivoCancelacion}\n";
+
+            if (montoComision.HasValue && montoComision.Value > 0)
+            {
+                mensaje += $"💰 Comisión reportada: ${montoComision:N2}\n" +
+                          $"   - Presentador (30%): ${montoComision.Value * 0.30m:N2}\n" +
+                          $"   - Empresa (70%): ${montoComision.Value * 0.70m:N2}";
+            }
+
+            await EnviarMensajeAsync(mensaje);
+
+            // Registrar en bitácora
+            await _bitacoraService.RegistrarAccionAsync(
+                "SYSTEM",
+                "NOTIFICACION_CANCELACION",
+                BitacoraEnum.TablaMonitoreo.SERVICIOS,
+                servicioId.ToString(),
+                null,
+                JsonSerializer.Serialize(new
+                {
+                    Motivo = servicio.MotivoCancelacion,
+                    MontoComision = montoComision,
+                    FechaCancelacion = DateTime.Now
+                })
+            );
+        }
     }
 }

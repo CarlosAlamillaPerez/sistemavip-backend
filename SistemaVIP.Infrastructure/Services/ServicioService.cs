@@ -1460,5 +1460,84 @@ namespace SistemaVIP.Infrastructure.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<ServicioDto> CancelarServicioAsync(int id, CancelacionServicioDto dto)
+        {
+            var servicio = await _context.Servicios
+                .Include(s => s.ServiciosTerapeutas)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (servicio == null)
+                throw new InvalidOperationException("Servicio no encontrado");
+
+            // Validar estado y confirmación
+            if (servicio.Estado != EstadosEnum.Servicio.PENDIENTE)
+                throw new InvalidOperationException("Solo se pueden cancelar servicios en estado PENDIENTE");
+
+            if (servicio.ServiciosTerapeutas.Any(st => st.HoraInicio.HasValue))
+                throw new InvalidOperationException("No se puede cancelar un servicio que ya ha sido confirmado");
+
+
+            // Registrar cancelación
+            var estadoAnterior = servicio.Estado;
+            servicio.Estado = EstadosEnum.Servicio.CANCELADO;
+            servicio.MotivoCancelacion = dto.MotivoCancelacion;
+            servicio.NotasCancelacion = dto.NotasCancelacion;
+            servicio.FechaCancelacion = DateTime.UtcNow;
+            servicio.IdUsuarioCancelacion = _currentUserService.GetUserId();
+
+            if (dto.MontoComisionCancelacion.HasValue && dto.MontoComisionCancelacion.Value < 0)
+            {
+                throw new InvalidOperationException("El monto de comisión por cancelación no puede ser negativo");
+            }
+
+            // Si hay monto de comisión, generar registro
+            if (dto.MontoComisionCancelacion.HasValue && dto.MontoComisionCancelacion.Value > 0)
+            {
+                var comision = new ComisionesModel
+                {
+                    ServicioId = servicio.Id,
+                    TerapeutaId = servicio.ServiciosTerapeutas.FirstOrDefault()?.TerapeutaId ?? 0,
+                    PresentadorId = servicio.PresentadorId,
+                    MontoTotal = dto.MontoComisionCancelacion.Value,
+                    MontoTerapeuta = 0, // No hay monto para terapeuta en cancelación
+                    MontoComisionTotal = dto.MontoComisionCancelacion.Value,
+                    MontoComisionEmpresa = dto.MontoComisionCancelacion.Value * 0.70m,
+                    MontoComisionPresentador = dto.MontoComisionCancelacion.Value * 0.30m,
+                    PorcentajeAplicadoEmpresa = 70,
+                    PorcentajeAplicadoPresentador = 30,
+                    FechaCalculo = DateTime.UtcNow,
+                    Estado = EstadosEnum.Comision.PAGADO, // Comisión por cancelación se marca como pagada
+                    IdUsuarioConfirmacion = _currentUserService.GetUserId(),
+                    FechaConfirmacion = DateTime.UtcNow,
+                    NotasPago = "Comisión por cancelación de servicio"
+                };
+
+                _context.Comisiones.Add(comision);
+            }
+
+            if (dto.MontoComisionCancelacion.HasValue && dto.MontoComisionCancelacion.Value > 0)
+            {
+                await _whatsAppService.AlertarServicioCanceladoAsync(
+                    servicio.Id,
+                    dto.MontoComisionCancelacion.Value
+                );
+            }
+
+            // Registrar en bitácora
+            await _bitacoraService.RegistrarCambioEstadoAsync(
+                _currentUserService.GetUserId(),
+                BitacoraEnum.TablaMonitoreo.SERVICIOS,
+                servicio.Id.ToString(),
+                estadoAnterior,
+                EstadosEnum.Servicio.CANCELADO,
+                dto.MotivoCancelacion
+            );
+
+            await _context.SaveChangesAsync();
+            return await GetByIdAsync(servicio.Id);
+        }
+
+
     }
 }

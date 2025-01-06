@@ -44,5 +44,6 @@ namespace SistemaVIP.Core.Interfaces
         Task EliminarComprobantePagoAsync(int servicioTerapeutaId, int comprobanteId);
         Task<List<ComprobantePagoDto>> GetComprobantesPagoByServicioAsync(int servicioTerapeutaId);
         Task<bool> DeleteServicioAsync(int id);
+        Task<ServicioDto> CancelarServicioAsync(int id, CancelacionServicioDto dto);
     }
 }

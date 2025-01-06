@@ -30,5 +30,7 @@ namespace SistemaVIP.Core.Interfaces
         // Métodos de utilidad
         Task<bool> ValidarLimiteDiarioAsync();
         Task RegistrarEnvioMensajeAsync(string tipo, string destinatario, bool exitoso, string error = null);
+        Task AlertarServicioCanceladoAsync(int servicioId, decimal? montoComision);
+
     }
 }

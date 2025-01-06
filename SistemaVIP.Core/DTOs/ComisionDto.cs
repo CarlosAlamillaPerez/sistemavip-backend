@@ -66,6 +66,7 @@ namespace SistemaVIP.Core.DTOs
         public int CantidadServiciosPendientes { get; set; }
         public int CantidadServiciosPorConfirmar { get; set; }
         public int CantidadServiciosConfirmados { get; set; }
+        public decimal MontoPorCancelaciones { get; set; }
         public DateTime? UltimaLiquidacion { get; set; }
     }
 

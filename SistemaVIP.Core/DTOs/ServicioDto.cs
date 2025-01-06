@@ -126,11 +126,9 @@ namespace SistemaVIP.Core.DTOs.Servicio
 
     public class CancelacionServicioDto
     {
-        [Required]
-        [StringLength(255)]
-        public string MotivoCancelacion { get; set; }
-
-        public string NotasCancelacion { get; set; }
+        public string? MotivoCancelacion { get; set; }  // Opcional
+        public string? NotasCancelacion { get; set; }   // Opcional
+        public decimal? MontoComisionCancelacion { get; set; } // Opcional - Nuevo campo
     }
 
     public class CreateServicioExtraDto

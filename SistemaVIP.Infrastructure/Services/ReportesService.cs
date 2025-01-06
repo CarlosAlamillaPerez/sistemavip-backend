@@ -34,7 +34,7 @@ namespace SistemaVIP.Infrastructure.Services
 
             foreach (var presentador in presentadores)
             {
-                // Obtener solo servicios LIQUIDADOS o PAGADOS
+                // Obtener servicios regulares (LIQUIDADOS o PAGADOS)
                 var servicios = await _context.Servicios
                     .Include(s => s.ServiciosTerapeutas)
                         .ThenInclude(st => st.ServiciosExtra)
@@ -48,6 +48,25 @@ namespace SistemaVIP.Infrastructure.Services
                     .OrderByDescending(s => s.FechaServicio)
                     .ToListAsync();
 
+                // Obtener comisiones por cancelación
+                var comisionesCancelacion = await _context.Comisiones
+                    .Where(c => c.PresentadorId == presentador.Id &&
+                               c.FechaCalculo >= filtro.FechaInicio &&
+                               c.FechaCalculo <= filtro.FechaFin &&
+                               c.Servicio.Estado == EstadosEnum.Servicio.CANCELADO)
+                    .ToListAsync();
+
+                // Calcular totales incluyendo cancelaciones
+                decimal ingresosServicios = servicios.Sum(s => s.MontoTotal);
+                decimal ingresosCancelaciones = comisionesCancelacion.Sum(c => c.MontoComisionPresentador);
+                decimal totalComisionesRegulares = servicios
+                    .Sum(s => _context.Comisiones
+                        .Where(c => c.ServicioId == s.Id &&
+                                   c.Estado == EstadosEnum.Comision.LIQUIDADO)
+                        .Select(c => c.MontoComisionPresentador)
+                        .FirstOrDefault());
+
+                // Procesar servicios por día
                 var serviciosPorDia = servicios
                     .GroupBy(s => s.FechaServicio.Date)
                     .Select(g => new ServiciosPorDiaDto
@@ -65,17 +84,37 @@ namespace SistemaVIP.Infrastructure.Services
                     .OrderByDescending(x => x.Fecha)
                     .ToList();
 
+                // Agregar día adicional para cancelaciones si hay alguna
+                if (comisionesCancelacion.Any())
+                {
+                    foreach (var cancelacionPorDia in comisionesCancelacion.GroupBy(c => c.FechaCalculo.Date))
+                    {
+                        var diaExistente = serviciosPorDia.FirstOrDefault(d => d.Fecha == cancelacionPorDia.Key);
+                        if (diaExistente != null)
+                        {
+                            diaExistente.MontoTotal += cancelacionPorDia.Sum(c => c.MontoComisionPresentador);
+                            diaExistente.Comisiones += cancelacionPorDia.Sum(c => c.MontoComisionPresentador);
+                        }
+                        else
+                        {
+                            serviciosPorDia.Add(new ServiciosPorDiaDto
+                            {
+                                Fecha = cancelacionPorDia.Key,
+                                CantidadServicios = 0, // No se cuenta como servicio regular
+                                MontoTotal = cancelacionPorDia.Sum(c => c.MontoComisionPresentador),
+                                Comisiones = cancelacionPorDia.Sum(c => c.MontoComisionPresentador)
+                            });
+                        }
+                    }
+                }
+
                 reportes.Add(new ReportePresentadorDto
                 {
                     PresentadorId = presentador.Id,
                     NombrePresentador = $"{presentador.Nombre} {presentador.Apellido}".Trim(),
-                    TotalIngresosGenerados = servicios.Sum(s => s.MontoTotal),
-                    TotalComisiones = servicios
-                        .Sum(s => _context.Comisiones
-                            .Where(c => c.ServicioId == s.Id &&
-                                       c.Estado == EstadosEnum.Comision.LIQUIDADO)
-                            .Select(c => c.MontoComisionPresentador)
-                            .FirstOrDefault()),
+                    TotalIngresosGenerados = ingresosServicios,
+                    TotalComisiones = totalComisionesRegulares + ingresosCancelaciones,
+                    MontoPorCancelaciones = ingresosCancelaciones,
                     CantidadServicios = servicios.Count,
                     TotalPagosEfectivo = servicios
                         .SelectMany(s => s.ServiciosTerapeutas)
@@ -89,14 +128,14 @@ namespace SistemaVIP.Infrastructure.Services
                         .Where(cp => cp.TipoComprobante == PagosEnum.TipoComprobante.TRANSFERENCIA &&
                                     cp.Estado == PagosEnum.EstadoComprobante.PAGADO)
                         .Sum(cp => cp.Monto),
-                    ServiciosPorDia = serviciosPorDia
+                    ServiciosPorDia = serviciosPorDia.OrderByDescending(x => x.Fecha).ToList()
                 });
             }
 
             return reportes;
         }
 
-        public async Task<ReportePresentadorDetalladoDto> GetReportePresentadorAsync(int presentadorId,DateTime fechaInicio,DateTime fechaFin)
+        public async Task<ReportePresentadorDetalladoDto> GetReportePresentadorAsync(int presentadorId, DateTime fechaInicio, DateTime fechaFin)
         {
             var presentador = await _context.Presentadores
                 .FirstOrDefaultAsync(p => p.Id == presentadorId);
@@ -104,11 +143,10 @@ namespace SistemaVIP.Infrastructure.Services
             if (presentador == null)
                 throw new InvalidOperationException("Presentador no encontrado");
 
-            // Obtener TODOS los servicios en el rango de fechas
+            // Obtener servicios regulares y cancelados
             var servicios = await _context.Servicios
                 .Include(s => s.ServiciosTerapeutas)
                     .ThenInclude(st => st.ServiciosExtra)
-                        .ThenInclude(se => se.ServicioExtraCatalogo)
                 .Include(s => s.ServiciosTerapeutas)
                     .ThenInclude(st => st.ComprobantesPago)
                 .Include(s => s.ServiciosTerapeutas)
@@ -119,19 +157,31 @@ namespace SistemaVIP.Infrastructure.Services
                 .OrderByDescending(s => s.FechaServicio)
                 .ToListAsync();
 
-            // Agrupar por estado
+            // Obtener comisiones por cancelación
+            var comisionesCancelacion = await _context.Comisiones
+                .Where(c => c.PresentadorId == presentadorId &&
+                            c.FechaCalculo >= fechaInicio &&
+                            c.FechaCalculo <= fechaFin &&
+                            c.Servicio.Estado == EstadosEnum.Servicio.CANCELADO)
+                .ToListAsync();
+
+            // Agrupar servicios por estado incluyendo cancelados
             var serviciosPorEstado = servicios
                 .GroupBy(s => s.Estado)
                 .Select(g => new ServicioPorEstadoDto
                 {
                     Estado = g.Key,
                     CantidadServicios = g.Count(),
-                    MontoTotal = g.Sum(s => s.MontoTotal),
+                    MontoTotal = g.Key == EstadosEnum.Servicio.CANCELADO ?
+                        comisionesCancelacion
+                            .Where(c => g.Select(s => s.Id).Contains(c.ServicioId))
+                            .Sum(c => c.MontoComisionPresentador) :
+                        g.Sum(s => s.MontoTotal),
                     Servicios = g.Select(s => MapToServicioDetallado(s)).ToList()
                 })
                 .ToList();
 
-            // Agrupar por día con más detalles
+            // Agrupar servicios por día
             var serviciosPorDia = servicios
                 .GroupBy(s => s.FechaServicio.Date)
                 .Select(g => new ServicioPorDiaDetalladoDto
@@ -181,12 +231,11 @@ namespace SistemaVIP.Infrastructure.Services
             {
                 PresentadorId = presentador.Id,
                 NombrePresentador = $"{presentador.Nombre} {presentador.Apellido}".Trim(),
-                TotalIngresosGenerados = servicios.Sum(s => s.MontoTotal),
-                TotalComisiones = servicios.Sum(s =>
-                    _context.Comisiones
-                        .Where(c => c.ServicioId == s.Id)
-                        .Select(c => c.MontoComisionPresentador)
-                        .FirstOrDefault()),
+                TotalIngresos = serviciosPorEstado
+                    .Where(s => s.Estado != EstadosEnum.Servicio.CANCELADO)
+                    .Sum(s => s.MontoTotal) +
+                    comisionesCancelacion.Sum(c => c.MontoComisionPresentador),
+                MontoPorCancelaciones = comisionesCancelacion.Sum(c => c.MontoComisionPresentador),
                 CantidadServicios = servicios.Count,
                 TotalPagosEfectivo = servicios
                     .SelectMany(s => s.ServiciosTerapeutas)
@@ -206,6 +255,7 @@ namespace SistemaVIP.Infrastructure.Services
             };
         }
 
+
         private ServicioDetalladoDto MapToServicioDetallado(ServiciosModel servicio)
         {
             return new ServicioDetalladoDto
@@ -215,21 +265,37 @@ namespace SistemaVIP.Infrastructure.Services
                 TipoUbicacion = servicio.TipoUbicacion,
                 MontoTotal = servicio.MontoTotal,
                 Estado = servicio.Estado,
-                ServiciosExtra = servicio.ServiciosTerapeutas
+                MontoCancelacion = servicio.Estado == EstadosEnum.Servicio.CANCELADO ?
+                    _context.Comisiones
+                        .Where(c => c.ServicioId == servicio.Id)
+                        .Select(c => c.MontoComisionPresentador)
+                        .FirstOrDefault() : null,
+                MotivoCancelacion = servicio.MotivoCancelacion,
+                NotasCancelacion = servicio.NotasCancelacion,
+                FechaCancelacion = servicio.FechaCancelacion,
+                ServiciosExtra = servicio.ServiciosTerapeutas?
+                    .Where(st => st != null && st.ServiciosExtra != null)
                     .SelectMany(st => st.ServiciosExtra)
+                    .Where(se => se != null && se.ServicioExtraCatalogo != null)
                     .Select(se => new ServicioExtraResumenDto
                     {
-                        Nombre = se.ServicioExtraCatalogo.Nombre,
+                        Nombre = se.ServicioExtraCatalogo?.Nombre ?? "Sin nombre",
                         Monto = se.Monto
-                    }).ToList(),
-                Comprobantes = servicio.ServiciosTerapeutas
+                    })
+                    .ToList() ?? new List<ServicioExtraResumenDto>(),
+                Comprobantes = servicio.ServiciosTerapeutas?
+                    .Where(st => st != null && st.ComprobantesPago != null)
                     .SelectMany(st => st.ComprobantesPago)
+                    .Where(cp => cp != null)
                     .Select(cp => new ComprobantePagoResumenDto
                     {
                         TipoComprobante = cp.TipoComprobante,
                         Monto = cp.Monto,
-                        Estado = cp.Estado
-                    }).ToList()
+                        Estado = cp.Estado,
+                        FechaRegistro = cp.FechaRegistro,
+                        NumeroOperacion = cp.NumeroOperacion
+                    })
+                    .ToList() ?? new List<ComprobantePagoResumenDto>()
             };
         }
 

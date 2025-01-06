@@ -143,11 +143,16 @@ namespace SistemaVIP.Infrastructure.Services
                         .Count(c => c.PresentadorId == p.Id && c.Estado == EstadosEnum.Comision.PAGADO),
                     UltimaLiquidacion = _context.Comisiones
                         .Where(c => c.PresentadorId == p.Id && c.Estado == EstadosEnum.Comision.LIQUIDADO)
-                        .Max(c => c.FechaLiquidacionPresentador)
+                        .Max(c => c.FechaLiquidacionPresentador),
+                    MontoPorCancelaciones = _context.Comisiones
+                        .Where(c => c.PresentadorId == p.Id &&
+                                   c.Servicio.Estado == EstadosEnum.Servicio.CANCELADO)
+                        .Sum(c => c.MontoComisionPresentador)
                 }).ToListAsync();
 
             return presentadores;
         }
+
 
         public async Task<ResumenComisionesDto> GetResumenPresentadorAsync(int presentadorId)
         {
@@ -218,7 +223,8 @@ namespace SistemaVIP.Infrastructure.Services
                 .Include(c => c.Terapeuta)
                 .Include(c => c.Servicio)
                 .Where(c => c.PresentadorId == presentadorId &&
-                            c.Estado == EstadosEnum.Comision.PAGADO)
+                            c.Estado == EstadosEnum.Comision.PAGADO &&
+                            c.Servicio.Estado != EstadosEnum.Servicio.CANCELADO) 
                 .OrderBy(c => c.FechaCalculo)
                 .ToListAsync();
 

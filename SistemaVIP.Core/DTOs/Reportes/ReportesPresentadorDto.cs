@@ -11,6 +11,7 @@ namespace SistemaVIP.Core.DTOs.Reportes
         public int PresentadorId { get; set; }
         public string NombrePresentador { get; set; }
         public decimal TotalIngresosGenerados { get; set; }
+        public decimal MontoPorCancelaciones { get; set; }
         public decimal TotalComisiones { get; set; }
         public int CantidadServicios { get; set; }
         public decimal TotalPagosEfectivo { get; set; }
@@ -38,8 +39,8 @@ namespace SistemaVIP.Core.DTOs.Reportes
     {
         public int PresentadorId { get; set; }
         public string NombrePresentador { get; set; }
-        public decimal TotalIngresosGenerados { get; set; }
-        public decimal TotalComisiones { get; set; }
+        public decimal TotalIngresos { get; set; }
+        public decimal MontoPorCancelaciones { get; set; }
         public int CantidadServicios { get; set; }
         public decimal TotalPagosEfectivo { get; set; }
         public decimal TotalPagosTransferencia { get; set; }
@@ -80,6 +81,13 @@ namespace SistemaVIP.Core.DTOs.Reportes
         public string TipoUbicacion { get; set; }
         public decimal MontoTotal { get; set; }
         public string Estado { get; set; }
+
+        public decimal? MontoCancelacion { get; set; }
+        public string? MotivoCancelacion { get; set; }
+        public string? NotasCancelacion { get; set; }
+        public DateTime? FechaCancelacion { get; set; }
+
+
         public List<ServicioExtraResumenDto> ServiciosExtra { get; set; }
         public List<ComprobantePagoResumenDto> Comprobantes { get; set; }
     }
