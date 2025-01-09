@@ -58,7 +58,8 @@ builder.Services.AddCors(options =>
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials()
-               .WithExposedHeaders("WWW-Authenticate");  // Agregar esto
+               .WithExposedHeaders("WWW-Authenticate")
+               .SetIsOriginAllowed(origin => true);
     });
 });
 
@@ -81,7 +82,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IBitacoraService, BitacoraService>();
 builder.Services.AddScoped<IBlacklistService, BlacklistService>();
 builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
-builder.Services.AddHttpClient("CallMeBot", client =>{client.DefaultRequestHeaders.Add("User-Agent", "SistemaVIP-WhatsApp/1.0");});
+builder.Services.AddHttpClient("CallMeBot", client => { client.DefaultRequestHeaders.Add("User-Agent", "SistemaVIP-WhatsApp/1.0"); });
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<IServicioExtraService, ServicioExtraService>();
 builder.Services.AddScoped<IReportesService, ReportesService>();
@@ -95,8 +96,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors();
 app.UseHttpsRedirection();
-app.UseCors(); 
 app.UseAuthentication();
 app.UseAuthorization();
 
