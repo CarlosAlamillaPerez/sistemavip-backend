@@ -50,9 +50,6 @@ builder.Services.AddIdentity<ApplicationUserModel, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // Configure Authentication & Authorization
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
-
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
@@ -60,9 +57,14 @@ builder.Services.AddCors(options =>
         builder.WithOrigins("http://localhost:4200")  // URL de tu aplicación Angular
                .AllowAnyMethod()
                .AllowAnyHeader()
-               .AllowCredentials();
+               .AllowCredentials()
+               .WithExposedHeaders("WWW-Authenticate");  // Agregar esto
     });
 });
+
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+
 
 // Register Services
 builder.Services.AddScoped<DbInitializerService>();
@@ -94,11 +96,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseHttpsRedirection();
-app.UseCors(); // Agregar esta línea
-
-// Add authentication & authorization middleware
+app.UseCors(); 
 app.UseAuthentication();
 app.UseAuthorization();
 

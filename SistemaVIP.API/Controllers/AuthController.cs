@@ -71,16 +71,18 @@ namespace SistemaVIP.API.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized();
+                return Unauthorized(new { message = "No autenticado" });
             }
 
             var user = await _authService.GetCurrentUserAsync(userId);
             if (user == null)
             {
-                return Unauthorized();
+                return Unauthorized(new { message = "Usuario no encontrado" });
             }
 
             return Ok(user);
         }
+
+
     }
 }
