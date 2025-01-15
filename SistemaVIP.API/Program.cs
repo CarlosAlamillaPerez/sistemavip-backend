@@ -7,6 +7,7 @@ using SistemaVIP.Infrastructure.Persistence.Context;
 using SistemaVIP.Infrastructure.Services;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,7 +55,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins("http://localhost:4200")  // URL de tu aplicación Angular
+        builder.WithOrigins("http://localhost:7198")  // URL de tu aplicación Angular
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials()
@@ -63,7 +64,24 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.LoginPath = "/Auth/Login"; // Ruta para iniciar sesión
+    options.LogoutPath = "/Auth/Logout"; // Ruta para cerrar sesión
+    options.AccessDeniedPath = "/Auth/AccessDenied"; // Ruta cuando no se tiene acceso
+    options.Cookie.Name = "SistemaVIP.Auth"; // Nombre de la cookie
+    options.Cookie.HttpOnly = true; // Seguridad para las cookies
+    options.Cookie.SameSite = SameSiteMode.None; // Permite enviar cookies entre dominios
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Solo se envía en HTTPS
+    options.ExpireTimeSpan = TimeSpan.FromHours(8); // Duración de la cookie
+});
+
 builder.Services.AddAuthorization();
 
 

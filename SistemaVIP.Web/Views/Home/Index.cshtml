@@ -1,0 +1,15 @@
+﻿@using System.Security.Claims
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title">Bienvenido al Sistema VIP</h2>
+            <p class="card-text">Has iniciado sesión correctamente.</p>
+            <p>Usuario: @User.Identity?.Name</p>
+            <p>Rol: @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value</p>
+        </div>
+    </div>
+</div>
