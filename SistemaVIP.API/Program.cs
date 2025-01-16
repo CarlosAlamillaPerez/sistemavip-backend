@@ -50,12 +50,35 @@ builder.Services.AddIdentity<ApplicationUserModel, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+//builder.Services.ConfigureApplicationCookie(options =>
+//{
+//    options.Cookie.Name = "SistemaVIP.Auth";
+//    options.Cookie.HttpOnly = true;
+//    options.Cookie.SameSite = SameSiteMode.None;
+//    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+//    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+
+//    options.Events = new CookieAuthenticationEvents
+//    {
+//        OnRedirectToLogin = context =>
+//        {
+//            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+//            return Task.CompletedTask;
+//        },
+//        OnRedirectToAccessDenied = context =>
+//        {
+//            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+//            return Task.CompletedTask;
+//        }
+//    };
+//});
+
 // Configure Authentication & Authorization
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins("http://localhost:7198")  // URL de tu aplicación Angular
+        builder.WithOrigins("https://localhost:7198")  // Cambiar a HTTPS
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials()
@@ -64,24 +87,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-})
-.AddCookie(options =>
-{
-    options.LoginPath = "/Auth/Login"; // Ruta para iniciar sesión
-    options.LogoutPath = "/Auth/Logout"; // Ruta para cerrar sesión
-    options.AccessDeniedPath = "/Auth/AccessDenied"; // Ruta cuando no se tiene acceso
-    options.Cookie.Name = "SistemaVIP.Auth"; // Nombre de la cookie
-    options.Cookie.HttpOnly = true; // Seguridad para las cookies
-    options.Cookie.SameSite = SameSiteMode.None; // Permite enviar cookies entre dominios
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Solo se envía en HTTPS
-    options.ExpireTimeSpan = TimeSpan.FromHours(8); // Duración de la cookie
-});
-
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 
@@ -114,8 +120,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors();
 app.UseHttpsRedirection();
+app.UseRouting();
+
+app.UseCors(); 
+
 app.UseAuthentication();
 app.UseAuthorization();
 

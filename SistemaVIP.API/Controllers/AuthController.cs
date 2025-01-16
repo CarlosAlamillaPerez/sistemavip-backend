@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaVIP.Core.DTOs.Auth;
 using SistemaVIP.Core.Interfaces;
@@ -21,27 +23,26 @@ namespace SistemaVIP.API.Controllers
         public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto request)
         {
             var response = await _authService.LoginAsync(request);
-
             if (!response.Success)
             {
                 return Unauthorized(response);
             }
 
-            // Configurar la cookie de autenticación
-            if (request.RememberMe)
-            {
-                HttpContext.Response.Cookies.Append(
-                    "X-Access-Token",
-                    "authenticated",
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7)
-                    }
-                );
-            }
+            // Establecer la cookie de autenticación
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(new ClaimsIdentity(
+                    new[] {
+                new Claim(ClaimTypes.NameIdentifier, response.User.Id),
+                new Claim(ClaimTypes.Name, response.User.Email),
+                new Claim(ClaimTypes.Role, response.User.Role)
+                    },
+                    CookieAuthenticationDefaults.AuthenticationScheme)),
+                new AuthenticationProperties
+                {
+                    IsPersistent = request.RememberMe,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                });
 
             return Ok(response);
         }

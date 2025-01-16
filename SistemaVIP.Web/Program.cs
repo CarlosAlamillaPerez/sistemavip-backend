@@ -11,6 +11,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWeb", builder =>
+    {
+        builder
+            .WithOrigins("https://localhost:7198") // Ajusta este puerto al de tu aplicación web
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 // Configurar HttpClient para consumir la API
 builder.Services.AddHttpClient("API", client =>
 {
@@ -60,6 +72,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IApiService, ApiService>();
 
@@ -76,6 +90,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseCors("AllowWeb");
 
 app.UseAuthentication();
 app.UseAuthorization();
