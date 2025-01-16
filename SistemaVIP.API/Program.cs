@@ -87,7 +87,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthentication();
+
+// Reemplázala con esta:
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
+});
 builder.Services.AddAuthorization();
 
 

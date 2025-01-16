@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using SistemaVIP.Core.DTOs.Auth;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Web.Interfaces;
-using SistemaVIP.Web.Models;
 using System.Diagnostics;
 using System.Security.Claims;
 
@@ -56,45 +55,47 @@ namespace SistemaVIP.Web.Controllers
                     {
                         // Almacenar la información del usuario en Claims
                         var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, result.User.Email),
-                    new Claim(ClaimTypes.Role, result.User.Role),
-                    new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
-                };
-
-                        // Crear la identidad y principal
-                        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-
-                        // Configurar las propiedades de autenticación (como "Recordar sesión")
-                        var authProperties = new AuthenticationProperties
                         {
-                            IsPersistent = model.RememberMe, // Sesión persistente si selecciona "Recordarme"
-                            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8) // Duración de la sesión
+                            new Claim(ClaimTypes.Name, result.User.Email),
+                            new Claim(ClaimTypes.Role, result.User.Role),
+                            new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
                         };
 
-                        // Iniciar sesión
-                        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+                        // Crear la identidad y principal
+                        var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+                        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                        // Configurar las propiedades de autenticación
+                        var authProperties = new AuthenticationProperties
+                        {
+                            IsPersistent = model.RememberMe,
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                        };
+
+                        // Iniciar sesión usando el esquema correcto
+                        await HttpContext.SignInAsync(
+                            IdentityConstants.ApplicationScheme,
+                            claimsPrincipal,
+                            authProperties);
 
                         // Redirigir según la URL de retorno o al home
                         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                         {
-                            return Redirect(returnUrl);
+                            return LocalRedirect(returnUrl);
                         }
                         return RedirectToAction("Index", "Home");
                     }
 
-                    // Agregar un error al modelo si no se pudo autenticar
                     ModelState.AddModelError(string.Empty, result.Message ?? "Error de autenticación");
+                    System.Diagnostics.Debug.WriteLine($"Error de autenticación: {result.Message}");
                 }
                 catch (Exception ex)
                 {
-                    // Error al conectar con el backend
-                    ModelState.AddModelError(string.Empty, "Error al conectar con el servidor");
+                    System.Diagnostics.Debug.WriteLine($"Excepción durante login: {ex.Message}");
+                    ModelState.AddModelError(string.Empty, "Error al conectar con el servidor: " + ex.Message);
                 }
             }
 
-            // Devolver la vista con los errores del modelo
             return View(model);
         }
 

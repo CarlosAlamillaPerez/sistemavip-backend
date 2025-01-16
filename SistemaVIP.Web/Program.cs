@@ -46,14 +46,6 @@ builder.Services.AddIdentity<ApplicationUserModel, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Configurar autenticación
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-});
-
 // Configurar cookies para autenticación
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -62,6 +54,21 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Auth/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.Cookie.Name = "SistemaVIP.Auth";
+    options.Cookie.HttpOnly = true;
+
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // Configurar la sesión

@@ -1,0 +1,36 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+
+<ul class="navbar-nav">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user me-1"></i>
+                @User.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li class="dropdown-item-text">
+                    <small class="d-block text-muted">@User.Identity?.Name</small>
+                    <small class="d-block text-muted">Rol: @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value</small>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm">
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">
+                <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
+            </a>
+        </li>
+    }
+</ul>

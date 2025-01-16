@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SistemaVIP.Core.DTOs.Auth;
 using SistemaVIP.Core.Interfaces;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 namespace SistemaVIP.API.Controllers
 {
@@ -30,19 +31,19 @@ namespace SistemaVIP.API.Controllers
 
             // Establecer la cookie de autenticación
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(new ClaimsIdentity(
-                    new[] {
-                new Claim(ClaimTypes.NameIdentifier, response.User.Id),
-                new Claim(ClaimTypes.Name, response.User.Email),
-                new Claim(ClaimTypes.Role, response.User.Role)
-                    },
-                    CookieAuthenticationDefaults.AuthenticationScheme)),
-                new AuthenticationProperties
-                {
-                    IsPersistent = request.RememberMe,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
-                });
+    IdentityConstants.ApplicationScheme,  // Cambiar esto
+    new ClaimsPrincipal(new ClaimsIdentity(
+        new[] {
+            new Claim(ClaimTypes.NameIdentifier, response.User.Id),
+            new Claim(ClaimTypes.Name, response.User.Email),
+            new Claim(ClaimTypes.Role, response.User.Role)
+        },
+        IdentityConstants.ApplicationScheme)),  // Cambiar esto también
+    new AuthenticationProperties
+    {
+        IsPersistent = request.RememberMe,
+        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+    });
 
             return Ok(response);
         }
