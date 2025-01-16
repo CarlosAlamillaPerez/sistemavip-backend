@@ -18,6 +18,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
+    <!-- Anti-forgery token para AJAX -->
+    @Html.AntiForgeryToken()
+
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
@@ -71,36 +74,14 @@
     <!-- Moment.js para manejo de fechas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
+    <!-- Servicios propios (IMPORTANTE: El orden importa) -->
+    <script src="~/js/services/loading.service.js" asp-append-version="true"></script>
+    <script src="~/js/services/alert.service.js" asp-append-version="true"></script>
+    <script src="~/js/interceptors/ajax.interceptor.js" asp-append-version="true"></script>
+
     <!-- Script propio -->
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
-
-    <!-- Script para inicializar elementos globales -->
-    <script>
-        // Configuración global de SweetAlert2
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-
-        // Configuración global de Bootstrap Table
-        $.extend($.fn.bootstrapTable.defaults, {
-            locale: 'es-MX',
-            search: true,
-            pagination: true,
-            pageSize: 10,
-            pageList: [10, 25, 50, 100],
-            showColumns: true,
-            showRefresh: true,
-            showToggle: true,
-            searchAlign: 'left',
-            toolbarAlign: 'right',
-            mobileResponsive: true
-        });
-    </script>
 </body>
 </html>

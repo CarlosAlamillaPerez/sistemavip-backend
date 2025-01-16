@@ -5,6 +5,7 @@ using SistemaVIP.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
+using SistemaVIP.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,12 +95,11 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseErrorHandling();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseCors("AllowWeb");
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
