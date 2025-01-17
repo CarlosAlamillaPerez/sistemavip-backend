@@ -4,6 +4,7 @@ using SistemaVIP.Core.DTOs.Presentador;
 using SistemaVIP.Core.DTOs.TerapeutaPresentador;
 using SistemaVIP.Web.Attributes;
 using SistemaVIP.Web.Interfaces;
+using System.Security.Claims;
 
 namespace SistemaVIP.Web.Controllers
 {
@@ -11,10 +12,13 @@ namespace SistemaVIP.Web.Controllers
     public class PersonalController : Controller
     {
         private readonly IApiService _apiService;
+        private readonly ILogger<HomeController> _logger;
 
-        public PersonalController(IApiService apiService)
+
+        public PersonalController(IApiService apiService, ILogger<HomeController> logger)
         {
             _apiService = apiService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -22,7 +26,7 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var presentadores = await _apiService.GetAsync<List<PresentadorDto>>("api/Presentador/obtener-todos");
+                var presentadores = await _apiService.GetAsync<List<PresentadorDto>>("api/Presentador");
                 return View("~/Views/Personal/Presentadores/Index.cshtml", presentadores);
             }
             catch (Exception ex)
@@ -44,7 +48,20 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var presentadores = await _apiService.GetAsync<List<dynamic>>("api/Presentador/obtener-todos");
+                // Verificar autenticación y rol
+                var isAuthenticated = User.Identity.IsAuthenticated;
+                var roles = User.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .ToList();
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                // Log para debugging
+                _logger.LogInformation($"IsAuthenticated: {isAuthenticated}");
+                _logger.LogInformation($"Roles: {string.Join(", ", roles)}");
+                _logger.LogInformation($"UserId: {userId}");
+
+                var presentadores = await _apiService.GetAsync<List<PresentadorDto>>("api/Presentador");
                 return Json(new { success = true, data = presentadores });
             }
             catch (Exception ex)
@@ -90,7 +107,7 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var result = await _apiService.PostAsync<PresentadorDto>("api/Presentador/crear", model);
+                var result = await _apiService.PostAsync<PresentadorDto>("api/Presentador", model);
                 return Json(new { success = true, message = "Presentador guardado exitosamente" });
             }
             catch (Exception ex)
@@ -114,11 +131,11 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ObtenerTerapeutasPorPresentador(int id)
+        public async Task<IActionResult> ObtenerTerapeutasPorPresentador(int presentadorId)
         {
             try
             {
-                var terapeutas = await _apiService.GetAsync<List<TerapeutasPorPresentadorDto>>($"api/TerapeutasPresentadores/por-presentador/{id}");
+                var terapeutas = await _apiService.GetAsync<List<TerapeutasPorPresentadorDto>>($"api/TerapeutasPresentadores/presentador/{presentadorId}");
                 return Json(new { success = true, data = terapeutas });
             }
             catch (Exception ex)

@@ -78,11 +78,11 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins("https://localhost:7198")  // Cambiar a HTTPS
+        builder.WithOrigins("https://localhost:7198")  
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials()
-               .WithExposedHeaders("WWW-Authenticate")
+               .WithExposedHeaders("Set-Cookie")
                .SetIsOriginAllowed(origin => true);
     });
 });
