@@ -78,9 +78,10 @@ namespace SistemaVIP.Web.Controllers
                 if (id.HasValue)
                 {
                     var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/{id}");
-                    return PartialView("_Modal_FormPresentador", presentador);
+                    return PartialView("~/Views/Personal/Presentadores/_Modal_FormPresentador.cshtml", presentador);
                 }
-                return PartialView("_Modal_FormPresentador", null);
+                // Para nuevo presentador, pasamos null pero con el modelo correcto
+                return PartialView("~/Views/Personal/Presentadores/_Modal_FormPresentador.cshtml", new CreatePresentadorDto());
             }
             catch (Exception ex)
             {
@@ -94,7 +95,7 @@ namespace SistemaVIP.Web.Controllers
             try
             {
                 var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/{id}");
-                return PartialView("_Modal_DetallePresentador", presentador);
+                return PartialView("~/Views/Personal/Presentadores/_Modal_DetallePresentador.cshtml", presentador);
             }
             catch (Exception ex)
             {
@@ -143,6 +144,7 @@ namespace SistemaVIP.Web.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
         #endregion
 
         #region Terapeutas

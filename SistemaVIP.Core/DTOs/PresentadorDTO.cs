@@ -24,35 +24,34 @@ namespace SistemaVIP.Core.DTOs.Presentador
 
     public class CreatePresentadorDto
     {
-        [Required]
-        [StringLength(100)]
+        [Required(ErrorMessage = "El nombre es requerido")]
+        [StringLength(100, ErrorMessage = "El nombre no puede tener más de 100 caracteres")]
         public string Nombre { get; set; }
 
-        [Required]
-        [StringLength(100)]
+        [Required(ErrorMessage = "El apellido es requerido")]
+        [StringLength(100, ErrorMessage = "El apellido no puede tener más de 100 caracteres")]
         public string Apellido { get; set; }
 
-        [Required]
-        [StringLength(20)]
+        [Required(ErrorMessage = "El teléfono es requerido")]
+        [StringLength(20, ErrorMessage = "El teléfono no puede tener más de 20 caracteres")]
         public string Telefono { get; set; }
 
-        [Required]
-        [EmailAddress]
-        [StringLength(100)]
+        [Required(ErrorMessage = "El email es requerido")]
+        [EmailAddress(ErrorMessage = "El email no tiene un formato válido")]
+        [StringLength(100, ErrorMessage = "El email no puede tener más de 100 caracteres")]
         public string Email { get; set; }
 
-        [Required]
-        [StringLength(100)]
+        [Required(ErrorMessage = "La contraseña es requerida")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
             ErrorMessage = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial")]
         public string Password { get; set; }
 
-        [Range(0, 100)]
-        public decimal PorcentajeComision { get; set; }
-
-        [Required]
-        [StringLength(20)]
+        [Required(ErrorMessage = "El documento de identidad es requerido")]
+        [StringLength(20, ErrorMessage = "El documento no puede tener más de 20 caracteres")]
         public string DocumentoIdentidad { get; set; }
+
+        [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100")]
+        public decimal PorcentajeComision { get; set; }
 
         public string? FotoUrl { get; set; }
 

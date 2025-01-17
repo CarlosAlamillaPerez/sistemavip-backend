@@ -9,22 +9,44 @@
     });
 
     // Eventos directos para los botones
-    $('#btn-detalle-presentador').on('click', function () {
+    $(document).on('click', '#btn-detalle-presentador', function () {
         const id = $(this).data('id');
         obtenerDetallePresentador(id);
     });
 
-    $('#btn-editar-presentador').on('click', function () {
-        console.log("Botron presionado");
+
+    $(document).on('click', '#btn-editar-presentador', function () {
+        console.log("Botón presionado");
         const id = $(this).data('id');
         obtenerFormularioPresentador(id);
     });
 
-    // Evento submit del formulario
-    $('#formPresentador').on('submit', function (e) {
+
+    // Evento submit del formulario con validación
+    $(document).on('submit', '#formPresentador', function (e) {
         e.preventDefault();
-        const id = $(this).data('id');
-        guardarPresentador(id, $(this));
+
+        // Validar el formulario
+        if ($(this).valid()) {  // Esto usará las validaciones de ASP.NET MVC
+            console.log("Formulario válido, procediendo a guardar");
+            const id = $(this).data('id');
+            guardarPresentador(id, $(this));
+        } else {
+            console.log("Formulario inválido");
+            // Mostrar los errores de validación en el modal
+            let errorMessage = "Por favor, complete todos los campos requeridos correctamente.";
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Validación',
+                text: errorMessage,
+                showConfirmButton: true
+            });
+        }
+    });
+
+    // Inicializar la validación cuando el formulario se carga en el modal
+    $(document).on('shown.bs.modal', function () {
+        $.validator.unobtrusive.parse("#formPresentador");
     });
 });
 
@@ -56,7 +78,11 @@ function obtenerFormularioPresentador(id = null) {
                 html: response,
                 width: '800px',
                 showCloseButton: false,
-                showConfirmButton: false
+                showConfirmButton: false,
+                didOpen: () => {
+                    // Inicializar las validaciones cuando se abre el modal
+                    $.validator.unobtrusive.parse("#formPresentador");
+                }
             });
         }
     });
@@ -79,7 +105,7 @@ function guardarPresentador(id, form) {
             if (response.success) {
                 Swal.close();
                 window.alertService.success('Éxito', response.message);
-                $('#tablaPresentadores').bootstrapTable('refresh');
+                window.location.reload();
             } else {
                 window.alertService.error('Error', response.message);
             }

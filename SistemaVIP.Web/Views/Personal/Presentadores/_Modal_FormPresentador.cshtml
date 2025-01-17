@@ -1,54 +1,63 @@
-﻿@model SistemaVIP.Core.DTOs.Presentador.PresentadorDto
+﻿@model SistemaVIP.Core.DTOs.Presentador.CreatePresentadorDto
 
-<form id="formPresentador">
+<form id="formPresentador" autocomplete="off">
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Nombre</label>
-            <input type="text" class="form-control" name="Nombre" value="@Model?.Nombre" required>
+            <input type="text" class="form-control" asp-for="Nombre" autocomplete="off">
+            <span asp-validation-for="Nombre" class="text-danger"></span>
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">Apellido</label>
-            <input type="text" class="form-control" name="Apellido" value="@Model?.Apellido" required>
+            <input type="text" class="form-control" asp-for="Apellido" autocomplete="off">
+            <span asp-validation-for="Apellido" class="text-danger"></span>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Teléfono</label>
-            <input type="tel" class="form-control" name="Telefono" value="@Model?.Telefono" required>
+            <input type="tel" class="form-control" asp-for="Telefono" autocomplete="off">
+            <span asp-validation-for="Telefono" class="text-danger"></span>
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">Email</label>
-            <input type="email" class="form-control" name="Email" value="@Model?.Email" required>
+            <input type="email" class="form-control" asp-for="Email" autocomplete="off">
+            <span asp-validation-for="Email" class="text-danger"></span>
         </div>
     </div>
 
     <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-control" asp-for="Password" autocomplete="new-password">
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">Documento de Identidad</label>
-            <input type="text" class="form-control" name="DocumentoIdentidad" value="@Model?.DocumentoIdentidad" required>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Porcentaje de Comisión</label>
-            <input type="number" step="0.01" class="form-control" name="PorcentajeComision" value="@Model?.PorcentajeComision" required>
+            <input type="text" class="form-control" asp-for="DocumentoIdentidad" autocomplete="off">
+            <span asp-validation-for="DocumentoIdentidad" class="text-danger"></span>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-12 mb-3">
-            <label class="form-label">Estado</label>
-            <select class="form-select" name="Estado" required>
-                <option value="ACTIVO" selected="@(Model?.Estado == "ACTIVO")">ACTIVO</option>
-                <option value="INACTIVO" selected="@(Model?.Estado == "INACTIVO")">INACTIVO</option>
-                <option value="SUSPENDIDO" selected="@(Model?.Estado == "SUSPENDIDO")">SUSPENDIDO</option>
-            </select>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Porcentaje de Comisión</label>
+            <input type="number" step="0.01" class="form-control" asp-for="PorcentajeComision" autocomplete="off">
+            <span asp-validation-for="PorcentajeComision" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">URL de Foto (opcional)</label>
+            <input type="text" class="form-control" asp-for="FotoUrl" autocomplete="off">
+            <span asp-validation-for="FotoUrl" class="text-danger"></span>
         </div>
     </div>
 
     <div class="row">
         <div class="col-12 mb-3">
-            <label class="form-label">Notas</label>
-            <textarea class="form-control" name="Notas" rows="3">@Model?.Notas</textarea>
+            <label class="form-label">Notas (opcional)</label>
+            <textarea class="form-control" asp-for="Notas" rows="3" autocomplete="off"></textarea>
+            <span asp-validation-for="Notas" class="text-danger"></span>
         </div>
     </div>
 
@@ -57,3 +66,9 @@
         <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
 </form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
