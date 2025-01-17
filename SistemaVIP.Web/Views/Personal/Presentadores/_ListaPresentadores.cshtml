@@ -1,0 +1,48 @@
+﻿@model List<SistemaVIP.Core.DTOs.Presentador.PresentadorDto>
+
+<div class="card">
+    <div class="card-header bg-primary text-white d-flex">
+        <h4 class="mb-0"><i class="fa-solid fa-users"></i> PRESENTADORES</h4>
+        <button class="btn btn-light btn-sm ms-auto" id="btn-editar-presentador">
+            <i class="fa-solid fa-plus"></i> Nuevo Presentador
+        </button>
+    </div>
+    <div class="card-body">
+        <table id="tablaPresentadores" class="table text-center table-striped"
+               data-toggle="table"
+               data-pagination="true"
+               data-search="true"
+               data-mobile-responsive="true"
+               data-url="/Personal/ObtenerPresentadores">
+            <thead>
+                <tr>
+                    <th data-field="nombre" data-sortable="true">Nombre</th>
+                    <th data-field="telefono" data-sortable="true">Teléfono</th>
+                    <th data-field="estado" data-sortable="true">Estado</th>
+                    <th data-field="acciones">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var presentador in Model)
+                {
+                    <tr>
+                        <td>@presentador.Nombre @presentador.Apellido</td>
+                        <td>@presentador.Telefono</td>
+                        <td>
+                            <span class="badge bg-@(presentador.Estado == "ACTIVO" ? "success" :
+                                                  presentador.Estado == "INACTIVO" ? "danger" : "warning")">
+                                @presentador.Estado
+                            </span>
+                        </td>
+                        <td>
+                            <i class="btn text-info fa-solid fa-eye btn-detalle-presentador"
+                               data-id="@presentador.Id"></i>
+                            <i class="btn text-primary fa-solid fa-pen-to-square btn-editar-presentador"
+                               data-id="@presentador.Id"></i>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -55,11 +55,11 @@ namespace SistemaVIP.Web.Controllers
                     {
                         // Almacenar la información del usuario en Claims
                         var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name, result.User.Email),
-                            new Claim(ClaimTypes.Role, result.User.Role),
-                            new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
-                        };
+                {
+                    new Claim(ClaimTypes.Name, result.User.Email),
+                    new Claim(ClaimTypes.Role, result.User.Role),
+                    new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
+                };
 
                         // Crear la identidad y principal
                         var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
@@ -78,11 +78,23 @@ namespace SistemaVIP.Web.Controllers
                             claimsPrincipal,
                             authProperties);
 
-                        // Redirigir según la URL de retorno o al home
+                        // Redirigir según el rol
+                        if (result.User.Role == "SUPER_ADMIN" || result.User.Role == "ADMIN")
+                        {
+                            return RedirectToAction("Presentadores", "Personal");
+                        }
+                        else if (result.User.Role == "PRESENTADOR")
+                        {
+                            return RedirectToAction("Index", "Home");
+                        }
+
+                        // Si hay una URL de retorno y es local, usarla
                         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                         {
                             return LocalRedirect(returnUrl);
                         }
+
+                        // Por defecto, ir al Home
                         return RedirectToAction("Index", "Home");
                     }
 
@@ -98,6 +110,7 @@ namespace SistemaVIP.Web.Controllers
 
             return View(model);
         }
+
 
 
         [HttpPost]

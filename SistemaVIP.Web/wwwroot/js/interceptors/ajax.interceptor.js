@@ -42,8 +42,9 @@ $(document).ready(function () {
             // Manejar diferentes códigos de estado
             switch (xhr.status) {
                 case 401:
-                    window.alertService.error('Sesión Expirada', 'Su sesión ha expirado, será redirigido al login.')
-                        .then(() => window.location.href = '/Auth/Login');
+                    window.alertService.error('Sesión Expirada', 'Su sesión ha expirado, será redirigido al login.').then(() => {
+                        window.location.href = '/Auth/Login';
+                    });
                     break;
                 case 403:
                     window.alertService.error('Acceso Denegado', 'No tiene permisos para realizar esta acción');

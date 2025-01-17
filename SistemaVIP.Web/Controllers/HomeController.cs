@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SistemaVIP.Web.Attributes;
 using System.Security.Claims;
 
 namespace SistemaVIP.Web.Controllers
 {
     public class HomeController : Controller
     {
-        [Authorize]
+        [CustomAuthorization("SUPER_ADMIN", "ADMIN", "PRESENTADOR")]
         public IActionResult Index()
         {
             // Debug information

@@ -53,7 +53,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Auth/Login";
     options.LogoutPath = "/Auth/Logout";
     options.AccessDeniedPath = "/Auth/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.ExpireTimeSpan = TimeSpan.FromDays(7); // 1 año
     options.Cookie.Name = "SistemaVIP.Auth";
     options.Cookie.HttpOnly = true;
 

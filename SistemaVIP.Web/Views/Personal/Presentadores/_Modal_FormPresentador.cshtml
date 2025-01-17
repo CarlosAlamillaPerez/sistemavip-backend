@@ -1,0 +1,59 @@
+﻿@model SistemaVIP.Core.DTOs.Presentador.PresentadorDto
+
+<form id="formPresentador">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" name="Nombre" value="@Model?.Nombre" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Apellido</label>
+            <input type="text" class="form-control" name="Apellido" value="@Model?.Apellido" required>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-control" name="Telefono" value="@Model?.Telefono" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="Email" value="@Model?.Email" required>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Documento de Identidad</label>
+            <input type="text" class="form-control" name="DocumentoIdentidad" value="@Model?.DocumentoIdentidad" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Porcentaje de Comisión</label>
+            <input type="number" step="0.01" class="form-control" name="PorcentajeComision" value="@Model?.PorcentajeComision" required>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Estado</label>
+            <select class="form-select" name="Estado" required>
+                <option value="ACTIVO" selected="@(Model?.Estado == "ACTIVO")">ACTIVO</option>
+                <option value="INACTIVO" selected="@(Model?.Estado == "INACTIVO")">INACTIVO</option>
+                <option value="SUSPENDIDO" selected="@(Model?.Estado == "SUSPENDIDO")">SUSPENDIDO</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label class="form-label">Notas</label>
+            <textarea class="form-control" name="Notas" rows="3">@Model?.Notas</textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>
