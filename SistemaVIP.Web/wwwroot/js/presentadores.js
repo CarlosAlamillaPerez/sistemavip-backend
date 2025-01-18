@@ -16,7 +16,6 @@
 
 
     $(document).on('click', '#btn-editar-presentador', function () {
-        console.log("Botón presionado");
         const id = $(this).data('id');
         obtenerFormularioPresentador(id);
     });
@@ -77,7 +76,7 @@ function obtenerFormularioPresentador(id = null) {
                 title: id ? 'Editar Presentador' : 'Nuevo Presentador',
                 html: response,
                 width: '800px',
-                showCloseButton: false,
+                showCloseButton: true,
                 showConfirmButton: false,
                 didOpen: () => {
                     // Inicializar las validaciones cuando se abre el modal

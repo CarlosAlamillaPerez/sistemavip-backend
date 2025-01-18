@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SistemaVIP.Core.DTOs.TerapeutaPresentador;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace SistemaVIP.Core.DTOs.Presentador
@@ -77,4 +78,12 @@ namespace SistemaVIP.Core.DTOs.Presentador
 
         public string? Notas { get; set; }
     }
+
+    public class PresentadorDetalleDto
+    {
+        public PresentadorDto Presentador { get; set; }
+        public List<TerapeutasPorPresentadorDto> TerapeutasAsignados { get; set; }
+    }
+
+
 }

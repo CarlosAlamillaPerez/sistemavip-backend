@@ -78,9 +78,25 @@ namespace SistemaVIP.Web.Controllers
                 if (id.HasValue)
                 {
                     var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/{id}");
-                    return PartialView("~/Views/Personal/Presentadores/_Modal_FormPresentador.cshtml", presentador);
+
+                    // Convertir PresentadorDto a CreatePresentadorDto
+                    var createDto = new CreatePresentadorDto
+                    {
+                        Nombre = presentador.Nombre,
+                        Apellido = presentador.Apellido,
+                        Telefono = presentador.Telefono,
+                        Email = presentador.Email,
+                        DocumentoIdentidad = presentador.DocumentoIdentidad,
+                        PorcentajeComision = presentador.PorcentajeComision,
+                        FotoUrl = presentador.FotoUrl,
+                        Notas = presentador.Notas
+                    };
+
+                    // Pasar el ID a la vista mediante ViewBag para saber que es una edición
+                    ViewBag.PresentadorId = id;
+                    return PartialView("~/Views/Personal/Presentadores/_Modal_FormPresentador.cshtml", createDto);
                 }
-                // Para nuevo presentador, pasamos null pero con el modelo correcto
+
                 return PartialView("~/Views/Personal/Presentadores/_Modal_FormPresentador.cshtml", new CreatePresentadorDto());
             }
             catch (Exception ex)
@@ -89,13 +105,25 @@ namespace SistemaVIP.Web.Controllers
             }
         }
 
+        // En PersonalController.cs
         [HttpGet]
         public async Task<IActionResult> ObtenerDetallePresentador(int id)
         {
             try
             {
+                // Obtener información del presentador
                 var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/{id}");
-                return PartialView("~/Views/Personal/Presentadores/_Modal_DetallePresentador.cshtml", presentador);
+
+                // Obtener terapeutas asignados
+                var terapeutasAsignados = await _apiService.GetAsync<List<TerapeutasPorPresentadorDto>>($"api/TerapeutasPresentadores/presentador/{id}");
+
+                var detalleCompleto = new PresentadorDetalleDto
+                {
+                    Presentador = presentador,
+                    TerapeutasAsignados = terapeutasAsignados
+                };
+
+                return PartialView("~/Views/Personal/Presentadores/_Modal_DetallePresentador.cshtml", detalleCompleto);
             }
             catch (Exception ex)
             {
