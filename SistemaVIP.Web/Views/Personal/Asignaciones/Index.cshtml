@@ -1,0 +1,21 @@
+﻿@{
+    ViewData["Title"] = "Gestión de Asignaciones";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/asignaciones.css" asp-append-version="true" />
+</head>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            @await Html.PartialAsync("~/Views/Personal/Asignaciones/_MatrizAsignaciones.cshtml")
+        </div>
+    </div>
+
+    <div id="modalSection" style="display: none;">
+        <!-- Aquí se cargarán los modales dinámicamente -->
+    </div>
+</div>
+
+<script src="~/js/asignaciones.js" asp-append-version="true"></script>

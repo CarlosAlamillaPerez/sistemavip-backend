@@ -1,0 +1,66 @@
+﻿@model List<SistemaVIP.Core.DTOs.TerapeutaPresentador.TerapeutaPresentadorDto>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="fa-solid fa-users-gear"></i> ASIGNACIONES TERAPEUTA-PRESENTADOR</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Panel Izquierdo - Lista de Presentadores -->
+            <div class="col-md-4 border-end">
+                <h5 class="mb-3">Presentadores Activos</h5>
+                <div class="list-group" id="lista-presentadores">
+                    @{
+                        var presentadoresAgrupados = Model
+                        .GroupBy(a => new { a.PresentadorId, a.NombrePresentador, a.ApellidoPresentador })
+                        .ToList();
+
+                        foreach (var grupo in presentadoresAgrupados)
+                        {
+                            <a href="#" class="list-group-item list-group-item-action"
+                               data-presentador-id="@grupo.Key.PresentadorId">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@grupo.Key.NombrePresentador @grupo.Key.ApellidoPresentador</h6>
+                                    <small>@grupo.Count() terapeutas</small>
+                                </div>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Panel Derecho - Terapeutas -->
+            <div class="col-md-8">
+                <div id="panel-terapeutas" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Terapeutas Disponibles</h5>
+                        <button class="btn btn-primary btn-sm" id="btn-asignar-terapeuta">
+                            <i class="fa-solid fa-plus"></i> Asignar Terapeuta
+                        </button>
+                    </div>
+
+                    <!-- Tabla de Terapeutas Asignadas -->
+                    <table class="table table-striped" id="tabla-terapeutas-asignadas">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Fecha Asignación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena dinámicamente con JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <<div id="panel-sin-seleccion" class="text-center py-5">
+                    <i class="fas fa-hand-point-left fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Seleccione un presentador para ver sus terapeutas asignadas</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

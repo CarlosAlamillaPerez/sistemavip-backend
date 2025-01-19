@@ -85,5 +85,15 @@ namespace SistemaVIP.Core.DTOs.Presentador
         public List<TerapeutasPorPresentadorDto> TerapeutasAsignados { get; set; }
     }
 
+    public class AsignacionesViewModel
+    {
+        public List<TerapeutaPresentadorDto> Asignaciones { get; set; }
+        public Dictionary<int, List<TerapeutaPresentadorDto>> AsignacionesPorPresentador { get; set; }
 
+        public AsignacionesViewModel()
+        {
+            Asignaciones = new List<TerapeutaPresentadorDto>();
+            AsignacionesPorPresentador = new Dictionary<int, List<TerapeutaPresentadorDto>>();
+        }
+    }
 }

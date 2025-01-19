@@ -1,0 +1,54 @@
+﻿@model List<SistemaVIP.Core.DTOs.Terapeuta.TerapeutaDto>
+
+<div id="contenedor-lista-terapeutas">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex">
+            <h4 class="mb-0"><i class="fa-solid fa-sack-dollar"></i> TERAPEUTAS</h4>
+            <button class="btn btn-light btn-sm ms-auto" id="btn-editar-presentador">
+                <i class="fa-solid fa-plus"></i> Nuevo Terapeuta
+            </button>
+        </div>
+        <div class="card-body">
+            <table id="tablaTerapeutas" class="table text-center table-striped"
+                   data-toggle="table"
+                   data-pagination="true"
+                   data-search="true"
+                   data-mobile-responsive="true"
+                   data-url="/Personal/ObtenerTerapeutas">
+                <thead>
+                    <tr>
+                        <th data-field="nombre" data-sortable="true">Nombre</th>
+                        <th data-field="telefono" data-sortable="true">Teléfono</th>
+                        <th data-field="estatura" data-sortable="true">Estatura</th>
+                        <th data-field="estado" data-sortable="true">Estado</th>
+                        <th data-field="acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var terapeuta in Model)
+                        {
+                            <tr>
+                                <td>@terapeuta.Nombre @terapeuta.Apellido</td>
+                                <td>@terapeuta.Telefono</td>
+                                <td>@terapeuta.Estatura</td>
+                                <td>
+                                    <span class="badge bg-@(terapeuta.Estado == "ACTIVO" ? "success" :
+                                                  terapeuta.Estado == "INACTIVO" ? "danger" : "warning")">
+                                        @terapeuta.Estado
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="btn text-info fa-solid fa-eye" id="btn-detalle-terapeuta" data-id="@terapeuta.Id"></i>
+                                    <i class="btn text-primary fa-solid fa-pen-to-square" id="btn-editar-terapeuta" data-id="@terapeuta.Id"></i>
+                                    <i class="btn text-warning fa-solid fa-exchange-alt btn-estado-terapeuta" data-id="@terapeuta.Id"></i>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

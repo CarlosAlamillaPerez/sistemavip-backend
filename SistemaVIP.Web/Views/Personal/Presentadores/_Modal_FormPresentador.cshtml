@@ -1,10 +1,10 @@
 ﻿@model SistemaVIP.Core.DTOs.Presentador.CreatePresentadorDto
 
 @{
-    var dataId = ViewBag.PresentadorId != null ? $"data-id={ViewBag.PresentadorId}" : "";
+    var presentadorId = ViewBag.PresentadorId;
 }
 
-<form id="formPresentador" autocomplete="off" dataId>
+<form id="formPresentador" autocomplete="off" data-presentador-id="@presentadorId">
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Nombre</label>

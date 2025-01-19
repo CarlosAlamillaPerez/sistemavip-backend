@@ -21,40 +21,110 @@
     <!-- Anti-forgery token para AJAX -->
     @Html.AntiForgeryToken()
 
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SistemaVIP</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="bg-dark">
+            <div class="sidebar-header">
+                <h3>Sistema VIP</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="#personalSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-users"></i> Personal
+                    </a>
+                    <ul class="collapse list-unstyled" id="personalSubmenu">
+                        <li><a href="/Personal/Presentadores">Presentadores</a></li>
+                        <li><a href="/Personal/Terapeutas">Terapeutas</a></li>
+                        <li><a href="/Personal/Asignaciones">Asignaciones</a></li>
                     </ul>
-                    @await Html.PartialAsync("_LoginPartial")
+                </li>
+
+                <li>
+                    <a href="#serviciosSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-calendar-check"></i> Servicios
+                    </a>
+                    <ul class="collapse list-unstyled" id="serviciosSubmenu">
+                        <li><a href="/Servicios/Activos">En Proceso</a></li>
+                        <li><a href="/Servicios/Seguimiento">Seguimiento</a></li>
+                        <li><a href="/Servicios/ServiciosExtra">Servicios Extra</a></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="#pagosSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-dollar-sign"></i> Pagos
+                    </a>
+                    <ul class="collapse list-unstyled" id="pagosSubmenu">
+                        <li><a href="/Pagos/Comprobantes">Comprobantes</a></li>
+                        <li><a href="/Pagos/Conciliacion">Conciliación</a></li>
+                        <li><a href="/Pagos/Liquidaciones">Liquidaciones</a></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="#controlSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-shield-alt"></i> Control
+                    </a>
+                    <ul class="collapse list-unstyled" id="controlSubmenu">
+                        <li><a href="/Control/Blacklist">Blacklist</a></li>
+                        <li><a href="/Control/Bitacora">Bitácora</a></li>
+                        <li><a href="/Control/Alertas">Alertas</a></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="#reportesSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-chart-bar"></i> Reportes
+                    </a>
+                    <ul class="collapse list-unstyled" id="reportesSubmenu">
+                        <li><a href="/Reportes/Presentadores">Por Presentador</a></li>
+                        <li><a href="/Reportes/Terapeutas">Por Terapeuta</a></li>
+                        <li><a href="/Reportes/Servicios">Por Servicio</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <!-- Navbar superior -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn-toggle-sidebar">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </button>
+
+                    <div class="ms-auto">
+                        @await Html.PartialAsync("_LoginPartial")
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Dashboard Principal -->
+            <div class="container-fluid p-4">
+                <div class="row" id="dashboard">
+                    <!-- Indicadores principales -->
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5>Servicios Activos</h5>
+                                <h2 id="serviciosActivos">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Más indicadores... -->
+                </div>
+
+                <!-- Contenido principal -->
+                <div class="row">
+                    <div class="col-12">
+                        @RenderBody()
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - SistemaVIP - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
-    </footer>
+    </div>
 
     <!-- jQuery Plugins -->
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>

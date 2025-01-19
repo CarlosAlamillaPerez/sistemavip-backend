@@ -24,24 +24,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var presentador in Model)
+                    @if (Model != null && Model.Any())
                     {
-                        <tr>
-                            <td>@presentador.Nombre @presentador.Apellido</td>
-                            <td>@presentador.Telefono</td>
-                            <td>
-                                <span class="badge bg-@(presentador.Estado == "ACTIVO" ? "success" :
+                        @foreach (var presentador in Model)
+                        {
+                            <tr>
+                                <td>@presentador.Nombre @presentador.Apellido</td>
+                                <td>@presentador.Telefono</td>
+                                <td>
+                                    <span class="badge bg-@(presentador.Estado == "ACTIVO" ? "success" :
                                                   presentador.Estado == "INACTIVO" ? "danger" : "warning")">
-                                    @presentador.Estado
-                                </span>
-                            </td>
-                            <td>
-                                <i class="btn text-info fa-solid fa-eye" id="btn-detalle-presentador"
-                                   data-id="@presentador.Id"></i>
-                                <i class="btn text-primary fa-solid fa-pen-to-square" id="btn-editar-presentador"
-                                   data-id="@presentador.Id"></i>
-                            </td>
-                        </tr>
+                                        @presentador.Estado
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="btn text-info fa-solid fa-eye" id="btn-detalle-presentador" data-id="@presentador.Id"></i>
+                                    <i class="btn text-primary fa-solid fa-pen-to-square" id="btn-editar-presentador" data-id="@presentador.Id"></i>
+                                    <i class="btn text-warning fa-solid fa-exchange-alt btn-estado-presentador" data-id="@presentador.Id"></i>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>

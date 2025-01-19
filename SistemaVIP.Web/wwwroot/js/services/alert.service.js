@@ -86,6 +86,19 @@ class AlertService {
             }
         });
     }
+
+    successWithTimer(title, text, timer = 2500, callback) {
+        Swal.fire({
+            icon: 'success',
+            title,
+            text,
+            timer: timer,
+            showConfirmButton: false,
+            timerProgressBar: true
+        }).then(() => {
+            if (callback) callback();
+        });
+    }
 }
 
 // Exportar como singleton

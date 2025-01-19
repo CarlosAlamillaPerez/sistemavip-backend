@@ -1,0 +1,35 @@
+﻿@model List<SistemaVIP.Core.DTOs.Terapeuta.TerapeutaDto>
+
+<div class="row">
+    <div class="col-12">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Estatura</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var terapeuta in Model)
+                    {
+                        <tr>
+                            <td>@terapeuta.Nombre @terapeuta.Apellido</td>
+                            <td>@terapeuta.Telefono</td>
+                            <td>@terapeuta.Estatura</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm btn-asignar"
+                                        data-terapeuta-id="@terapeuta.Id">
+                                    <i class="fas fa-plus"></i> Asignar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

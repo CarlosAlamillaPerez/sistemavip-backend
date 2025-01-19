@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Presentador;
+using SistemaVIP.Core.DTOs.Terapeuta;
 using SistemaVIP.Core.DTOs.TerapeutaPresentador;
 using SistemaVIP.Web.Attributes;
 using SistemaVIP.Web.Interfaces;
@@ -37,10 +38,35 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Terapeutas()
+        public async Task<IActionResult> Terapeutas()
         {
-            return View();
+            try
+            {
+                var terapeutas = await _apiService.GetAsync<List<TerapeutaDto>>("api/Terapeuta");
+                return View("~/Views/Personal/Terapeutas/Index.cshtml", terapeutas);
+            }
+            catch (Exception ex)
+            {
+                // Si hay un error, devolvemos una lista vacía para evitar el null
+                return View("~/Views/Personal/Terapeutas/Index.cshtml", new List<TerapeutaDto>());
+            }
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Asignaciones()
+        {
+            try
+            {
+                var asignaciones = await _apiService.GetAsync<List<TerapeutaPresentadorDto>>("api/TerapeutasPresentadores");
+                return View("~/Views/Personal/Asignaciones/Index.cshtml", asignaciones ?? new List<TerapeutaPresentadorDto>());
+            }
+            catch (Exception ex)
+            {
+                return View("~/Views/Personal/Asignaciones/Index.cshtml", new List<TerapeutaPresentadorDto>());
+            }
+        }
+
 
         #region Presentadores
         [HttpGet]
@@ -181,8 +207,150 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var terapeutas = await _apiService.GetAsync<List<dynamic>>("api/Terapeuta/obtener-todos");
+                var isAuthenticated = User.Identity.IsAuthenticated;
+                var roles = User.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .ToList();
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                var terapeutas = await _apiService.GetAsync<List<TerapeutaDto>>("api/Terapeuta");
                 return Json(new { success = true, data = terapeutas });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerFormularioTerapeuta(int? id)
+        {
+            try
+            {
+                if (id.HasValue)
+                {
+                    var terapeuta = await _apiService.GetAsync<TerapeutaDto>($"api/Terapeuta/{id}");
+                    var createDto = new CreateTerapeutaDto
+                    {
+                        Nombre = terapeuta.Nombre,
+                        Apellido = terapeuta.Apellido,
+                        Telefono = terapeuta.Telefono,
+                        Email = terapeuta.Email,
+                        DocumentoIdentidad = terapeuta.DocumentoIdentidad,
+                        Estatura = terapeuta.Estatura,
+                        FotoUrl = terapeuta.FotoUrl,
+                        FechaNacimiento = terapeuta.FechaNacimiento,
+                        TarifaBase = terapeuta.TarifaBase,
+                        TarifaExtra = terapeuta.TarifaExtra,
+                        Notas = terapeuta.Notas
+                    };
+
+                    ViewBag.TerapeutaId = id;
+                    return PartialView("~/Views/Personal/Terapeutas/_Modal_FormTerapeuta.cshtml", createDto);
+                }
+
+                return PartialView("~/Views/Personal/Terapeutas/_Modal_FormTerapeuta.cshtml", new CreateTerapeutaDto());
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerDetalleTerapeuta(int id)
+        {
+            try
+            {
+                var terapeuta = await _apiService.GetAsync<TerapeutaDto>($"api/Terapeuta/{id}");
+                return PartialView("~/Views/Personal/Terapeutas/_Modal_DetalleTerapeuta.cshtml", terapeuta);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GuardarTerapeuta([FromBody] CreateTerapeutaDto model)
+        {
+            try
+            {
+                var result = await _apiService.PostAsync<TerapeutaDto>("api/Terapeuta", model);
+                return Json(new { success = true, message = "Terapeuta guardada exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> ActualizarTerapeuta(int id, [FromBody] UpdateTerapeutaDto model)
+        {
+            try
+            {
+                var result = await _apiService.PutAsync<TerapeutaDto>($"api/Terapeuta/{id}", model);
+                return Json(new { success = true, message = "Terapeuta actualizada exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        #endregion
+
+        #region Asignaciones
+        [HttpGet]
+        public async Task<IActionResult> ObtenerTerapeutasDisponibles(int presentadorId)
+        {
+            try
+            {
+                var terapeutas = await _apiService.GetAsync<List<TerapeutaDto>>($"api/Terapeuta/disponibles/{presentadorId}");
+                return PartialView("~/Views/Personal/Asignaciones/_Modal_FormAsignacion.cshtml", terapeutas);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AsignarTerapeuta([FromBody] AsignarTerapeutaPresentadorDto dto)
+        {
+            try
+            {
+                var result = await _apiService.PostAsync<TerapeutaPresentadorDto>("api/TerapeutasPresentadores", dto);
+                return Json(new { success = true, message = "Terapeuta asignada exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> CambiarEstadoAsignacion(int presentadorId, int terapeutaId, [FromBody] CambioEstadoDto dto)
+        {
+            try
+            {
+                var result = await _apiService.PutAsync<bool>($"api/TerapeutasPresentadores/{terapeutaId}/{presentadorId}/estado", dto);
+                return Json(new { success = true, message = "Estado actualizado exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> EliminarAsignacion(int presentadorId, int terapeutaId)
+        {
+            try
+            {
+                await _apiService.DeleteAsync($"api/TerapeutasPresentadores/{terapeutaId}/{presentadorId}");
+                return Json(new { success = true, message = "Asignación eliminada exitosamente" });
             }
             catch (Exception ex)
             {

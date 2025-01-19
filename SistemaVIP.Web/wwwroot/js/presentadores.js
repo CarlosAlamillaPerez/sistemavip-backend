@@ -1,12 +1,4 @@
 ﻿$(document).ready(function () {
-    $('#tablaPresentadores').bootstrapTable({
-        onLoadSuccess: function (data) {
-            console.log('Datos cargados:', data);
-        },
-        onLoadError: function (status, res) {
-            console.error('Error al cargar datos:', status, res);
-        }
-    });
 
     // Eventos directos para los botones
     $(document).on('click', '#btn-detalle-presentador', function () {
@@ -88,6 +80,7 @@ function obtenerFormularioPresentador(id = null) {
 }
 
 function guardarPresentador(id, form) {
+    const presentadorId = form.attr('data-presentador-id');
     const formData = form.serializeArray();
     const data = {};
 
@@ -96,15 +89,15 @@ function guardarPresentador(id, form) {
     });
 
     $.ajax({
-        url: id ? `/Personal/ActualizarPresentador/${id}` : '/Personal/GuardarPresentador',
-        type: id ? 'PUT' : 'POST',
+        url: presentadorId ? `/Personal/ActualizarPresentador/${presentadorId}` : '/Personal/GuardarPresentador',
+        type: presentadorId ? 'PUT' : 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function (response) {
             if (response.success) {
                 Swal.close();
-                window.alertService.success('Éxito', response.message);
-                window.location.reload();
+                window.alertService.successWithTimer('Éxito',response.message,1500,() => window.location.reload()
+                );
             } else {
                 window.alertService.error('Error', response.message);
             }
