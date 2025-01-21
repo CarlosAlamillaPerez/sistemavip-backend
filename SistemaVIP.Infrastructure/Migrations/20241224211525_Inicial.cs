@@ -467,7 +467,7 @@ namespace SistemaVIP.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ServiciosTerapeutas", x => x.Id);
-                    //table.CheckConstraint("CK_ServiciosTerapeutas_GastosTransporte", "([GastosTransporte] IS NULL AND EXISTS (SELECT 1 FROM Servicios s WHERE s.Id = ServicioId AND s.TipoUbicacion = 'CONSULTORIO')) OR ([GastosTransporte] IS NOT NULL AND EXISTS (SELECT 1 FROM Servicios s WHERE s.Id = ServicioId AND s.TipoUbicacion = 'DOMICILIO'))");
+                    table.CheckConstraint("CK_ServiciosTerapeutas_GastosTransporte", "([GastosTransporte] IS NULL AND EXISTS (SELECT 1 FROM Servicios s WHERE s.Id = ServicioId AND s.TipoUbicacion = 'CONSULTORIO')) OR ([GastosTransporte] IS NOT NULL AND EXISTS (SELECT 1 FROM Servicios s WHERE s.Id = ServicioId AND s.TipoUbicacion = 'DOMICILIO'))");
                     table.ForeignKey(
                         name: "FK_ServiciosTerapeutas_AspNetUsers_IdPresentadorConfirmaPago",
                         column: x => x.IdPresentadorConfirmaPago,

@@ -1,6 +1,8 @@
 ﻿using SistemaVIP.Web.Controllers;
 using SistemaVIP.Web.Interfaces;
 using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 
 namespace SistemaVIP.Web.Services
@@ -24,35 +26,6 @@ namespace SistemaVIP.Web.Services
             var handler = new HttpClientHandler { CookieContainer = cookieContainer };
             _httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
         }
-
-        //private void AddAuthenticationHeader()
-        //{
-        //    var cookies = _httpContextAccessor.HttpContext?.Request.Cookies;
-        //    if (cookies != null)
-        //    {
-        //        // Log todas las cookies disponibles
-        //        foreach (var cookie in cookies)
-        //        {
-        //            _logger.LogInformation($"Cookie: {cookie.Key} = {cookie.Value}");
-        //        }
-
-        //        // Asegurarnos de enviar la cookie de autenticación
-        //        var authCookie = cookies[".AspNetCore.Identity.Application"] ??
-        //                        cookies["SistemaVIP.Auth"];  // Verificar ambos nombres de cookie
-
-        //        if (!string.IsNullOrEmpty(authCookie))
-        //        {
-        //            if (!_httpClient.DefaultRequestHeaders.Contains("Cookie"))
-        //            {
-        //                _httpClient.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={authCookie}");
-        //            }
-        //        }
-        //        else
-        //        {
-        //            _logger.LogWarning("No se encontró cookie de autenticación");
-        //        }
-        //    }
-        //}
 
         private void AddAuthenticationHeader()
         {
@@ -85,17 +58,6 @@ namespace SistemaVIP.Web.Services
                 }
             }
         }
-
-        //public async Task<T> GetAsync<T>(string endpoint)
-        //{
-        //    AddAuthenticationHeader();
-        //    var response = await _httpClient.GetAsync(endpoint);
-        //    if (response.IsSuccessStatusCode)
-        //    {
-        //        return await response.Content.ReadFromJsonAsync<T>();
-        //    }
-        //    throw new HttpRequestException($"Error calling API: {response.StatusCode}");
-        //}
 
         public async Task<T> GetAsync<T>(string endpoint)
         {
@@ -153,7 +115,6 @@ namespace SistemaVIP.Web.Services
             throw new HttpRequestException(errorMessage);
         }
 
-
         public async Task<T> PutAsync<T>(string endpoint, object data)
         {
             AddAuthenticationHeader();
@@ -163,6 +124,59 @@ namespace SistemaVIP.Web.Services
                 return await response.Content.ReadFromJsonAsync<T>();
             }
             throw new HttpRequestException($"Error calling API: {response.StatusCode}");
+        }
+
+        public async Task<T> PatchAsync<T>(string endpoint, object data)
+        {
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Patch, endpoint)
+                {
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(data),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+
+                var response = await _httpClient.SendAsync(request);
+
+                if (response.StatusCode == HttpStatusCode.NoContent)
+                {
+                    // Si es un bool lo que esperamos y la respuesta es exitosa (204)
+                    if (typeof(T) == typeof(bool))
+                    {
+                        return (T)(object)true;
+                    }
+                    return default;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        throw new UnauthorizedAccessException("No autorizado para realizar esta operación");
+                    }
+
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"Error llamando a la API: {response.StatusCode}\nDetalle: {errorContent}");
+                }
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (string.IsNullOrEmpty(responseContent))
+                {
+                    return default;
+                }
+
+                return JsonSerializer.Deserialize<T>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error en PatchAsync: {ex.Message}", ex);
+            }
         }
 
         public async Task<bool> DeleteAsync(string endpoint)

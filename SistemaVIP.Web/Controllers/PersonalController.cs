@@ -307,8 +307,18 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var terapeutas = await _apiService.GetAsync<List<TerapeutaDto>>($"api/Terapeuta/disponibles/{presentadorId}");
-                return PartialView("~/Views/Personal/Asignaciones/_Modal_FormAsignacion.cshtml", terapeutas);
+                // 1. Obtener todas las terapeutas activas
+                var terapeutasActivas = await _apiService.GetAsync<List<TerapeutaDto>>("api/Terapeuta/activos");
+
+                // 2. Obtener terapeutas ya asignadas al presentador
+                var terapeutasAsignadas = await _apiService.GetAsync<List<TerapeutasPorPresentadorDto>>($"api/TerapeutasPresentadores/presentador/{presentadorId}");
+
+                // 3. Filtrar solo las no asignadas
+                var terapeutasDisponibles = terapeutasActivas
+                    .Where(t => !terapeutasAsignadas.Any(ta => ta.TerapeutaId == t.Id))
+                    .ToList();
+
+                return PartialView("~/Views/Personal/Asignaciones/_Modal_FormAsignacion.cshtml", terapeutasDisponibles);
             }
             catch (Exception ex)
             {
@@ -331,16 +341,47 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpPatch]
-        public async Task<IActionResult> CambiarEstadoAsignacion(int presentadorId, int terapeutaId, [FromBody] CambioEstadoDto dto)
+        public async Task<IActionResult> CambiarEstadoAsignacion([FromBody] CambioEstadoAsignacionDto dto)
         {
+            // Agregar log para debug
+            var userRoles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value);
+            _logger.LogInformation($"Usuario autenticado como: {User.Identity.Name}");
+            _logger.LogInformation($"Roles del usuario: {string.Join(", ", userRoles)}");
+
             try
             {
-                var result = await _apiService.PutAsync<bool>($"api/TerapeutasPresentadores/{terapeutaId}/{presentadorId}/estado", dto);
-                return Json(new { success = true, message = "Estado actualizado exitosamente" });
+                if (string.IsNullOrEmpty(dto.Estado))
+                {
+                    return Json(new { success = false, message = "El estado no puede estar vacío" });
+                }
+                var result = await _apiService.PatchAsync<bool>(
+                    $"api/TerapeutasPresentadores/{dto.TerapeutaId}/{dto.PresentadorId}/estado",
+                    dto.Estado
+                );
+                if (result)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = $"Estado de asignación actualizado a {dto.Estado} exitosamente"
+                    });
+                }
+                else
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "No se pudo actualizar el estado de la asignación"
+                    });
+                }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error al actualizar el estado: {ex.Message}"
+                });
             }
         }
 

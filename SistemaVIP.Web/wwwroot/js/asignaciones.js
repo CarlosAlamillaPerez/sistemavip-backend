@@ -37,6 +37,11 @@
         const terapeutaId = $(this).data('terapeuta-id');
         eliminarAsignacion(presentadorSeleccionadoId, terapeutaId);
     });
+
+    $(document).on('click', '.btn-asignar', function () {
+        const terapeutaId = $(this).data('terapeuta-id');
+        asignarTerapeuta(presentadorSeleccionadoId, terapeutaId);
+    });
 });
 
 function cargarTerapeutasAsignadas(presentadorId) {
@@ -130,9 +135,13 @@ function cambiarEstadoAsignacion(presentadorId, terapeutaId, nuevoEstado) {
         `¿Está seguro de cambiar el estado de la asignación a ${nuevoEstado}?`,
         () => {
             $.ajax({
-                url: `/Personal/CambiarEstadoAsignacion/${presentadorId}/${terapeutaId}`,
+                url: `/Personal/CambiarEstadoAsignacion`,
                 type: 'PATCH',
-                data: JSON.stringify({ estado: nuevoEstado }),
+                data: JSON.stringify({
+                    presentadorId: presentadorId,
+                    terapeutaId: terapeutaId,
+                    estado: nuevoEstado
+                }),
                 contentType: 'application/json',
                 success: function (response) {
                     if (response.success) {
@@ -154,8 +163,12 @@ function eliminarAsignacion(presentadorId, terapeutaId) {
         '¿Está seguro de eliminar esta asignación?',
         () => {
             $.ajax({
-                url: `/Personal/EliminarAsignacion/${presentadorId}/${terapeutaId}`,
+                url: `/Personal/EliminarAsignacion`,
                 type: 'DELETE',
+                data: JSON.stringify({
+                    presentadorId: presentadorId,
+                    terapeutaId: terapeutaId,
+                }),
                 success: function (response) {
                     if (response.success) {
                         window.alertService.successWithTimer('Éxito', response.message, 1500, () => {
@@ -170,8 +183,3 @@ function eliminarAsignacion(presentadorId, terapeutaId) {
     );
 }
 
-// Agregar al document.ready
-$(document).on('click', '.btn-asignar', function () {
-    const terapeutaId = $(this).data('terapeuta-id');
-    asignarTerapeuta(presentadorSeleccionadoId, terapeutaId);
-});
