@@ -12,7 +12,6 @@
         obtenerFormularioPresentador(id);
     });
 
-
     // Evento submit del formulario con validación
     $(document).on('submit', '#formPresentador', function (e) {
         e.preventDefault();
@@ -39,6 +38,66 @@
     $(document).on('shown.bs.modal', function () {
         $.validator.unobtrusive.parse("#formPresentador");
     });
+
+    $(document).on('click', '.btn-estado-presentador', function () {
+        const id = $(this).data('id');
+        const estadoActual = $(this).closest('tr').find('.badge').text().trim();
+
+        // Lista de estados disponibles excluyendo el actual
+        const estados = ['ACTIVO', 'INACTIVO', 'SUSPENDIDO'].filter(e => e !== estadoActual);
+
+        // Creamos las opciones del select
+        const opcionesEstado = estados.map(estado =>
+            `<option value="${estado}">${estado}</option>`
+        ).join('');
+
+        Swal.fire({
+            title: 'Cambiar Estado',
+            html: `
+            <div class="mb-3">
+                <label class="form-label">Seleccione nuevo estado:</label>
+                <select id="nuevoEstado" class="form-select">
+                    ${opcionesEstado}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Motivo del cambio:</label>
+                <textarea id="motivoEstado" class="form-control" rows="3" required></textarea>
+            </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Cambiar',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const nuevoEstado = $('#nuevoEstado').val();
+                const motivo = $('#motivoEstado').val();
+
+                if (!motivo?.trim()) {
+                    Swal.showValidationMessage('El motivo es requerido');
+                    return false;
+                }
+
+                return { estado: nuevoEstado, motivoEstado: motivo };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/Personal/CambiarEstadoPresentador?id=${id}&estado=${result.value.estado}&motivo=${result.value.motivo}`,
+                    type: 'PATCH',
+                    contentType: 'application/json',
+                    success: function (response) {
+                        if (response.success) {
+                            window.alertService.successWithTimer('Éxito', response.message, 1500, () => {
+                                window.location.reload();
+                            });
+                        } else {
+                            window.alertService.error('Error', response.message);
+                        }
+                    }
+                });
+            }
+        });
+    });
+
 });
 
 function obtenerDetallePresentador(id) {
@@ -106,14 +165,4 @@ function guardarPresentador(id, form) {
             window.alertService.error('Error', 'Hubo un problema al procesar la solicitud');
         }
     });
-}
-
-function queryParamsTerapeutas() {
-    return {
-        id: $('#presentadorId').val()
-    };
-}
-
-function formatoFecha(value) {
-    return value ? new Date(value).toLocaleDateString() : '';
 }

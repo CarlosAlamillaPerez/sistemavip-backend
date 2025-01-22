@@ -18,6 +18,7 @@
                 <thead>
                     <tr>
                         <th data-field="nombre" data-sortable="true">Nombre</th>
+                        <th data-field="documentoIdentidad" data-sortable="true">Ciudad de trabajo</th>
                         <th data-field="telefono" data-sortable="true">Teléfono</th>
                         <th data-field="estado" data-sortable="true">Estado</th>
                         <th data-field="acciones">Acciones</th>
@@ -30,6 +31,7 @@
                         {
                             <tr>
                                 <td>@presentador.Nombre @presentador.Apellido</td>
+                                <td>@presentador.DocumentoIdentidad</td>
                                 <td>@presentador.Telefono</td>
                                 <td>
                                     <span class="badge bg-@(presentador.Estado == "ACTIVO" ? "success" :

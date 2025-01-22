@@ -75,11 +75,6 @@ function actualizarTablaTerapeutas(terapeutas) {
                 </td>
                 <td>${moment(terapeuta.fechaAsignacion).format('DD/MM/YYYY')}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning btn-estado-asignacion"
-                            data-terapeuta-id="${terapeuta.terapeutaId}"
-                            data-estado="${terapeuta.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO'}">
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>
                     <button class="btn btn-sm btn-danger btn-eliminar-asignacion"
                             data-terapeuta-id="${terapeuta.terapeutaId}">
                         <i class="fas fa-trash"></i>
@@ -121,6 +116,12 @@ function asignarTerapeuta(presentadorId, terapeutaId) {
                 Swal.close();
                 window.alertService.successWithTimer('Éxito', response.message, 1500, () => {
                     cargarTerapeutasAsignadas(presentadorId);
+
+                    // Actualizar el contador en la lista de presentadores
+                    const presentadorElement = $(`#lista-presentadores .list-group-item[data-presentador-id="${presentadorId}"]`);
+                    const contadorElement = presentadorElement.find('small');
+                    const numeroActual = parseInt(contadorElement.text().split(' ')[0]);
+                    contadorElement.text(`${numeroActual + 1} terapeutas`);
                 });
             } else {
                 window.alertService.error('Error', response.message);
@@ -163,16 +164,20 @@ function eliminarAsignacion(presentadorId, terapeutaId) {
         '¿Está seguro de eliminar esta asignación?',
         () => {
             $.ajax({
-                url: `/Personal/EliminarAsignacion`,
+                url: `/Personal/EliminarAsignacion?presentadorId=${presentadorId}&terapeutaId=${terapeutaId}`,
                 type: 'DELETE',
-                data: JSON.stringify({
-                    presentadorId: presentadorId,
-                    terapeutaId: terapeutaId,
-                }),
+                contentType: 'application/json',
                 success: function (response) {
                     if (response.success) {
                         window.alertService.successWithTimer('Éxito', response.message, 1500, () => {
+                            // Actualizar tabla de terapeutas
                             cargarTerapeutasAsignadas(presentadorId);
+                            
+                            // Actualizar el contador en la lista de presentadores
+                            const presentadorElement = $(`#lista-presentadores .list-group-item[data-presentador-id="${presentadorId}"]`);
+                            const contadorElement = presentadorElement.find('small');
+                            const numeroActual = parseInt(contadorElement.text().split(' ')[0]);
+                            contadorElement.text(`${numeroActual - 1} terapeutas`);
                         });
                     } else {
                         window.alertService.error('Error', response.message);

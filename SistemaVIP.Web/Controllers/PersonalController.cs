@@ -199,6 +199,21 @@ namespace SistemaVIP.Web.Controllers
             }
         }
 
+        [HttpPatch]
+        public async Task<IActionResult> CambiarEstadoPresentador(int id, string estado, string motivo)
+        {
+            try
+            {
+                var dto = new CambioEstadoDto { Estado = estado, MotivoEstado = motivo };
+                var result = await _apiService.PatchAsync<bool>($"api/Presentador/{id}/estado", dto);
+                return Json(new { success = true, message = "Estado actualizado exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         #endregion
 
         #region Terapeutas
@@ -241,8 +256,6 @@ namespace SistemaVIP.Web.Controllers
                         Estatura = terapeuta.Estatura,
                         FotoUrl = terapeuta.FotoUrl,
                         FechaNacimiento = terapeuta.FechaNacimiento,
-                        TarifaBase = terapeuta.TarifaBase,
-                        TarifaExtra = terapeuta.TarifaExtra,
                         Notas = terapeuta.Notas
                     };
 
@@ -277,6 +290,10 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
+                // Establecer las tarifas fijas
+                model.TarifaBase = 1200m;
+                model.TarifaExtra = 1200m;
+
                 var result = await _apiService.PostAsync<TerapeutaDto>("api/Terapeuta", model);
                 return Json(new { success = true, message = "Terapeuta guardada exitosamente" });
             }
@@ -291,8 +308,25 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
+                var terapeutaActual = await _apiService.GetAsync<TerapeutaDto>($"api/Terapeuta/{id}");
+
                 var result = await _apiService.PutAsync<TerapeutaDto>($"api/Terapeuta/{id}", model);
                 return Json(new { success = true, message = "Terapeuta actualizada exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> CambiarEstadoTerapeuta(int id, string estado, string motivo)
+        {
+            try
+            {
+                var dto = new CambioEstadoDto { Estado = estado, MotivoEstado = motivo };
+                var result = await _apiService.PatchAsync<bool>($"api/Terapeuta/{id}/estado", dto);
+                return Json(new { success = true, message = "Estado actualizado exitosamente" });
             }
             catch (Exception ex)
             {
@@ -399,5 +433,7 @@ namespace SistemaVIP.Web.Controllers
             }
         }
         #endregion
+
+
     }
 }

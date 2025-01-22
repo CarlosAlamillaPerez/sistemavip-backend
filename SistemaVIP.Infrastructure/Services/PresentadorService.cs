@@ -147,18 +147,13 @@ namespace SistemaVIP.Infrastructure.Services
             }
 
             // Actualizar solo los campos proporcionados
-            if (!string.IsNullOrEmpty(dto.Nombre))
-                presentador.Nombre = dto.Nombre;
-            if (!string.IsNullOrEmpty(dto.Apellido))
-                presentador.Apellido = dto.Apellido;
-            if (!string.IsNullOrEmpty(dto.Telefono))
-                presentador.Telefono = dto.Telefono;
-            if (!string.IsNullOrEmpty(dto.Email))
-                presentador.Email = dto.Email;
-            if (!string.IsNullOrEmpty(dto.FotoUrl))
-                presentador.FotoUrl = dto.FotoUrl;
-            if (!string.IsNullOrEmpty(dto.Notas))
-                presentador.Notas = dto.Notas;
+            if (!string.IsNullOrEmpty(dto.Nombre)) presentador.Nombre = dto.Nombre;
+            if (!string.IsNullOrEmpty(dto.Apellido)) presentador.Apellido = dto.Apellido;
+            if (!string.IsNullOrEmpty(dto.Telefono)) presentador.Telefono = dto.Telefono;
+            if (!string.IsNullOrEmpty(dto.Email)) presentador.Email = dto.Email;
+            if (!string.IsNullOrEmpty(dto.FotoUrl)) presentador.FotoUrl = dto.FotoUrl;
+            if (!string.IsNullOrEmpty(dto.DocumentoIdentidad)) presentador.DocumentoIdentidad = dto.DocumentoIdentidad;
+            if (!string.IsNullOrEmpty(dto.Notas)) presentador.Notas = dto.Notas;
 
             presentador.UltimaActualizacion = DateTime.UtcNow;
 

@@ -119,20 +119,14 @@ namespace SistemaVIP.Infrastructure.Services
             }
 
             // Actualizar solo los campos proporcionados
-            if (!string.IsNullOrEmpty(dto.Nombre))
-                terapeuta.Nombre = dto.Nombre;
-            if (!string.IsNullOrEmpty(dto.Apellido))
-                terapeuta.Apellido = dto.Apellido;
-            if (!string.IsNullOrEmpty(dto.Telefono))
-                terapeuta.Telefono = dto.Telefono;
-            if (!string.IsNullOrEmpty(dto.Email))
-                terapeuta.Email = dto.Email;
-            if (!string.IsNullOrEmpty(dto.Estatura))
-                terapeuta.Estatura = dto.Estatura;
-            if (!string.IsNullOrEmpty(dto.FotoUrl))
-                terapeuta.FotoUrl = dto.FotoUrl;
-            if (!string.IsNullOrEmpty(dto.Notas))
-                terapeuta.Notas = dto.Notas;
+            if (!string.IsNullOrEmpty(dto.Nombre)) terapeuta.Nombre = dto.Nombre;
+            if (!string.IsNullOrEmpty(dto.Apellido)) terapeuta.Apellido = dto.Apellido;
+            if (!string.IsNullOrEmpty(dto.Telefono)) terapeuta.Telefono = dto.Telefono;
+            if (!string.IsNullOrEmpty(dto.Email)) terapeuta.Email = dto.Email;
+            if (!string.IsNullOrEmpty(dto.Estatura)) terapeuta.Estatura = dto.Estatura;
+            if (!string.IsNullOrEmpty(dto.FotoUrl)) terapeuta.FotoUrl = dto.FotoUrl;
+            if (!string.IsNullOrEmpty(dto.Notas)) terapeuta.Notas = dto.Notas;
+            if (!string.IsNullOrEmpty(dto.DocumentoIdentidad)) terapeuta.DocumentoIdentidad = dto.DocumentoIdentidad;
 
             terapeuta.UltimaActualizacion = DateTime.UtcNow;
 

@@ -39,6 +39,8 @@ namespace SistemaVIP.Core.DTOs.Terapeuta
         [StringLength(20)]
         public string Telefono { get; set; }
 
+        public int Edad { get; set; }
+
         [Required]
         [EmailAddress]
         [StringLength(100)]
@@ -51,8 +53,7 @@ namespace SistemaVIP.Core.DTOs.Terapeuta
         [StringLength(20)]
         public string Estatura { get; set; }
 
-        [Required]
-        [StringLength(20)]
+        [Required(ErrorMessage = "La ciudad de trabajo es requerida")]
         public string DocumentoIdentidad { get; set; }
 
         public string? FotoUrl { get; set; }
@@ -78,6 +79,9 @@ namespace SistemaVIP.Core.DTOs.Terapeuta
 
         [StringLength(20)]
         public string? Telefono { get; set; }
+
+        [Required(ErrorMessage = "La ciudad de trabajo es requerida")]
+        public string DocumentoIdentidad { get; set; }
 
         [EmailAddress]
         [StringLength(100)]

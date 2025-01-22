@@ -5,80 +5,89 @@
 }
 
 <form id="formTerapeuta" autocomplete="off" data-terapeuta-id="@terapeutaId">
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Nombre</label>
-            <input type="text" class="form-control" asp-for="Nombre" autocomplete="off">
-            <span asp-validation-for="Nombre" class="text-danger"></span>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Apellido</label>
-            <input type="text" class="form-control" asp-for="Apellido" autocomplete="off">
-            <span asp-validation-for="Apellido" class="text-danger"></span>
-        </div>
-    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" asp-for="Nombre" autocomplete="off" placeholder="Nombre">
+                        <label class="form-label">Nombre</label>
+                        <span asp-validation-for="Nombre" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" asp-for="Apellido" autocomplete="off" placeholder="Apellido">
+                        <label class="form-label">Apellido</label>
+                        <span asp-validation-for="Apellido" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Teléfono</label>
-            <input type="tel" class="form-control" asp-for="Telefono" autocomplete="off">
-            <span asp-validation-for="Telefono" class="text-danger"></span>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" asp-for="Email" autocomplete="off">
-            <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
-    </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="tel" class="form-control" asp-for="Telefono" autocomplete="off" placeholder="Teléfono">
+                        <label class="form-label">Teléfono</label>
+                        <span asp-validation-for="Telefono" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="email" class="form-control" asp-for="Email" autocomplete="off" placeholder="Email">
+                        <label class="form-label">Email</label>
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Documento de Identidad</label>
-            <input type="text" class="form-control" asp-for="DocumentoIdentidad" autocomplete="off">
-            <span asp-validation-for="DocumentoIdentidad" class="text-danger"></span>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Estatura</label>
-            <input type="text" class="form-control" asp-for="Estatura" autocomplete="off">
-            <span asp-validation-for="Estatura" class="text-danger"></span>
-        </div>
-    </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" asp-for="DocumentoIdentidad" autocomplete="off" placeholder="Ciudad de trabajo">
+                        <label class="form-label">Ciudad de trabajo</label>
+                        <span asp-validation-for="DocumentoIdentidad" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" asp-for="Estatura" autocomplete="off" placeholder="Estatura">
+                        <label class="form-label">Estatura</label>
+                        <span asp-validation-for="Estatura" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Fecha de Nacimiento</label>
-            <input type="date" class="form-control" asp-for="FechaNacimiento" autocomplete="off">
-            <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">URL de Foto (opcional)</label>
-            <input type="text" class="form-control" asp-for="FotoUrl" autocomplete="off">
-            <span asp-validation-for="FotoUrl" class="text-danger"></span>
-        </div>
-    </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="date" class="form-control" asp-for="FechaNacimiento" value="@DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd")" autocomplete="off" placeholder="Fecha de Nacimiento">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" asp-for="FotoUrl" autocomplete="off" placeholder="URL de Foto (opcional)">
+                        <label class="form-label">URL de Foto (opcional)</label>
+                        <span asp-validation-for="FotoUrl" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Tarifa Base</label>
-            <input type="number" class="form-control" asp-for="TarifaBase" autocomplete="off">
-            <span asp-validation-for="TarifaBase" class="text-danger"></span>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Tarifa Extra</label>
-            <input type="number" class="form-control" asp-for="TarifaExtra" autocomplete="off">
-            <span asp-validation-for="TarifaExtra" class="text-danger"></span>
-        </div>
-    </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="form-floating">
+                        <textarea class="form-control" asp-for="Notas" rows="3" autocomplete="off" placeholder="Notas (opcional)"></textarea>
+                        <label class="form-label">Notas (opcional)</label>
+                        <span asp-validation-for="Notas" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-12 mb-3">
-            <label class="form-label">Notas (opcional)</label>
-            <textarea class="form-control" asp-for="Notas" rows="3" autocomplete="off"></textarea>
-            <span asp-validation-for="Notas" class="text-danger"></span>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">Guardar</button>
+            </div>
         </div>
-    </div>
-
-    <div class="d-flex justify-content-end gap-2">
-        <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
 </form>

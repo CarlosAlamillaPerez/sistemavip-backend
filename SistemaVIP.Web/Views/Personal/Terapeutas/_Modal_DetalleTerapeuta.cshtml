@@ -10,12 +10,6 @@
             <dt class="col-sm-4">Teléfono</dt>
             <dd class="col-sm-8">@Model.Telefono</dd>
 
-            <dt class="col-sm-4">Email</dt>
-            <dd class="col-sm-8">@Model.Email</dd>
-
-            <dt class="col-sm-4">Documento</dt>
-            <dd class="col-sm-8">@Model.DocumentoIdentidad</dd>
-
             <dt class="col-sm-4">Fecha Nacimiento</dt>
             <dd class="col-sm-8">@Model.FechaNacimiento.ToString("dd/MM/yyyy")</dd>
 
@@ -42,6 +36,16 @@
 
             <dt class="col-sm-4">Fecha Alta</dt>
             <dd class="col-sm-8">@Model.FechaAlta.ToString("dd/MM/yyyy")</dd>
+        </dl>
+    </div>
+
+    <div class="col-md-12">
+        <dl class="row">
+            <dt class="col-sm-4">Email</dt>
+            <dd class="col-sm-8">@Model.Email</dd>
+
+            <dt class="col-sm-4">Ciudad de trabajo</dt>
+            <dd class="col-sm-8">@Model.DocumentoIdentidad</dd>
         </dl>
     </div>
 </div>

@@ -47,8 +47,7 @@ namespace SistemaVIP.Core.DTOs.Presentador
             ErrorMessage = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial")]
         public string Password { get; set; }
 
-        [Required(ErrorMessage = "El documento de identidad es requerido")]
-        [StringLength(20, ErrorMessage = "El documento no puede tener más de 20 caracteres")]
+        [Required(ErrorMessage = "La ciudad de trabajo es requerida")]
         public string DocumentoIdentidad { get; set; }
 
         [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100")]
@@ -69,6 +68,14 @@ namespace SistemaVIP.Core.DTOs.Presentador
 
         [StringLength(20)]
         public string? Telefono { get; set; }
+
+        [Required(ErrorMessage = "La contraseña es requerida")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
+            ErrorMessage = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial")]
+        public string Password { get; set; }
+
+        [Required(ErrorMessage = "La ciudad de trabajo es requerida")]
+        public string DocumentoIdentidad { get; set; }
 
         [EmailAddress]
         [StringLength(100)]
