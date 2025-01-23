@@ -1,0 +1,25 @@
+﻿<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="fa-solid fa-list-check"></i> SEGUIMIENTO DE SERVICIOS</h4>
+    </div>
+    <div class="card-body">
+        <table id="tablaServicios" class="table table-striped"
+               data-toggle="table"
+               data-pagination="true"
+               data-search="true"
+               data-url="/Servicios/ObtenerServicios">
+            <thead>
+                <tr>
+                    <th data-field="id">ID</th>
+                    <th data-field="fechaServicio">Fecha</th>
+                    <th data-field="presentador">Presentador</th>
+                    <th data-field="terapeuta">Terapeuta</th>
+                    <th data-field="tipoUbicacion">Ubicación</th>
+                    <th data-field="montoTotal">Monto</th>
+                    <th data-field="estado" data-formatter="formatearEstado">Estado</th>
+                    <th data-field="acciones" data-formatter="formatearAcciones">Acciones</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>

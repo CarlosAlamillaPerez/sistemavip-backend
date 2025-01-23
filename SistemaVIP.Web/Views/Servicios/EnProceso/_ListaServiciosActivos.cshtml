@@ -1,0 +1,32 @@
+﻿<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="fa-solid fa-clock"></i> SERVICIOS EN PROCESO</h4>
+        <div>
+            <button class="btn btn-light btn-sm" id="btn-refrescar">
+                <i class="fa-solid fa-sync"></i> Actualizar
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <table id="tablaServiciosActivos" class="table table-striped"
+               data-toggle="table"
+               data-pagination="true"
+               data-search="true"
+               data-show-refresh="true"
+               data-url="/Servicios/ObtenerServiciosActivos">
+            <thead>
+                <tr>
+                    <th data-field="id">ID</th>
+                    <th data-field="presentador">Presentador</th>
+                    <th data-field="terapeuta">Terapeuta</th>
+                    <th data-field="horaInicio">Hora Inicio</th>
+                    <th data-field="tiempoRestante">Tiempo Restante</th>
+                    <th data-field="progreso" data-formatter="formatearProgreso">Progreso</th>
+                    <th data-field="ubicacion">Ubicación</th>
+                    <th data-field="montoTotal">Monto</th>
+                    <th data-field="acciones" data-formatter="formatearAcciones">Acciones</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>

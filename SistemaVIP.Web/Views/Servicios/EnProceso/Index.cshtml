@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Servicios en Proceso";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/servicios.css" asp-append-version="true" />
+</head>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Panel de Indicadores -->
+        <div class="col-12 mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Servicios Activos</h5>
+                            <h2 id="contador-activos">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Por Finalizar</h5>
+                            <h2 id="contador-finalizando">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Finalizados Hoy</h5>
+                            <h2 id="contador-finalizados">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total del Día</h5>
+                            <h2 id="monto-total">$0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Servicios -->
+        <div class="col-12">
+            @await Html.PartialAsync("~/Views/Servicios/EnProceso/_ListaServiciosActivos.cshtml")
+        </div>
+    </div>
+</div>
+
+<script src="~/js/servicios/servicios-activos.js" asp-append-version="true"></script>
