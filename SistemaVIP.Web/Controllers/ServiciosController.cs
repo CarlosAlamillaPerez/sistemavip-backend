@@ -20,9 +20,9 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult EnProceso()
+        public IActionResult Activos()
         {
-            return View("~/Views/Servicios/EnProceso/Index.cshtml");
+            return View("~/Views/Servicios/Activos/Index.cshtml");
         }
 
         [HttpGet]
@@ -142,52 +142,6 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ObtenerCatalogoServiciosExtra()
-        {
-            try
-            {
-                var catalogo = await _apiService.GetAsync<List<ServicioExtraCatalogoDto>>(
-                    "api/Servicio/servicios-extra/catalogo");
-                return Json(new { success = true, data = catalogo });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ObtenerServiciosExtra(int servicioTerapeutaId)
-        {
-            try
-            {
-                var serviciosExtra = await _apiService.GetAsync<List<ServicioExtraDetalleDto>>(
-                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra");
-                return Json(new { success = true, data = serviciosExtra });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AgregarServicioExtra(int servicioTerapeutaId, [FromBody] CreateServicioExtraDto dto)
-        {
-            try
-            {
-                await _apiService.PostAsync<object>(
-                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra",
-                    dto);
-                return Json(new { success = true, message = "Servicio extra agregado correctamente" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet]
         public async Task<IActionResult> ObtenerComprobantesPago(int servicioTerapeutaId)
         {
             try
@@ -283,5 +237,131 @@ namespace SistemaVIP.Web.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
+
+        #region ServicioExtra
+        // En ServiciosController.cs, agregaremos las siguientes acciones:
+
+        [HttpGet]
+        public async Task<IActionResult> ServiciosExtra()
+        {
+            return View("~/Views/Servicios/ServicioExtra/Index.cshtml");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerServiciosExtraCatalogo()
+        {
+            try
+            {
+                var catalogo = await _apiService.GetAsync<List<ServicioExtraCatalogoDto>>("api/Servicio/servicios-extra/catalogo");
+                return Json(new { success = true, data = catalogo });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AgregarServicioExtra(int servicioTerapeutaId, [FromBody] CreateServicioExtraDto dto)
+        {
+            try
+            {
+                var resultado = await _apiService.PostAsync<object>(
+                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra",
+                    dto);
+                return Json(new { success = true, message = "Servicio extra agregado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerServiciosExtra(int servicioTerapeutaId)
+        {
+            try
+            {
+                var serviciosExtra = await _apiService.GetAsync<List<ServicioExtraDetalleDto>>(
+                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra");
+                return Json(new { success = true, data = serviciosExtra });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> ActualizarServicioExtra(
+            int servicioTerapeutaId,
+            int servicioExtraId,
+            [FromBody] UpdateServicioExtraDto dto)
+        {
+            try
+            {
+                var resultado = await _apiService.PutAsync<ServicioExtraDetalleDto>(
+                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra/{servicioExtraId}",
+                    dto);
+                return Json(new { success = true, data = resultado });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> EliminarServicioExtra(int servicioTerapeutaId, int servicioExtraId)
+        {
+            try
+            {
+                await _apiService.DeleteAsync(
+                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra/{servicioExtraId}");
+                return Json(new { success = true, message = "Servicio extra eliminado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerDetalleServicioExtra(int servicioTerapeutaId, int servicioExtraId)
+        {
+            try
+            {
+                var servicio = await _apiService.GetAsync<ServicioExtraDetalleDto>(
+                    $"api/Servicio/{servicioTerapeutaId}/servicios-extra/{servicioExtraId}");
+                return PartialView("~/Views/Servicios/ServicioExtra/_DetalleServicioExtra.cshtml", servicio);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerFormularioServicioExtra(int? servicioTerapeutaId, int? servicioExtraId = null)
+        {
+            try
+            {
+                if (servicioExtraId.HasValue)
+                {
+                    var servicio = await _apiService.GetAsync<ServicioExtraDetalleDto>(
+                        $"api/Servicio/{servicioTerapeutaId}/servicios-extra/{servicioExtraId}");
+                    ViewBag.ServicioExtraId = servicioExtraId;
+                    return PartialView("~/Views/Servicios/ServicioExtra/_FormServicioExtra.cshtml", servicio);
+                }
+
+                return PartialView("~/Views/Servicios/ServicioExtra/_FormServicioExtra.cshtml", null);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        #endregion
     }
 }

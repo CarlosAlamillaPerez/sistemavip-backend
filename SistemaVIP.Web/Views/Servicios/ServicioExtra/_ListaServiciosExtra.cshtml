@@ -1,5 +1,35 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="fa-solid fa-list-plus"></i> SERVICIOS EXTRA</h4>
+        <button class="btn btn-light btn-sm" id="btn-nuevo-servicio">
+            <i class="fa-solid fa-plus"></i> Nuevo Servicio
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <select class="form-select" id="filtro-estado">
+                    <option value="">Todos los estados</option>
+                    <option value="true">Activos</option>
+                    <option value="false">Inactivos</option>
+                </select>
+            </div>
+        </div>
+
+        <table id="tablaServiciosExtra" class="table table-striped"
+               data-toggle="table"
+               data-pagination="true"
+               data-search="true"
+               data-url="/Servicios/ObtenerServiciosExtra">
+            <thead>
+                <tr>
+                    <th data-field="nombre" data-sortable="true">Nombre</th>
+                    <th data-field="descripcion">Descripción</th>
+                    <th data-field="estado" data-formatter="formatearEstado">Estado</th>
+                    <th data-field="fechaCreacion" data-formatter="formatearFecha">Fecha Creación</th>
+                    <th data-field="acciones" data-formatter="formatearAcciones">Acciones</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
