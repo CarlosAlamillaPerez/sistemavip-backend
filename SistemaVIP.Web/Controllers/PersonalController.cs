@@ -58,7 +58,7 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var asignaciones = await _apiService.GetAsync<List<TerapeutaPresentadorDto>>("api/TerapeutasPresentadores");
+                var asignaciones = await _apiService.GetAsync<List<TerapeutaPresentadorDto>>("api/Presentador/activos");
                 return View("~/Views/Personal/Asignaciones/Index.cshtml", asignaciones ?? new List<TerapeutaPresentadorDto>());
             }
             catch (Exception ex)

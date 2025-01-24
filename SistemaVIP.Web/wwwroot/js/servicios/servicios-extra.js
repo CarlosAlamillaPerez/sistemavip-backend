@@ -1,14 +1,15 @@
 ﻿// servicios-extra.js
 
+// Variable global
+let tablaCatalogo = null;
 $(document).ready(function () {
-    // Variables globales
-    let tablaCatalogo = null;
-    let servicioTerapeutaIdActual = null;
-
-    // Inicialización
-    inicializarTabla();
-    inicializarEventos();
-
+    // Aseguramos que las dependencias estén cargadas
+    if ($().bootstrapTable) {
+        inicializarTabla();
+        inicializarEventos();
+    } else {
+        console.error('Bootstrap Table no está disponible');
+    }
     // Eventos para los botones principales
     $(document).on('click', '#btn-nuevo-servicio', function () {
         mostrarFormularioServicio();
@@ -45,6 +46,13 @@ $(document).ready(function () {
 
 // Función de inicialización de la tabla
 function inicializarTabla() {
+    if (!$.fn.bootstrapTable) {
+        console.error('Bootstrap Table no está cargado');
+        return;
+    }
+
+    $('#tablaServiciosExtra').bootstrapTable('destroy');
+
     tablaCatalogo = $('#tablaServiciosExtra').bootstrapTable({
         url: '/Servicios/ObtenerServiciosExtraCatalogo',
         pagination: true,
@@ -52,6 +60,10 @@ function inicializarTabla() {
         pageSize: 10,
         pageList: [10, 25, 50, 100],
         locale: 'es-MX',
+        // Agregamos el responseHandler
+        responseHandler: function (res) {
+            return res.success ? res.data : [];
+        },
         columns: [{
             field: 'nombre',
             title: 'Nombre',
@@ -63,11 +75,6 @@ function inicializarTabla() {
             field: 'estado',
             title: 'Estado',
             formatter: formatearEstado
-        }, {
-            field: 'fechaCreacion',
-            title: 'Fecha Creación',
-            formatter: formatearFecha,
-            sortable: true
         }, {
             field: 'acciones',
             title: 'Acciones',
@@ -143,14 +150,15 @@ function mostrarFormularioServicio(id = null) {
 
 function guardarServicioExtra(form) {
     const servicioExtraId = form.data('id');
-    const data = form.serializeArray().reduce((obj, item) => {
-        obj[item.name] = item.value;
-        return obj;
-    }, {});
+    const data = {
+        nombre: form.find('[name="Nombre"]').val(),
+        descripcion: form.find('[name="Descripcion"]').val(),
+        estado: form.find('[name="Estado"]').val() === 'true'
+    };
 
     const url = servicioExtraId ?
-        `/Servicios/ActualizarServicioExtra/${servicioExtraId}` :
-        '/Servicios/AgregarServicioExtra';
+        `/Servicios/ActualizarServicioExtraCatalogo/${servicioExtraId}` :
+        '/Servicios/AgregarServicioExtraCatalogo';
 
     $.ajax({
         url: url,
@@ -162,7 +170,7 @@ function guardarServicioExtra(form) {
                 Swal.close();
                 window.alertService.successWithTimer(
                     'Éxito',
-                    response.message,
+                    servicioExtraId ? 'Servicio extra actualizado correctamente' : 'Servicio extra agregado correctamente',
                     1500,
                     () => {
                         tablaCatalogo.bootstrapTable('refresh');
@@ -176,7 +184,7 @@ function guardarServicioExtra(form) {
 }
 
 function mostrarDetalleServicio(id) {
-    $.get(`/Servicios/ObtenerDetalleServicioExtra/${id}`)
+    $.get(`/Servicios/ObtenerDetalleServicioExtraCatalogo/${id}`)
         .done(function (response) {
             Swal.fire({
                 title: 'Detalle del Servicio Extra',
@@ -201,7 +209,7 @@ function confirmarEliminacion(id) {
 
 function eliminarServicioExtra(id) {
     $.ajax({
-        url: `/Servicios/EliminarServicioExtra/${id}`,
+        url: `/Servicios/EliminarServicioExtraCatalogo/${id}`,
         type: 'DELETE',
         success: function (response) {
             if (response.success) {

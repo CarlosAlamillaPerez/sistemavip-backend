@@ -231,6 +231,65 @@ namespace SistemaVIP.API.Controllers
             }
         }
 
+        [HttpGet("servicios-extra/catalogo/{id}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult<ServicioExtraCatalogoDto>> GetServicioExtraCatalogo(int id)
+        {
+            try
+            {
+                var resultado = await _servicioExtraService.GetServicioExtraCatalogoByIdAsync(id);
+                if (resultado == null)
+                    return NotFound(new { message = "Servicio extra no encontrado" });
+
+                return Ok(resultado);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Error interno al obtener el servicio extra" });
+            }
+        }
+
+        [HttpPut("servicios-extra/catalogo/{id}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult<ServicioExtraCatalogoDto>> UpdateServicioExtraCatalogo(int id, [FromBody] UpdateServicioExtraCatalogoDto dto)
+        {
+            try
+            {
+                var resultado = await _servicioExtraService.UpdateServicioExtraCatalogoAsync(id, dto);
+                return Ok(resultado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Error interno al actualizar el servicio extra" });
+            }
+        }
+
+        [HttpDelete("servicios-extra/catalogo/{id}")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> DeleteServicioExtraCatalogo(int id)
+        {
+            try
+            {
+                var resultado = await _servicioExtraService.DeleteServicioExtraCatalogoAsync(id);
+                if (!resultado)
+                    return NotFound(new { message = "Servicio extra no encontrado" });
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Error interno al eliminar el servicio extra" });
+            }
+        }
+
         [HttpPost("{servicioTerapeutaId}/servicios-extra")]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}, {UserRoles.PRESENTADOR}")]
         public async Task<ActionResult> AgregarServiciosExtra(int servicioTerapeutaId, [FromBody] CreateServicioExtraDto dto)
@@ -262,6 +321,25 @@ namespace SistemaVIP.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Error al obtener los servicios extra", error = ex.Message });
+            }
+        }
+        
+        [HttpPost("servicios-extra/catalogo")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult<ServicioExtraCatalogoDto>> CreateServicioExtraCatalogo([FromBody] CreateServicioExtraCatalogoDto dto)
+        {
+            try
+            {
+                var resultado = await _servicioExtraService.CreateServicioExtraCatalogoAsync(dto);
+                return Ok(resultado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno al crear el servicio extra" });
             }
         }
 

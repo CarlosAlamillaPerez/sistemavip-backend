@@ -1,4 +1,6 @@
-﻿<div class="row">
+﻿@model SistemaVIP.Core.DTOs.ServicioExtraCatalogoDto
+
+<div class="row">
     <div class="col-12">
         <dl class="row">
             <dt class="col-sm-3">Nombre</dt>
@@ -13,15 +15,6 @@
                     @(Model.Estado ? "Activo" : "Inactivo")
                 </span>
             </dd>
-
-            <dt class="col-sm-3">Fecha Creación</dt>
-            <dd class="col-sm-9">@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</dd>
-
-            @if (!string.IsNullOrEmpty(Model.Notas))
-            {
-                <dt class="col-sm-3">Notas</dt>
-                <dd class="col-sm-9">@Model.Notas</dd>
-            }
         </dl>
     </div>
 </div>

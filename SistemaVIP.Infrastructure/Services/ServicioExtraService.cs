@@ -145,5 +145,98 @@ namespace SistemaVIP.Infrastructure.Services
 
             return true;
         }
+        public async Task<ServicioExtraCatalogoDto> CreateServicioExtraCatalogoAsync(CreateServicioExtraCatalogoDto dto)
+        {
+            // Validar que no exista un servicio con el mismo nombre
+            var existeServicio = await _context.ServiciosExtraCatalogo
+                .AnyAsync(s => s.Nombre.ToLower() == dto.Nombre.ToLower());
+
+            if (existeServicio)
+                throw new InvalidOperationException("Ya existe un servicio extra con este nombre");
+
+            var servicioExtra = new ServicioExtraCatalogoModel
+            {
+                Nombre = dto.Nombre,
+                Descripcion = dto.Descripcion,
+                Estado = dto.Estado
+            };
+
+            _context.ServiciosExtraCatalogo.Add(servicioExtra);
+            await _context.SaveChangesAsync();
+
+            return new ServicioExtraCatalogoDto
+            {
+                Id = servicioExtra.Id,
+                Nombre = servicioExtra.Nombre,
+                Descripcion = servicioExtra.Descripcion,
+                Estado = servicioExtra.Estado
+            };
+        }
+        public async Task<ServicioExtraCatalogoDto> UpdateServicioExtraCatalogoAsync(int id, UpdateServicioExtraCatalogoDto dto)
+        {
+            var servicioExtra = await _context.ServiciosExtraCatalogo
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (servicioExtra == null)
+                throw new InvalidOperationException("Servicio extra no encontrado");
+
+            // Verificar si existe otro servicio con el mismo nombre (excluyendo el actual)
+            var existeServicio = await _context.ServiciosExtraCatalogo
+                .AnyAsync(s => s.Id != id && s.Nombre.ToLower() == dto.Nombre.ToLower());
+
+            if (existeServicio)
+                throw new InvalidOperationException("Ya existe otro servicio extra con este nombre");
+
+            servicioExtra.Nombre = dto.Nombre;
+            servicioExtra.Descripcion = dto.Descripcion;
+            servicioExtra.Estado = dto.Estado;
+
+            await _context.SaveChangesAsync();
+
+            return new ServicioExtraCatalogoDto
+            {
+                Id = servicioExtra.Id,
+                Nombre = servicioExtra.Nombre,
+                Descripcion = servicioExtra.Descripcion,
+                Estado = servicioExtra.Estado
+            };
+        }
+        public async Task<bool> DeleteServicioExtraCatalogoAsync(int id)
+        {
+            var servicioExtra = await _context.ServiciosExtraCatalogo
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (servicioExtra == null)
+                return false;
+
+            // Verificar si el servicio está siendo utilizado
+            var tieneServiciosAsociados = await _context.ServiciosExtra
+                .AnyAsync(se => se.ServicioExtraCatalogoId == id);
+
+            if (tieneServiciosAsociados)
+                throw new InvalidOperationException("No se puede eliminar el servicio extra porque está siendo utilizado en servicios existentes");
+
+            _context.ServiciosExtraCatalogo.Remove(servicioExtra);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<ServicioExtraCatalogoDto> GetServicioExtraCatalogoByIdAsync(int id)
+        {
+            var servicioExtra = await _context.ServiciosExtraCatalogo
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (servicioExtra == null)
+                return null;
+
+            return new ServicioExtraCatalogoDto
+            {
+                Id = servicioExtra.Id,
+                Nombre = servicioExtra.Nombre,
+                Descripcion = servicioExtra.Descripcion,
+                Estado = servicioExtra.Estado
+            };
+        }
+
     }
 }

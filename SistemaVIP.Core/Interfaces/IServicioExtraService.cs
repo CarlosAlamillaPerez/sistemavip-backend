@@ -12,5 +12,9 @@ namespace SistemaVIP.Core.Interfaces
         Task<List<ServicioExtraDetalleDto>> GetServiciosExtraByServicioAsync(int servicioTerapeutaId);
         Task<ServicioExtraDetalleDto> UpdateServicioExtraAsync(int servicioTerapeutaId, int servicioExtraId, UpdateServicioExtraDto dto);
         Task<bool> DeleteServicioExtraAsync(int servicioTerapeutaId, int servicioExtraId);
+        Task<ServicioExtraCatalogoDto> CreateServicioExtraCatalogoAsync(CreateServicioExtraCatalogoDto dto);
+        Task<ServicioExtraCatalogoDto> UpdateServicioExtraCatalogoAsync(int id, UpdateServicioExtraCatalogoDto dto);
+        Task<bool> DeleteServicioExtraCatalogoAsync(int id);
+        Task<ServicioExtraCatalogoDto> GetServicioExtraCatalogoByIdAsync(int id);
     }
 }
