@@ -21,7 +21,6 @@ namespace SistemaVIP.Infrastructure.Services
         public async Task<List<ServicioExtraCatalogoDto>> GetCatalogoActivoAsync()
         {
             return await _context.ServiciosExtraCatalogo
-                .Where(s => s.Estado)
                 .Select(s => new ServicioExtraCatalogoDto
                 {
                     Id = s.Id,

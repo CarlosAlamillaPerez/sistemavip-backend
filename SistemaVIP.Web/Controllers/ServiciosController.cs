@@ -239,8 +239,6 @@ namespace SistemaVIP.Web.Controllers
 
 
         #region ServicioExtra
-
-
         [HttpGet]
         public async Task<IActionResult> ObtenerServiciosExtraCatalogo()
         {
@@ -302,18 +300,19 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ObtenerFormularioServicioExtraCatalogo(int? id = null)
+        public async Task<IActionResult> ObtenerFormularioServicioExtraCatalogo(int? id)
         {
             try
             {
                 if (id.HasValue)
                 {
                     var servicio = await _apiService.GetAsync<ServicioExtraCatalogoDto>(
-                        $"api/Servicio/servicios-extra/catalogo/{id}");
-                    ViewBag.ServicioExtraId = id;
+                        $"api/Servicio/servicios-extra/catalogo/{id.Value}");
+
+                    ViewBag.ServicioExtraId = id.Value;
                     return PartialView("~/Views/Servicios/ServicioExtra/_FormServicioExtra.cshtml", servicio);
                 }
-                return PartialView("~/Views/Servicios/ServicioExtra/_FormServicioExtra.cshtml", null);
+                return PartialView("~/Views/Servicios/ServicioExtra/_FormServicioExtra.cshtml", new ServicioExtraCatalogoDto());
             }
             catch (Exception ex)
             {

@@ -6,7 +6,6 @@ $(document).ready(function () {
     // Aseguramos que las dependencias estén cargadas
     if ($().bootstrapTable) {
         inicializarTabla();
-        inicializarEventos();
     } else {
         console.error('Bootstrap Table no está disponible');
     }
@@ -14,12 +13,6 @@ $(document).ready(function () {
     $(document).on('click', '#btn-nuevo-servicio', function () {
         mostrarFormularioServicio();
     });
-
-    $(document).on('click', '.btn-editar-servicio', function () {
-        const servicioExtraId = $(this).data('id');
-        mostrarFormularioServicio(servicioExtraId);
-    });
-
     $(document).on('click', '.btn-detalle-servicio', function () {
         const servicioExtraId = $(this).data('id');
         mostrarDetalleServicio(servicioExtraId);
@@ -28,11 +21,6 @@ $(document).ready(function () {
     $(document).on('click', '.btn-eliminar-servicio', function () {
         const servicioExtraId = $(this).data('id');
         confirmarEliminacion(servicioExtraId);
-    });
-
-    // Evento para el filtro de estado
-    $('#filtro-estado').on('change', function () {
-        tablaCatalogo.bootstrapTable('refresh');
     });
 
     // Handler para el formulario
@@ -127,11 +115,12 @@ function formatearAcciones(value, row) {
 
 // Métodos CRUD y operaciones
 function mostrarFormularioServicio(id = null) {
-    const url = '/Servicios/ObtenerFormularioServicioExtra';
-    const params = id ? { servicioExtraId: id } : {};
+    const url = '/Servicios/ObtenerFormularioServicioExtraCatalogo' + (id ? `?id=${id}` : '');
 
-    $.get(url, params)
-        .done(function (response) {
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function (response) {
             Swal.fire({
                 title: id ? 'Editar Servicio Extra' : 'Nuevo Servicio Extra',
                 html: response,
@@ -139,13 +128,15 @@ function mostrarFormularioServicio(id = null) {
                 showCloseButton: true,
                 showConfirmButton: false,
                 didOpen: () => {
+                    // Solo inicializamos las validaciones
                     $.validator.unobtrusive.parse("#formServicioExtra");
                 }
             });
-        })
-        .fail(function (error) {
+        },
+        error: function (xhr) {
             window.alertService.error('Error', 'No se pudo cargar el formulario');
-        });
+        }
+    });
 }
 
 function guardarServicioExtra(form) {
@@ -228,14 +219,3 @@ function eliminarServicioExtra(id) {
     });
 }
 
-// Funciones auxiliares
-function inicializarEventos() {
-    // Refrescar tabla cuando cambia el filtro de estado
-    $('#filtro-estado').on('change', function () {
-        tablaCatalogo.bootstrapTable('refresh', {
-            query: {
-                estado: $(this).val()
-            }
-        });
-    });
-}
