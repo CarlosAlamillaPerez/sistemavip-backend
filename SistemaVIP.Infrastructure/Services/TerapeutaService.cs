@@ -72,10 +72,9 @@ namespace SistemaVIP.Infrastructure.Services
         {
             // Validar que no exista otro terapeuta con el mismo email o documento
             if (await _context.Terapeutas.AnyAsync(t =>
-                t.Email == dto.Email ||
-                t.DocumentoIdentidad == dto.DocumentoIdentidad))
+                t.Email == dto.Email))
             {
-                throw new InvalidOperationException("Ya existe un terapeuta con el mismo email o documento de identidad.");
+                throw new InvalidOperationException("Ya existe un terapeuta con el mismo email.");
             }
 
             var terapeuta = new TerapeutaModel

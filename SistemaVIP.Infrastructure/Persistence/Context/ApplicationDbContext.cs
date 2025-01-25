@@ -97,14 +97,17 @@ namespace SistemaVIP.Infrastructure.Persistence.Context
                 entity.HasKey(tp => new { tp.TerapeutaId, tp.PresentadorId });
 
                 entity.HasOne(tp => tp.Terapeuta)
-                    .WithMany()
+                    .WithMany(t => t.TerapeutasPresentadores)
                     .HasForeignKey(tp => tp.TerapeutaId)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(tp => tp.Presentador)
-                    .WithMany()
+                    .WithMany(p => p.TerapeutasPresentadores)
                     .HasForeignKey(tp => tp.PresentadorId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(tp => tp.Estado)
+                    .IsRequired();
             });
 
             // Configurar la relación ServiciosTerapeutas

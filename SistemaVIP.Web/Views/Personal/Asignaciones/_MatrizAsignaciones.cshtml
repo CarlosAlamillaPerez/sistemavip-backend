@@ -1,4 +1,4 @@
-﻿@model List<SistemaVIP.Core.DTOs.TerapeutaPresentador.TerapeutaPresentadorDto>
+﻿@model List<SistemaVIP.Core.DTOs.TerapeutaPresentador.AsignacionesPresentadorDto>
 
 <div class="card">
     <div class="card-header bg-primary text-white">
@@ -8,23 +8,31 @@
         <div class="row">
             <!-- Panel Izquierdo - Lista de Presentadores -->
             <div class="col-md-4 border-end">
-                <h5 class="mb-3">Presentadores Activos</h5>
+                <h5 class="mb-3">Presentadores</h5>
                 <div class="list-group" id="lista-presentadores">
-                    @{
-                        var presentadoresAgrupados = Model
-                        .GroupBy(a => new { a.PresentadorId, a.NombrePresentador, a.ApellidoPresentador })
-                        .ToList();
-
-                        foreach (var grupo in presentadoresAgrupados)
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var asignacion in Model)
                         {
-                            <a href="#" class="list-group-item list-group-item-action"
-                               data-presentador-id="@grupo.Key.PresentadorId">
+                            <a href="#" class="list-group-item list-group-item-action @(asignacion.Estado != "ACTIVO" ? "disabled" : "")"
+                               data-presentador-id="@asignacion.PresentadorId">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">@grupo.Key.NombrePresentador @grupo.Key.ApellidoPresentador</h6>
-                                    <small>@grupo.Count() terapeutas</small>
+                                    <h6 class="mb-1">@asignacion.NombreCompleto</h6>
+                                    <small>
+                                        <span class="badge bg-@(asignacion.Estado == "ACTIVO" ? "success" : "danger")">
+                                            @asignacion.Estado
+                                        </span>
+                                        <span class="ms-2">@asignacion.CantidadTerapeutas terapeutas</span>
+                                    </small>
                                 </div>
                             </a>
                         }
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            No hay presentadores disponibles
+                        </div>
                     }
                 </div>
             </div>
@@ -56,7 +64,7 @@
                     </table>
                 </div>
 
-                <<div id="panel-sin-seleccion" class="text-center py-5">
+                <div id="panel-sin-seleccion" class="text-center py-5">
                     <i class="fas fa-hand-point-left fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Seleccione un presentador para ver sus terapeutas asignadas</h5>
                 </div>

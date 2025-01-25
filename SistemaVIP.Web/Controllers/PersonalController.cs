@@ -58,12 +58,11 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
-                var asignaciones = await _apiService.GetAsync<List<TerapeutaPresentadorDto>>("api/Presentador/activos");
-                return View("~/Views/Personal/Asignaciones/Index.cshtml", asignaciones ?? new List<TerapeutaPresentadorDto>());
+                return View("~/Views/Personal/Asignaciones/Index.cshtml");
             }
             catch (Exception ex)
             {
-                return View("~/Views/Personal/Asignaciones/Index.cshtml", new List<TerapeutaPresentadorDto>());
+                return View("~/Views/Personal/Asignaciones/Index.cshtml");
             }
         }
 
@@ -131,7 +130,6 @@ namespace SistemaVIP.Web.Controllers
             }
         }
 
-        // En PersonalController.cs
         [HttpGet]
         public async Task<IActionResult> ObtenerDetallePresentador(int id)
         {
@@ -217,6 +215,7 @@ namespace SistemaVIP.Web.Controllers
         #endregion
 
         #region Terapeutas
+
         [HttpGet]
         public async Task<IActionResult> ObtenerTerapeutas()
         {
@@ -336,6 +335,20 @@ namespace SistemaVIP.Web.Controllers
         #endregion
 
         #region Asignaciones
+        [HttpGet]
+        public async Task<IActionResult> ObtenerMatrizAsignaciones()
+        {
+            try
+            {
+                var asignaciones = await _apiService.GetAsync<List<AsignacionesPresentadorDto>>("api/TerapeutasPresentadores/asignaciones");
+                return Json(new { success = true, data = asignaciones });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> ObtenerTerapeutasDisponibles(int presentadorId)
         {

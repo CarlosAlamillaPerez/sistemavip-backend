@@ -19,6 +19,21 @@ namespace SistemaVIP.API.Controllers
             _service = service;
         }
 
+        [HttpGet("asignaciones")]
+        [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
+        public async Task<ActionResult> GetAsignaciones()
+        {
+            try
+            {
+                var asignaciones = await _service.GetAsignacionesByPresentadorAsync();
+                return Ok(asignaciones);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet]
         [Authorize(Roles = $"{UserRoles.SUPER_ADMIN}, {UserRoles.ADMIN}")]
         public async Task<ActionResult> GetAll()
@@ -92,5 +107,7 @@ namespace SistemaVIP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
     }
 }

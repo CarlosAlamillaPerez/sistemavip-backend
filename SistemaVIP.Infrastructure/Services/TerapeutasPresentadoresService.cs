@@ -43,10 +43,7 @@ namespace SistemaVIP.Infrastructure.Services
         {
             return await _context.TerapeutasPresentadores
                 .Include(tp => tp.Terapeuta)
-                .Where(tp =>
-                    tp.PresentadorId == presentadorId &&
-                    tp.Estado == EstadosEnum.General.ACTIVO &&
-                    tp.Terapeuta.Estado == EstadosEnum.General.ACTIVO)
+                .Where(tp => tp.PresentadorId == presentadorId)
                 .Select(tp => new TerapeutasPorPresentadorDto
                 {
                     TerapeutaId = tp.TerapeutaId,
@@ -169,6 +166,35 @@ namespace SistemaVIP.Infrastructure.Services
             }
         }
 
+        public async Task<List<AsignacionesPresentadorDto>> GetAsignacionesByPresentadorAsync()
+        {
+            return await _context.Presentadores
+                .Include(p => p.TerapeutasPresentadores)
+                    .ThenInclude(tp => tp.Terapeuta)
+                .Select(p => new AsignacionesPresentadorDto
+                {
+                    PresentadorId = p.Id,
+                    NombreCompleto = $"{p.Nombre} {p.Apellido}",
+                    Estado = p.Estado,
+                    CantidadTerapeutas = p.TerapeutasPresentadores.Count,
+                    UltimaAsignacion = p.TerapeutasPresentadores
+                        .OrderByDescending(tp => tp.FechaAsignacion)
+                        .Select(tp => tp.FechaAsignacion)
+                        .FirstOrDefault(),
+                    TerapeutasAsignadas = p.TerapeutasPresentadores
+                        .Select(tp => new TerapeutaAsignadaDto
+                        {
+                            TerapeutaId = tp.TerapeutaId,
+                            NombreCompleto = $"{tp.Terapeuta.Nombre} {tp.Terapeuta.Apellido}",
+                            Telefono = tp.Terapeuta.Telefono,
+                            Email = tp.Terapeuta.Email,
+                            Estado = tp.Estado,
+                            FechaAsignacion = tp.FechaAsignacion
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+        }
 
     }
 }

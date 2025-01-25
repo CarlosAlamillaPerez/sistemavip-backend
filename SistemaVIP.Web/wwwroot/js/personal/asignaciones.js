@@ -2,6 +2,8 @@
     // Variables globales
     let presentadorSeleccionadoId = null;
 
+    cargarMatrizAsignaciones();
+
     // Evento de selección de presentador
     $(document).on('click', '#lista-presentadores .list-group-item', function (e) {
         e.preventDefault();
@@ -42,7 +44,23 @@
         const terapeutaId = $(this).data('terapeuta-id');
         asignarTerapeuta(presentadorSeleccionadoId, terapeutaId);
     });
+
 });
+
+function cargarMatrizAsignaciones() {
+    $.ajax({
+        url: '/Personal/ObtenerMatrizAsignaciones',
+        type: 'GET',
+        success: function (response) {
+            if (response.success) {
+                actualizarVistaAsignaciones(response.data);
+            }
+        },
+        error: function (xhr) {
+            window.alertService.error('Error', 'No se pudieron cargar las asignaciones');
+        }
+    });
+}
 
 function cargarTerapeutasAsignadas(presentadorId) {
     $.ajax({
@@ -51,9 +69,12 @@ function cargarTerapeutasAsignadas(presentadorId) {
         data: { presentadorId: presentadorId },
         success: function (response) {
             if (response.success) {
-                actualizarTablaTerapeutas(response.data);
-            } else {
-                window.alertService.error('Error', response.message);
+                actualizarTablaTerapeutas(response.data.terapeutasAsignadas || []);
+                // Mostrar mensaje si no hay asignaciones
+                if (!response.data.terapeutasAsignadas?.length) {
+                    $('#tabla-terapeutas-asignadas tbody')
+                        .html('<tr><td colspan="5" class="text-center">No hay terapeutas asignadas</td></tr>');
+                }
             }
         }
     });
@@ -188,3 +209,34 @@ function eliminarAsignacion(presentadorId, terapeutaId) {
     );
 }
 
+function actualizarVistaAsignaciones(asignaciones) {
+    const listaContainer = $('#lista-presentadores');
+    listaContainer.empty(); // Limpiamos la lista actual
+
+    if (!asignaciones || asignaciones.length === 0) {
+        listaContainer.html(`
+            <div class="alert alert-info">
+                No hay presentadores disponibles
+            </div>
+        `);
+        return;
+    }
+
+    // Agregamos cada presentador a la lista
+    asignaciones.forEach(asignacion => {
+        listaContainer.append(`
+            <a href="#" class="list-group-item list-group-item-action ${asignacion.estado !== 'ACTIVO' ? 'disabled' : ''}"
+               data-presentador-id="${asignacion.presentadorId}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${asignacion.nombreCompleto}</h6>
+                    <small>
+                        <span class="badge bg-${asignacion.estado === 'ACTIVO' ? 'success' : 'danger'}">
+                            ${asignacion.estado}
+                        </span>
+                        <span class="ms-2">${asignacion.cantidadTerapeutas} terapeutas</span>
+                    </small>
+                </div>
+            </a>
+        `);
+    });
+}

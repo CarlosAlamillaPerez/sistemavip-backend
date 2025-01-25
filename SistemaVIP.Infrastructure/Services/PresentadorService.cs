@@ -83,10 +83,9 @@ namespace SistemaVIP.Infrastructure.Services
         {
             // Validar que no exista otro presentador con el mismo email o documento
             if (await _context.Presentadores.AnyAsync(p =>
-                p.Email == dto.Email ||
-                p.DocumentoIdentidad == dto.DocumentoIdentidad))
+                p.Email == dto.Email))
             {
-                throw new InvalidOperationException("Ya existe un presentador con el mismo email o documento de identidad.");
+                throw new InvalidOperationException("Ya existe un presentador con el mismo email");
             }
 
             // Crear usuario de Identity

@@ -29,5 +29,12 @@ namespace SistemaVIP.Core.Models
 
         // Referencia al usuario de Identity
         public ApplicationUserModel? User { get; set; }
+
+        public virtual ICollection<TerapeutasPresentadoresModel> TerapeutasPresentadores { get; set; }
+
+        public TerapeutaModel()
+        {
+            TerapeutasPresentadores = new HashSet<TerapeutasPresentadoresModel>();
+        }
     }
 }
