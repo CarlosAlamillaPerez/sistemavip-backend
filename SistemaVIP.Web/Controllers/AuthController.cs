@@ -55,11 +55,11 @@ namespace SistemaVIP.Web.Controllers
                     {
                         // Almacenar la información del usuario en Claims
                         var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, result.User.Email),
-                    new Claim(ClaimTypes.Role, result.User.Role),
-                    new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
-                };
+                        {
+                            new Claim(ClaimTypes.Name, result.User.Email),
+                            new Claim(ClaimTypes.Role, result.User.Role),
+                            new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
+                        };
 
                         // Crear la identidad y principal
                         var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
@@ -85,7 +85,7 @@ namespace SistemaVIP.Web.Controllers
                         }
                         else if (result.User.Role == "PRESENTADOR")
                         {
-                            return RedirectToAction("Index", "Home");
+                            return RedirectToAction("Index", "Presentador");
                         }
 
                         // Si hay una URL de retorno y es local, usarla

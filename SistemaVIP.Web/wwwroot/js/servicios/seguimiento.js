@@ -221,6 +221,7 @@ function formatearAcciones(value, row) {
                     data-estado="${row.estado}"
                     title="Verificar pago">
                 <i class="fas fa-check"></i>
+                <span class="d-none d-md-inline ms-1">Verificar Pago</span>
             </button>
         `);
     } else if (row.estado === 'PAGADO') {
@@ -230,6 +231,12 @@ function formatearAcciones(value, row) {
                     data-estado="${row.estado}"
                     title="Liquidar comisiones">
                 <i class="fas fa-dollar-sign"></i>
+                <span class="d-none d-md-inline ms-1">Liquidar</span>
+            </button>
+            <button class="btn btn-sm btn-secondary btn-imprimir-liquidacion"
+                    data-id="${row.id}"
+                    title="Imprimir liquidación">
+                <i class="fas fa-print"></i>
             </button>
         `);
     }
@@ -315,4 +322,31 @@ function guardarCambioEstado(form) {
             }
         }
     });
+}
+
+function validarCambioEstado(servicioId, estadoActual, nuevoEstado) {
+    // Validaciones para cambio a PAGADO
+    if (nuevoEstado === 'PAGADO') {
+        // Verificar que todos los comprobantes estén cargados
+        let montoComprobantes = calcularTotalComprobantes();
+        if (montoComprobantes < montoTotal) {
+            return {
+                valido: false,
+                mensaje: 'El monto de los comprobantes no cubre el total del servicio'
+            };
+        }
+    }
+
+    // Validaciones para cambio a LIQUIDADO
+    if (nuevoEstado === 'LIQUIDADO') {
+        // Verificar que las comisiones estén calculadas
+        if (!comisionesCalculadas) {
+            return {
+                valido: false,
+                mensaje: 'Debe calcular las comisiones antes de liquidar'
+            };
+        }
+    }
+
+    return { valido: true };
 }

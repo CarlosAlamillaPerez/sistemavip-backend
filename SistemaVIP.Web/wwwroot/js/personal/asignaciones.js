@@ -69,9 +69,10 @@ function cargarTerapeutasAsignadas(presentadorId) {
         data: { presentadorId: presentadorId },
         success: function (response) {
             if (response.success) {
-                actualizarTablaTerapeutas(response.data.terapeutasAsignadas || []);
+                actualizarTablaTerapeutas(response.data || []);
+
                 // Mostrar mensaje si no hay asignaciones
-                if (!response.data.terapeutasAsignadas?.length) {
+                if (!response.data?.length) {
                     $('#tabla-terapeutas-asignadas tbody')
                         .html('<tr><td colspan="5" class="text-center">No hay terapeutas asignadas</td></tr>');
                 }
@@ -137,12 +138,7 @@ function asignarTerapeuta(presentadorId, terapeutaId) {
                 Swal.close();
                 window.alertService.successWithTimer('Éxito', response.message, 1500, () => {
                     cargarTerapeutasAsignadas(presentadorId);
-
-                    // Actualizar el contador en la lista de presentadores
-                    const presentadorElement = $(`#lista-presentadores .list-group-item[data-presentador-id="${presentadorId}"]`);
-                    const contadorElement = presentadorElement.find('small');
-                    const numeroActual = parseInt(contadorElement.text().split(' ')[0]);
-                    contadorElement.text(`${numeroActual + 1} terapeutas`);
+                    actualizarContadorTerapeutas(presentadorId);
                 });
             } else {
                 window.alertService.error('Error', response.message);
@@ -191,14 +187,8 @@ function eliminarAsignacion(presentadorId, terapeutaId) {
                 success: function (response) {
                     if (response.success) {
                         window.alertService.successWithTimer('Éxito', response.message, 1500, () => {
-                            // Actualizar tabla de terapeutas
                             cargarTerapeutasAsignadas(presentadorId);
-                            
-                            // Actualizar el contador en la lista de presentadores
-                            const presentadorElement = $(`#lista-presentadores .list-group-item[data-presentador-id="${presentadorId}"]`);
-                            const contadorElement = presentadorElement.find('small');
-                            const numeroActual = parseInt(contadorElement.text().split(' ')[0]);
-                            contadorElement.text(`${numeroActual - 1} terapeutas`);
+                            actualizarContadorTerapeutas(presentadorId);
                         });
                     } else {
                         window.alertService.error('Error', response.message);
@@ -238,5 +228,32 @@ function actualizarVistaAsignaciones(asignaciones) {
                 </div>
             </a>
         `);
+    });
+}
+
+function actualizarContadorTerapeutas(presentadorId) {
+    const presentadorElement = $(`#lista-presentadores .list-group-item[data-presentador-id="${presentadorId}"]`);
+    const contadorElement = presentadorElement.find('small');
+
+    // Obtener el estado del presentador
+    const estadoElement = presentadorElement.find('.badge');
+    const estado = estadoElement.text().trim();
+
+    $.ajax({
+        url: '/Personal/ObtenerTerapeutasPorPresentador',
+        type: 'GET',
+        data: { presentadorId: presentadorId },
+        success: function (response) {
+            if (response.success) {
+                const cantidadTerapeutas = response.data.length;
+                // Actualizar el contador manteniendo el badge de estado
+                contadorElement.html(`
+                    <span class="badge bg-${estado === 'ACTIVO' ? 'success' : 'danger'}">
+                        ${estado}
+                    </span>
+                    <span class="ms-2">${cantidadTerapeutas} terapeutas</span>
+                `);
+            }
+        }
     });
 }

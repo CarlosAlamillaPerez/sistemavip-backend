@@ -1,3 +1,10 @@
 ﻿@{
-    Layout = "_Layout";
+    if (User.IsInRole("PRESENTADOR"))
+    {
+        Layout = "_LayoutPresentador";
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
 }

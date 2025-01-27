@@ -1,0 +1,101 @@
+﻿<nav id="sidebar" class="bg-dark">
+    <div class="sidebar-header">
+        <h3>Sistema VIP</h3>
+        <div class="user-info text-white">
+            <small>@User.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value</small>
+        </div>
+    </div>
+
+    <ul class="list-unstyled components">
+        <!-- Sección de Servicios -->
+        <li>
+            <a href="#serviciosSubmenu" data-bs-toggle="collapse">
+                <i class="fas fa-calendar-check"></i>
+                Gestión de Servicios
+            </a>
+            <ul class="collapse list-unstyled" id="serviciosSubmenu">
+                <li>
+                    <a href="#" id="btnNuevoServicio">
+                        <i class="fas fa-plus"></i> Nuevo Servicio
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="btnVerTerapeutas">
+                        <i class="fas fa-users"></i> Ver Terapeutas
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Resumen Semanal -->
+        <li>
+            <a href="#resumenSubmenu" data-bs-toggle="collapse">
+                <i class="fas fa-chart-bar"></i>
+                Resumen Semanal
+            </a>
+            <ul class="collapse list-unstyled" id="resumenSubmenu">
+                <li>
+                    <a href="#" class="resumen-info" data-tipo="servicios">
+                        <i class="fas fa-list"></i> Total Servicios
+                        <span class="badge bg-primary float-end" id="total-servicios">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="resumen-info" data-tipo="horas">
+                        <i class="fas fa-clock"></i> Horas Trabajadas
+                        <span class="badge bg-info float-end" id="total-horas">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="resumen-info" data-tipo="ganancias">
+                        <i class="fas fa-dollar-sign"></i> Ganancias
+                        <span class="badge bg-success float-end" id="total-ganancias">$0</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Estados de Servicios -->
+        <li>
+            <a href="#estadosSubmenu" data-bs-toggle="collapse">
+                <i class="fas fa-tasks"></i>
+                Estados de Servicios
+            </a>
+            <ul class="collapse list-unstyled" id="estadosSubmenu">
+                <li>
+                    <a href="#" class="filtro-estado" data-estado="PENDIENTE">
+                        <i class="fas fa-clock text-warning"></i> Pendientes
+                        <span class="badge bg-warning float-end" id="count-pendientes">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="filtro-estado" data-estado="EN_PROCESO">
+                        <i class="fas fa-spinner text-primary"></i> En Proceso
+                        <span class="badge bg-primary float-end" id="count-proceso">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="filtro-estado" data-estado="POR_CONFIRMAR">
+                        <i class="fas fa-check text-info"></i> Por Confirmar
+                        <span class="badge bg-info float-end" id="count-confirmar">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="filtro-estado" data-estado="FINALIZADO">
+                        <i class="fas fa-flag-checkered text-success"></i> Finalizados
+                        <span class="badge bg-success float-end" id="count-finalizados">0</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <!-- Footer del Sidebar -->
+    <div class="sidebar-footer">
+        <form asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm">
+            <button type="submit" class="btn btn-link text-white w-100">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+        </form>
+    </div>
+</nav>

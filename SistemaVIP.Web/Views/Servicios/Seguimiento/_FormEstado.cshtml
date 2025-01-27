@@ -2,41 +2,65 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i>
-            Cambiar estado de: <strong>@ViewBag.EstadoActual</strong> a <strong>@ViewBag.NuevoEstado</strong>
+        <!-- Panel de información actual -->
+        <div class="alert alert-info mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Monto Total:</strong> $@Model.MontoTotal
+                </div>
+                <div class="col-md-6">
+                    <strong>Comprobantes:</strong> $@Model.MontoComprobantes
+                </div>
+            </div>
         </div>
+
+        <!-- Detalles de comprobantes si es cambio a PAGADO -->
+        @if (ViewBag.NuevoEstado == "PAGADO")
+        {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Comprobantes de Pago</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Monto</th>
+                                        <th>N° Operación</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Lista de comprobantes -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+        }
+
+        <!-- Detalles de liquidación si es cambio a LIQUIDADO -->
+        @if (ViewBag.NuevoEstado == "LIQUIDADO")
+        {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Detalles de Liquidación</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Monto Terapeuta:</strong> $@Model.MontoTerapeuta</p>
+                                <p><strong>Comisión Empresa:</strong> $@Model.ComisionEmpresa</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Comisión Presentador:</strong> $@Model.ComisionPresentador</p>
+                                <p><strong>Total a Liquidar:</strong> $@Model.TotalLiquidacion</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        }
     </div>
 </div>
-
-<form id="formCambioEstado">
-    <input type="hidden" name="Estado" value="@ViewBag.NuevoEstado" />
-
-    <div class="form-group mb-3">
-        <label class="form-label">Motivo del cambio</label>
-        <textarea class="form-control"
-                  name="MotivoEstado"
-                  rows="3"
-                  required
-                  placeholder="Ingrese el motivo del cambio de estado"></textarea>
-    </div>
-
-    @if (ViewBag.RequiereComprobante == true)
-    {
-        <div class="form-group mb-3">
-            <label class="form-label">Comprobante de pago</label>
-            <input type="file"
-                   class="form-control"
-                   name="Comprobante"
-                   accept=".jpg,.jpeg,.png,.pdf"
-                   required />
-        </div>
-    }
-
-    <div class="d-flex justify-content-end gap-2">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> Guardar Cambio
-        </button>
-    </div>
-</form>

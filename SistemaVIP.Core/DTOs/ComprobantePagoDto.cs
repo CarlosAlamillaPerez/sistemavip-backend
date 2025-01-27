@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SistemaVIP.Core.DTOs.Servicio;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace SistemaVIP.Core.DTOs
@@ -17,6 +18,12 @@ namespace SistemaVIP.Core.DTOs
         public string? MotivoRechazo { get; set; }  // Nuevo campo
         public string NombreUsuarioRegistro { get; set; }
         public decimal Monto { get; set; }
+    }
+
+    public class ComprobanteViewModel
+    {
+        public ServicioDto Servicio { get; set; }
+        public List<ComprobantePagoDto> Comprobantes { get; set; }
     }
 
     public class CreateComprobantesMultiplesDto

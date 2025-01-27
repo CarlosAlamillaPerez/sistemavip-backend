@@ -237,6 +237,48 @@ namespace SistemaVIP.Web.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ObtenerFormularioEstado(int id, string estadoActual, string nuevoEstado)
+        {
+            try
+            {
+                // Obtener información del servicio y sus comprobantes
+                var servicio = await _apiService.GetAsync<ServicioDto>($"api/Servicio/{id}");
+                var comprobantes = await _apiService.GetAsync<List<ComprobantePagoDto>>($"api/Servicio/{id}/comprobantes");
+
+                var model = new CambioEstadoDto
+                {
+                    Estado = nuevoEstado,
+                    MontoTotal = servicio.MontoTotal,
+                    MontoComprobantes = comprobantes.Sum(c => c.Monto),
+                    Comprobantes = comprobantes.Select(c => new ComprobantePagoResumenDto
+                    {
+                        TipoComprobante = c.TipoComprobante,
+                        Monto = c.Monto,
+                        NumeroOperacion = c.NumeroOperacion,
+                        Estado = c.Estado
+                    }).ToList()
+                };
+
+                // Si es cambio a LIQUIDADO, calcular comisiones
+                if (nuevoEstado == "LIQUIDADO")
+                {
+                    var comisiones = await _apiService.GetAsync<ComisionDto>($"api/Comision/servicio/{id}");
+                    model.MontoTerapeuta = comisiones.MontoTerapeuta;
+                    model.ComisionEmpresa = comisiones.MontoComisionEmpresa;
+                    model.ComisionPresentador = comisiones.MontoComisionPresentador;
+                    model.TotalLiquidacion = comisiones.MontoComisionTotal;
+                }
+
+                ViewBag.NuevoEstado = nuevoEstado;
+                return PartialView("~/Views/Servicios/Seguimiento/_FormEstado.cshtml", model);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
 
         #region ServicioExtra
         [HttpGet]

@@ -1,0 +1,218 @@
+/* Contenedor principal */
+.servicios-container {
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+}
+
+/* Estilos para los filtros */
+.filtros-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-select, .form-control {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+    .form-select:focus, .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+
+/* Estilos para la tabla */
+.table-responsive {
+    margin-top: 1rem;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    background-color: transparent;
+}
+
+    .table th {
+        padding: 0.75rem;
+        vertical-align: middle;
+        border-top: 1px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        background-color: #f8f9fa;
+    }
+
+    .table td {
+        padding: 0.75rem;
+        vertical-align: middle;
+    }
+
+/* Estilos para los badges de estado */
+.badge {
+    padding: 0.5em 0.75em;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+/* Estilos para los botones de acción */
+.btn-group {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.btn i {
+    font-size: 0.875rem;
+}
+
+/* Estilos para los estados */
+.estado-pendiente {
+    background-color: #6c757d;
+}
+
+.estado-proceso {
+    background-color: #007bff;
+}
+
+.estado-confirmar {
+    background-color: #17a2b8;
+}
+
+.estado-finalizado {
+    background-color: #28a745;
+}
+
+.estado-pagado {
+    background-color: #28a745;
+}
+
+.estado-cancelado {
+    background-color: #dc3545;
+}
+
+/* Estilos para las ubicaciones */
+.ubicacion-icon {
+    margin-right: 0.5rem;
+}
+
+/* Estilos para los montos */
+.monto {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+}
+
+/* Estilos para el loading */
+#loadingIndicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+/* Estilos para los tooltips */
+.tooltip {
+    font-size: 0.875rem;
+}
+
+/* Estilos para la paginación */
+.pagination {
+    margin: 1rem 0;
+    justify-content: center;
+}
+
+.page-link {
+    padding: 0.375rem 0.75rem;
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Responsive adaptations */
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .btn-sm {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Hover effects */
+.table tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s;
+}
+
+/* Animaciones */
+.fade-enter {
+    opacity: 0;
+}
+
+.fade-enter-active {
+    opacity: 1;
+    transition: opacity 200ms ease-in;
+}
+
+.fade-exit {
+    opacity: 1;
+}
+
+.fade-exit-active {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+
+/* Custom scrollbar */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }

@@ -1,0 +1,93 @@
+﻿@model SistemaVIP.Core.DTOs.Servicio.CreateServicioDto
+
+<form id="formNuevoServicio" class="needs-validation" novalidate>
+    <div class="row mb-3">
+        <!-- Tipo de Ubicación -->
+        <div class="col-12">
+            <label class="form-label">Tipo de Ubicación</label>
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="TipoUbicacion" id="ubicacionConsultorio" value="CONSULTORIO" required>
+                <label class="btn btn-outline-primary" for="ubicacionConsultorio">
+                    <i class="fas fa-hospital"></i> Consultorio
+                </label>
+
+                <input type="radio" class="btn-check" name="TipoUbicacion" id="ubicacionDomicilio" value="DOMICILIO">
+                <label class="btn btn-outline-primary" for="ubicacionDomicilio">
+                    <i class="fas fa-home"></i> Domicilio
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selección de Terapeuta -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <label class="form-label">Terapeuta</label>
+            <select class="form-select" name="TerapeutaId" required>
+                <option value="">Seleccione una terapeuta...</option>
+                <!-- Se llenará dinámicamente -->
+            </select>
+            <div class="invalid-feedback">Por favor seleccione una terapeuta</div>
+        </div>
+    </div>
+
+    <!-- Duración y Montos -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Duración (horas)</label>
+            <input type="number" class="form-control" name="DuracionHoras"
+                   min="1" max="24" required value="1">
+            <div class="invalid-feedback">La duración debe ser entre 1 y 24 horas</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Monto Total</label>
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" name="MontoTotal"
+                       min="1500" step="100" required>
+            </div>
+            <div class="invalid-feedback">El monto mínimo es $1,500</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Comisión (30%)</label>
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="text" class="form-control" id="montoComision" readonly>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campos para Domicilio -->
+    <div id="camposDomicilio" class="row mb-3" style="display: none;">
+        <div class="col-md-8">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" name="Direccion">
+            <div class="invalid-feedback">La dirección es requerida para servicios a domicilio</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Gastos de Transporte</label>
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" name="GastosTransporte"
+                       min="0" step="50">
+            </div>
+        </div>
+        <div class="col-12 mt-2">
+            <label class="form-label">Notas de Transporte</label>
+            <textarea class="form-control" name="NotasTransporte" rows="2"></textarea>
+        </div>
+    </div>
+
+    <!-- Notas Generales -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <label class="form-label">Notas (Opcional)</label>
+            <textarea class="form-control" name="Notas" rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Servicio</button>
+    </div>
+</form>
