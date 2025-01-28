@@ -13,9 +13,23 @@
 
                 <input type="radio" class="btn-check" name="TipoUbicacion" id="ubicacionDomicilio" value="DOMICILIO">
                 <label class="btn btn-outline-primary" for="ubicacionDomicilio">
-                    <i class="fas fa-home"></i> Domicilio
+                    <i class="fas fa-home"></i> Domicilio de Cliente
                 </label>
             </div>
+        </div>
+    </div>
+
+    <!-- Fecha y Hora del Servicio -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Fecha y Hora</label>
+            <input type="datetime-local" class="form-control" name="FechaServicio" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Duración (horas)</label>
+            <input type="number" class="form-control" name="DuracionHoras"
+                   min="1" max="24" required value="1">
+            <div class="invalid-feedback">La duración debe ser entre 1 y 24 horas</div>
         </div>
     </div>
 
@@ -31,15 +45,9 @@
         </div>
     </div>
 
-    <!-- Duración y Montos -->
+    <!-- Montos -->
     <div class="row mb-3">
-        <div class="col-md-4">
-            <label class="form-label">Duración (horas)</label>
-            <input type="number" class="form-control" name="DuracionHoras"
-                   min="1" max="24" required value="1">
-            <div class="invalid-feedback">La duración debe ser entre 1 y 24 horas</div>
-        </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <label class="form-label">Monto Total</label>
             <div class="input-group">
                 <span class="input-group-text">$</span>
@@ -48,13 +56,17 @@
             </div>
             <div class="invalid-feedback">El monto mínimo es $1,500</div>
         </div>
-        <div class="col-md-4">
-            <label class="form-label">Comisión (30%)</label>
+        <div class="col-md-6">
+            <label class="form-label">Comisión Total</label>
             <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="text" class="form-control" id="montoComision" readonly>
+                <input type="number" class="form-control" id="montoComision" required>
             </div>
+            <span id="indicadorComisionHora" class="form-text"></span>
         </div>
+        <!-- Campo oculto para monto terapeuta -->
+        <input type="hidden" id="montoTerapeuta" name="MontoTerapeuta">
+        <div id="alertaMontoTerapeuta" class="col-12 mt-2 d-none"></div>
     </div>
 
     <!-- Campos para Domicilio -->
@@ -69,13 +81,14 @@
             <div class="input-group">
                 <span class="input-group-text">$</span>
                 <input type="number" class="form-control" name="GastosTransporte"
-                       min="0" step="50">
+                       min="0" step="50" value="0">
             </div>
         </div>
         <div class="col-12 mt-2">
             <label class="form-label">Notas de Transporte</label>
             <textarea class="form-control" name="NotasTransporte" rows="2"></textarea>
         </div>
+        <div id="notaTransporte" class="col-12 mt-2"></div>
     </div>
 
     <!-- Notas Generales -->

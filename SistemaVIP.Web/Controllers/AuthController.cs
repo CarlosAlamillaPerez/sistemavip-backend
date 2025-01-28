@@ -58,6 +58,7 @@ namespace SistemaVIP.Web.Controllers
                         {
                             new Claim(ClaimTypes.Name, result.User.Email),
                             new Claim(ClaimTypes.Role, result.User.Role),
+                            new Claim(ClaimTypes.NameIdentifier, result.User.Id),
                             new Claim("FullName", $"{result.User.Nombre} {result.User.Apellido}")
                         };
 

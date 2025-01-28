@@ -157,4 +157,19 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public decimal Monto { get; set; }
         public string? Notas { get; set; }
     }
+
+    public class ConfirmacionServicioDetalleDto
+    {
+        public int Id { get; set; }
+        public string NombreTerapeuta { get; set; }
+        public string NombrePresentador { get; set; }
+        public decimal MontoTerapeuta { get; set; }
+        public string TipoUbicacion { get; set; }
+        public string Direccion { get; set; }
+        public int DuracionHoras { get; set; }
+        public DateTime FechaServicio { get; set; }
+        public Guid LinkConfirmacion { get; set; }
+        public Guid LinkFinalizacion { get; set; }
+        public string Estado { get; set; }
+    }
 }

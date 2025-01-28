@@ -5,6 +5,7 @@ using SistemaVIP.Core.Interfaces;
 using SistemaVIP.Core.Enums;
 using System.Threading.Tasks;
 using SistemaVIP.Core.DTOs;
+using System.Security.Claims;
 
 namespace SistemaVIP.API.Controllers
 {
@@ -55,7 +56,7 @@ namespace SistemaVIP.API.Controllers
                 return NotFound();
 
             // Verificar que el usuario actual solo pueda ver su propio perfil
-            if (User.FindFirst("sub")?.Value != userId &&
+            if (User.FindFirst(ClaimTypes.NameIdentifier)?.Value != userId &&
                 !User.IsInRole(UserRoles.SUPER_ADMIN) &&
                 !User.IsInRole(UserRoles.ADMIN))
                 return Forbid();

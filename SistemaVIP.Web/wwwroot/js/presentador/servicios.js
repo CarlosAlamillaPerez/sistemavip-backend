@@ -452,11 +452,49 @@ function inicializarFormularioServicio() {
         $('[name="Direccion"]').prop('required', esDomicilio);
     });
 
-    // Calcular comisión automáticamente
-    $('[name="MontoTotal"]').on('input', function () {
-        const montoTotal = parseFloat($(this).val()) || 0;
-        const comision = montoTotal * 0.3; // 30%
-        $('#montoComision').val(comision.toFixed(2));
+    // Calcular monto terapeuta y comisión por hora
+    $('[name="MontoTotal"], [name="DuracionHoras"], #montoComision').on('input', function () {
+        const montoTotal = parseFloat($('[name="MontoTotal"]').val()) || 0;
+        const comision = parseFloat($('#montoComision').val()) || 0;
+        const horas = parseInt($('[name="DuracionHoras"]').val()) || 1;
+
+        // Calcular monto terapeuta
+        const montoTerapeuta = montoTotal - comision;
+        $('#montoTerapeuta').val(montoTerapeuta.toFixed(2));
+
+        // Validar monto mínimo terapeuta por hora
+        const montoTerapeutaPorHora = montoTerapeuta / horas;
+        if (montoTerapeutaPorHora < 1000) {
+            $('#alertaMontoTerapeuta').html(
+                '<i class="fas fa-exclamation-triangle"></i> El monto por hora para la terapeuta no puede ser menor a $1,000'
+            ).removeClass('d-none').addClass('text-danger');
+        } else {
+            $('#alertaMontoTerapeuta').addClass('d-none');
+        }
+
+        // Calcular y mostrar comisión por hora
+        const comisionPorHora = comision / horas;
+        $('#indicadorComisionHora')
+            .text(`Comisión por hora: $${comisionPorHora.toFixed(2)}`)
+            .removeClass('text-success text-danger')
+            .addClass(comisionPorHora < 500 ? 'text-danger' : 'text-success');
+    });
+
+    // Mostrar/ocultar campos de domicilio
+    $('input[name="TipoUbicacion"]').on('change', function () {
+        const esDomicilio = $(this).val() === 'DOMICILIO';
+        $('#camposDomicilio').toggle(esDomicilio);
+
+        if (esDomicilio) {
+            $('#notaTransporte').removeClass('d-none').html(
+                '<div class="alert alert-info">' +
+                '<i class="fas fa-info-circle"></i> Recuerda solicitar al cliente el pago por el gasto de transporte, ' +
+                'o en caso de ser $0, indicar en las \'Notas\' el motivo' +
+                '</div>'
+            );
+        } else {
+            $('#notaTransporte').addClass('d-none');
+        }
     });
 
     // Validación y envío del formulario
@@ -498,22 +536,40 @@ function cargarTerapeutasDisponibles() {
 }
 
 function guardarServicio(form) {
-    // Crear objeto con los datos del formulario
     const formData = new FormData(form[0]);
-    const data = {};
+    const horas = parseInt(formData.get('DuracionHoras'));
+    const montoTerapeuta = parseFloat($('#montoTerapeuta').val());
+    const montoTerapeutaPorHora = montoTerapeuta / horas;
 
-    // Convertir FormData a objeto plano
-    for (let [key, value] of formData.entries()) {
-        // Convertir valores numéricos
-        if (['MontoTotal', 'GastosTransporte', 'DuracionHoras'].includes(key)) {
-            data[key] = value ? parseFloat(value) : null;
-        } else {
-            data[key] = value;
-        }
+    const data = {
+        // No necesitamos enviar PresentadorId, se obtiene del usuario logueado
+        fechaServicio: formData.get('FechaServicio'),
+        tipoUbicacion: formData.get('TipoUbicacion'),
+        direccion: formData.get('Direccion'),
+        montoTotal: parseFloat(formData.get('MontoTotal')),
+        gastosTransporte: formData.get('TipoUbicacion') === 'DOMICILIO' ?
+            parseFloat(formData.get('GastosTransporte')) : null,
+        notasTransporte: formData.get('NotasTransporte'),
+        terapeutas: [{
+            terapeutaId: parseInt(formData.get('TerapeutaId')),
+            montoTerapeuta: montoTerapeuta
+        }],
+        notas: formData.get('Notas'),
+        duracionHoras: horas
+    };
+
+    // Validaciones
+    const errores = [];
+
+    if (montoTerapeutaPorHora < 1000) {
+        errores.push(`El monto por hora para la terapeuta debe ser al menos $1,000 (actual: $${montoTerapeutaPorHora.toFixed(2)})`);
     }
 
-    // Validar el formulario
-    const errores = [];
+    if (data.tipoUbicacion === 'DOMICILIO' &&
+        data.gastosTransporte === 0 &&
+        !data.notasTransporte) {
+        errores.push('Debe indicar el motivo cuando los gastos de transporte son $0');
+    }
 
     // Validar campos requeridos
     if (!data.TerapeutaId) {
@@ -534,6 +590,14 @@ function guardarServicio(form) {
 
     if (!data.DuracionHoras || data.DuracionHoras < 1 || data.DuracionHoras > 24) {
         errores.push('La duración debe estar entre 1 y 24 horas');
+    }
+
+    if (data.montoTotal < 1500) {
+        errores.push('El monto total debe ser mayor a $1,500');
+    }
+
+    if (data.terapeutas[0].montoTerapeuta < 0) {
+        errores.push('El monto para la terapeuta no puede ser negativo');
     }
 
     // Si hay errores, mostrarlos y detener el proceso
