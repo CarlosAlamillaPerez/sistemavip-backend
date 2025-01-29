@@ -46,6 +46,24 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> ObtenerModalTerapeutas()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/user/{userId}");
+                var terapeutas = await _apiService.GetAsync<List<TerapeutasPorPresentadorDto>>($"api/TerapeutasPresentadores/presentador/{presentador.Id}");
+
+                return PartialView("~/Views/Presentador/Dashboard/_Modal_Terapeutas.cshtml", terapeutas);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener modal de terapeutas");
+                return Json(new { success = false, message = "Error al cargar terapeutas" });
+            }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ObtenerServicios(string estado = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
             try
@@ -130,21 +148,6 @@ namespace SistemaVIP.Web.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CancelarServicio(int id, [FromBody] CancelacionServicioDto dto)
-        {
-            try
-            {
-                var resultado = await _apiService.PostAsync<ServicioDto>($"api/Servicio/{id}/cancelar", dto);
-                return Json(new { success = true, message = "Servicio cancelado exitosamente" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al cancelar servicio");
-                return Json(new { success = false, message = "Error al cancelar el servicio" });
-            }
-        }
-
         [HttpGet]
         public async Task<IActionResult> ObtenerFormularioServicio(int? id = null)
         {
@@ -175,7 +178,8 @@ namespace SistemaVIP.Web.Controllers
                 var viewModel = new ComprobanteViewModel
                 {
                     Servicio = servicio,
-                    Comprobantes = comprobantes
+                    Comprobantes = comprobantes,
+                    TieneComprobantesPagados = comprobantes?.Any(c => c.Estado == "PAGADO") ?? false
                 };
 
                 return PartialView("~/Views/Presentador/Dashboard/_Modal_Comprobante.cshtml", viewModel);
@@ -214,6 +218,36 @@ namespace SistemaVIP.Web.Controllers
             {
                 _logger.LogError(ex, "Error al obtener resumen del servicio");
                 return Json(new { success = false, message = "Error al cargar el resumen del servicio" });
+            }
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> EliminarServicio(int id)
+        {
+            try
+            {
+                await _apiService.DeleteAsync($"api/Servicio/{id}");
+                return Json(new { success = true, message = "Servicio eliminado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar servicio");
+                return Json(new { success = false, message = "Error al eliminar el servicio" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelarServicio(int id, [FromBody] CancelacionServicioDto dto)
+        {
+            try
+            {
+                var resultado = await _apiService.PostAsync<ServicioDto>($"api/Servicio/{id}/cancelar", dto);
+                return Json(new { success = true, message = "Servicio cancelado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cancelar servicio");
+                return Json(new { success = false, message = ex.Message });
             }
         }
 

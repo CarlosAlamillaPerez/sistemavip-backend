@@ -29,7 +29,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Comprobantes Registrados</h6>
-                        @if (Model.Comprobantes.Any(c => c.Estado == "PAGADO"))
+                        @if (Model.TieneComprobantesPagados)
                         {
                             <button type="button" class="btn btn-danger btn-sm" id="btnCorregir">
                                 <i class="fas fa-redo"></i> Corregir
@@ -148,3 +148,9 @@
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
     <button type="submit" form="formComprobante" class="btn btn-primary">Guardar Comprobante</button>
 </div>
+
+@section Scripts {
+    <script src="~/js/presentador/dashboard.js" asp-append-version="true"></script>
+    <script src="~/js/presentador/servicios.js" asp-append-version="true"></script>
+    <script src="~/js/presentador/calendario.js" asp-append-version="true"></script>
+}

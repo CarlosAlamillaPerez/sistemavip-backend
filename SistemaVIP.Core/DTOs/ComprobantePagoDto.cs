@@ -24,6 +24,7 @@ namespace SistemaVIP.Core.DTOs
     {
         public ServicioDto Servicio { get; set; }
         public List<ComprobantePagoDto> Comprobantes { get; set; }
+        public bool TieneComprobantesPagados { get; set; }
     }
 
     public class CreateComprobantesMultiplesDto

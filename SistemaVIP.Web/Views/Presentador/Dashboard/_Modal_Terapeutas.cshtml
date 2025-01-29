@@ -1,1 +1,59 @@
-﻿
+﻿@model List<SistemaVIP.Core.DTOs.TerapeutaPresentador.TerapeutasPorPresentadorDto>
+
+<div class="modal fade" id="modalTerapeutas" tabindex="-1" aria-labelledby="modalTerapeutasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTerapeutasLabel">
+                    <i class="fas fa-users"></i> Terapeutas Disponibles
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (!Model.Any())
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay terapeutas asignadas actualmente.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Ciudad</th>
+                                    <th>Teléfono</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var terapeuta in Model)
+                                {
+                                    <tr>
+                                        <td>@terapeuta.NombreCompleto</td>
+                                        @* <td>@terapeuta.DocumentoIdentidad</td> *@
+                                        <td>@terapeuta.Telefono</td>
+                                        <td>
+                                            <span class="badge bg-@(terapeuta.Estado == "ACTIVO" ? "success" : "danger")">
+                                                @terapeuta.Estado
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/presentador/modals/terapeutas.js" asp-append-version="true"></script>
+}

@@ -1,60 +1,57 @@
 ﻿$(document).ready(function () {
     // Variables globales
-    let tablaSolicitudes = null;
-    let filtrosActuales = {
-        estado: '',
-        terapeutaId: '',
-        fechaInicio: '',
-        fechaFin: ''
-    };
+    let tablaServicios = null;
 
     // Inicialización
     inicializarTabla();
-    cargarTerapeutas();
     inicializarFiltros();
     inicializarEventos();
 
-    // Eventos directos para los botones principales
-    $(document).on('click', '#btnNuevoServicio', mostrarModalNuevoServicio);
-    $(document).on('click', '#btnVerTerapeutas', mostrarModalTerapeutas);
+    // Event listeners principales
+    //$('#btnNuevoServicio').on('click', () => {
+    //    cargarModalNuevoServicio();
+    //});
+    $(document).on('click', '#btnNuevoServicio', function () {
+        cargarModalNuevoServicio();
+    });
 
-    // Eventos para acciones de la tabla
+    $(document).on('click', '#btnVerTerapeutas', function () {
+        cargarModalTerapeutas();
+    });
+
+    // Event listeners para botones de la tabla
     $(document).on('click', '.btn-detalle-servicio', function () {
-        const id = $(this).closest('button').data('id');
-        mostrarDetalleServicio(id);
+        const id = $(this).data('id');
+        cargarModalDetalle(id);
     });
 
     $(document).on('click', '.btn-editar-servicio', function () {
-        const id = $(this).closest('button').data('id');
-        editarServicio(id);
+        const id = $(this).data('id');
+        cargarModalEditar(id);
     });
 
     $(document).on('click', '.btn-comprobante', function () {
-        const id = $(this).closest('button').data('id');
-        subirComprobante(id);
+        const id = $(this).data('id');
+        cargarModalComprobantes(id);
+    });
+
+    $(document).on('click', '.btn-servicios-extra', function () {
+        const id = $(this).data('id');
+        cargarModalServiciosExtra(id);
+    });
+
+    $(document).on('click', '.btn-eliminar-servicio', function () {
+        const id = $(this).data('id');
+        confirmarEliminacionServicio(id);
     });
 
     $(document).on('click', '.btn-cancelar-servicio', function () {
-        const id = $(this).closest('button').data('id');
-        confirmarCancelacion(id);
+        const id = $(this).data('id');
+        mostrarModalCancelacion(id);
     });
 });
 
-window.accionesEvents = {
-    'click .btn-detalle-servicio': function (e, value, row, index) {
-        mostrarDetalleServicio(row.id);
-    },
-    'click .btn-editar-servicio': function (e, value, row, index) {
-        editarServicio(row.id);
-    },
-    'click .btn-comprobante': function (e, value, row, index) {
-        subirComprobante(row.id);
-    },
-    'click .btn-cancelar-servicio': function (e, value, row, index) {
-        confirmarCancelacion(row.id);
-    }
-};
-
+// Funciones de inicialización
 function inicializarTabla() {
     $('#tablaServicios').bootstrapTable({
         url: '/Presentador/ObtenerServicios',
@@ -82,10 +79,6 @@ function inicializarTabla() {
             title: 'Ubicación',
             formatter: formatearUbicacion
         }, {
-            field: 'duracion',
-            title: 'Duración',
-            formatter: formatearDuracion
-        }, {
             field: 'montoTotal',
             title: 'Monto Total',
             formatter: formatearMonto,
@@ -108,9 +101,26 @@ function inicializarTabla() {
         }]
     });
 
-    tablaSolicitudes = $('#tablaServicios');
+    tablaServicios = $('#tablaServicios');
 }
 
+function inicializarFiltros() {
+    const hoy = moment();
+    const inicioMes = moment().startOf('month');
+
+    $('#fecha-desde').val(inicioMes.format('YYYY-MM-DD'));
+    $('#fecha-hasta').val(hoy.format('YYYY-MM-DD'));
+
+    cargarTerapeutas();
+    aplicarFiltros();
+}
+
+function inicializarEventos() {
+    $('#filtro-estado, #filtro-terapeuta').on('change', aplicarFiltros);
+    $('#fecha-desde, #fecha-hasta').on('change', validarFechas);
+}
+
+// Funciones de carga de datos
 function cargarTerapeutas() {
     $.ajax({
         url: '/Presentador/ObtenerTerapeutas',
@@ -120,7 +130,6 @@ function cargarTerapeutas() {
                 const select = $('#filtro-terapeuta');
                 select.empty();
                 select.append('<option value="">Todas</option>');
-
                 response.data.forEach(terapeuta => {
                     select.append(`<option value="${terapeuta.terapeutaId}">
                         ${terapeuta.nombreCompleto}
@@ -129,24 +138,6 @@ function cargarTerapeutas() {
             }
         }
     });
-}
-
-function inicializarFiltros() {
-    // Inicializar fechas con el mes actual
-    const hoy = moment();
-    const inicioMes = moment().startOf('month');
-
-    $('#fecha-desde').val(inicioMes.format('YYYY-MM-DD'));
-    $('#fecha-hasta').val(hoy.format('YYYY-MM-DD'));
-
-    // Aplicar filtros iniciales
-    aplicarFiltros();
-}
-
-function inicializarEventos() {
-    // Eventos de filtros
-    $('#filtro-estado, #filtro-terapeuta').on('change', aplicarFiltros);
-    $('#fecha-desde, #fecha-hasta').on('change', validarFechas);
 }
 
 // Funciones de formateo
@@ -159,10 +150,6 @@ function formatearMonto(value) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     })}`;
-}
-
-function formatearDuracion(value) {
-    return `${value} hora${value > 1 ? 's' : ''}`;
 }
 
 function formatearUbicacion(value) {
@@ -180,6 +167,7 @@ function formatearEstado(value) {
         'EN_PROCESO': 'primary',
         'FINALIZADO': 'success',
         'PAGADO': 'success',
+        'LIQUIDADO': 'success',
         'CANCELADO': 'danger'
     };
 
@@ -188,25 +176,35 @@ function formatearEstado(value) {
     </span>`;
 }
 
-// Formatear acciones según estado
 function formatearAcciones(value, row) {
     const acciones = [];
 
     // Botón de detalle siempre visible
     acciones.push(`
         <button class="btn btn-sm btn-info btn-detalle-servicio" 
-                data-id="${row.id}" 
-                title="Ver detalle">
+                data-id="${row.id}" title="Ver detalle">
             <i class="fas fa-eye"></i>
         </button>
     `);
+
+    if (row.estado === 'PENDIENTE') {
+        acciones.push(`
+        <button class="btn btn-sm btn-danger btn-eliminar-servicio" 
+                data-id="${row.id}" title="Eliminar servicio">
+            <i class="fas fa-trash"></i>
+        </button>
+        <button class="btn btn-sm btn-warning btn-cancelar-servicio" 
+                data-id="${row.id}" title="Cancelar servicio">
+            <i class="fas fa-ban"></i>
+        </button>
+    `);
+    }
 
     // Botón de edición según estado
     if (['PENDIENTE', 'EN_PROCESO', 'FINALIZADO'].includes(row.estado)) {
         acciones.push(`
             <button class="btn btn-sm btn-primary btn-editar-servicio" 
-                    data-id="${row.id}" 
-                    title="Editar servicio">
+                    data-id="${row.id}" title="Editar servicio">
                 <i class="fas fa-edit"></i>
             </button>
         `);
@@ -216,20 +214,18 @@ function formatearAcciones(value, row) {
     if (['FINALIZADO', 'POR_CONFIRMAR'].includes(row.estado)) {
         acciones.push(`
             <button class="btn btn-sm btn-success btn-comprobante" 
-                    data-id="${row.id}" 
-                    title="Subir comprobante">
+                    data-id="${row.id}" title="Comprobantes">
                 <i class="fas fa-receipt"></i>
             </button>
         `);
     }
 
-    // Botón de cancelación solo para PENDIENTE
-    if (row.estado === 'PENDIENTE') {
+    // Botón de servicios extra
+    if (['EN_PROCESO', 'FINALIZADO'].includes(row.estado)) {
         acciones.push(`
-            <button class="btn btn-sm btn-danger btn-cancelar-servicio" 
-                    data-id="${row.id}" 
-                    title="Cancelar servicio">
-                <i class="fas fa-times"></i>
+            <button class="btn btn-sm btn-warning btn-servicios-extra" 
+                    data-id="${row.id}" title="Servicios Extra">
+                <i class="fas fa-star"></i>
             </button>
         `);
     }
@@ -237,150 +233,7 @@ function formatearAcciones(value, row) {
     return acciones.join(' ');
 }
 
-// Funciones de Modal
-function mostrarModalNuevoServicio() {
-    $.ajax({
-        url: '/Presentador/ObtenerFormularioServicio',
-        type: 'GET',
-        success: function (response) {
-            Swal.fire({
-                title: 'Nuevo Servicio',
-                html: response,
-                width: '800px',
-                showCloseButton: true,
-                showConfirmButton: false,
-                didOpen: () => {
-                    inicializarFormularioServicio();
-                }
-            });
-        }
-    });
-}
-
-function mostrarModalTerapeutas() {
-    $.ajax({
-        url: '/Presentador/ObtenerTerapeutas',
-        type: 'GET',
-        success: function (response) {
-            if (response.success) {
-                Swal.fire({
-                    title: 'Terapeutas Disponibles',
-                    html: generarHTMLTerapeutas(response.data),
-                    width: '800px',
-                    showCloseButton: true,
-                    showConfirmButton: false
-                });
-            } else {
-                window.alertService.error('Error', response.message);
-            }
-        }
-    });
-}
-
-function mostrarDetalleServicio(id) {
-    $.ajax({
-        url: `/Presentador/ObtenerDetalleServicio/${id}`,
-        type: 'GET',
-        success: function (response) {
-            Swal.fire({
-                title: 'Detalle del Servicio',
-                html: response,
-                width: '800px',
-                showCloseButton: true,
-                showConfirmButton: false
-            });
-        }
-    });
-}
-
-// Funciones de Acción
-function editarServicio(id) {
-    $.ajax({
-        url: `/Presentador/ObtenerFormularioServicio/${id}`,
-        type: 'GET',
-        success: function (response) {
-            Swal.fire({
-                title: 'Editar Servicio',
-                html: response,
-                width: '800px',
-                showCloseButton: true,
-                showConfirmButton: false,
-                didOpen: () => {
-                    inicializarFormularioServicio(true);
-                }
-            });
-        }
-    });
-}
-
-function subirComprobante(id) {
-    $.ajax({
-        url: `/Presentador/ObtenerFormularioComprobante/${id}`,
-        type: 'GET',
-        success: function (response) {
-            Swal.fire({
-                title: 'Subir Comprobante',
-                html: response,
-                width: '600px',
-                showCloseButton: true,
-                showConfirmButton: false,
-                didOpen: () => {
-                    inicializarFormularioComprobante();
-                }
-            });
-        }
-    });
-}
-
-function confirmarCancelacion(id) {
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: 'Esta acción no se puede deshacer',
-        icon: 'warning',
-        input: 'textarea',
-        inputLabel: 'Motivo de cancelación',
-        inputPlaceholder: 'Ingrese el motivo de la cancelación...',
-        inputAttributes: {
-            required: 'true'
-        },
-        showCancelButton: true,
-        confirmButtonText: 'Sí, cancelar',
-        cancelButtonText: 'No, volver',
-        showLoaderOnConfirm: true,
-        preConfirm: (motivo) => {
-            if (!motivo) {
-                Swal.showValidationMessage('El motivo es requerido');
-                return false;
-            }
-            return cancelarServicio(id, motivo);
-        }
-    });
-}
-
-function cancelarServicio(id, motivo) {
-    return $.ajax({
-        url: `/Presentador/CancelarServicio/${id}`,
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ motivoCancelacion: motivo }),
-        success: function (response) {
-            if (response.success) {
-                window.alertService.successWithTimer(
-                    'Éxito',
-                    'Servicio cancelado correctamente',
-                    1500,
-                    () => {
-                        aplicarFiltros();
-                    }
-                );
-            } else {
-                window.alertService.error('Error', response.message);
-            }
-        }
-    });
-}
-
-// Funciones de Filtrado
+// Funciones de filtrado
 function aplicarFiltros() {
     const filtros = {
         estado: $('#filtro-estado').val(),
@@ -389,7 +242,7 @@ function aplicarFiltros() {
         fechaFin: $('#fecha-hasta').val()
     };
 
-    tablaSolicitudes.bootstrapTable('refresh', {
+    tablaServicios.bootstrapTable('refresh', {
         query: filtros
     });
 }
@@ -403,239 +256,182 @@ function validarFechas() {
         return false;
     }
 
+    const diferencia = fechaFin.diff(fechaInicio, 'days');
+    if (diferencia > 31) {
+        window.alertService.error('Error', 'El rango máximo permitido es de 31 días');
+        return false;
+    }
+
     aplicarFiltros();
     return true;
 }
 
-// Funciones auxiliares
-function generarHTMLTerapeutas(terapeutas) {
-    return `
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Ciudad</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${terapeutas.map(t => `
-                        <tr>
-                            <td>${t.nombreCompleto}</td>
-                            <td>${t.documentoIdentidad}</td>
-                            <td>${t.telefono}</td>
-                            <td>
-                                <span class="badge bg-${t.estado === 'ACTIVO' ? 'success' : 'danger'}">
-                                    ${t.estado}
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
-
-function inicializarFormularioServicio() {
-    const form = $('#formNuevoServicio');
-
-    // Cargar terapeutas disponibles
-    cargarTerapeutasDisponibles();
-
-    // Manejar cambio de tipo de ubicación
-    $('input[name="TipoUbicacion"]').on('change', function () {
-        const esDomicilio = $(this).val() === 'DOMICILIO';
-        $('#camposDomicilio').toggle(esDomicilio);
-        $('[name="Direccion"]').prop('required', esDomicilio);
-    });
-
-    // Calcular monto terapeuta y comisión por hora
-    $('[name="MontoTotal"], [name="DuracionHoras"], #montoComision').on('input', function () {
-        const montoTotal = parseFloat($('[name="MontoTotal"]').val()) || 0;
-        const comision = parseFloat($('#montoComision').val()) || 0;
-        const horas = parseInt($('[name="DuracionHoras"]').val()) || 1;
-
-        // Calcular monto terapeuta
-        const montoTerapeuta = montoTotal - comision;
-        $('#montoTerapeuta').val(montoTerapeuta.toFixed(2));
-
-        // Validar monto mínimo terapeuta por hora
-        const montoTerapeutaPorHora = montoTerapeuta / horas;
-        if (montoTerapeutaPorHora < 1000) {
-            $('#alertaMontoTerapeuta').html(
-                '<i class="fas fa-exclamation-triangle"></i> El monto por hora para la terapeuta no puede ser menor a $1,000'
-            ).removeClass('d-none').addClass('text-danger');
-        } else {
-            $('#alertaMontoTerapeuta').addClass('d-none');
-        }
-
-        // Calcular y mostrar comisión por hora
-        const comisionPorHora = comision / horas;
-        $('#indicadorComisionHora')
-            .text(`Comisión por hora: $${comisionPorHora.toFixed(2)}`)
-            .removeClass('text-success text-danger')
-            .addClass(comisionPorHora < 500 ? 'text-danger' : 'text-success');
-    });
-
-    // Mostrar/ocultar campos de domicilio
-    $('input[name="TipoUbicacion"]').on('change', function () {
-        const esDomicilio = $(this).val() === 'DOMICILIO';
-        $('#camposDomicilio').toggle(esDomicilio);
-
-        if (esDomicilio) {
-            $('#notaTransporte').removeClass('d-none').html(
-                '<div class="alert alert-info">' +
-                '<i class="fas fa-info-circle"></i> Recuerda solicitar al cliente el pago por el gasto de transporte, ' +
-                'o en caso de ser $0, indicar en las \'Notas\' el motivo' +
-                '</div>'
-            );
-        } else {
-            $('#notaTransporte').addClass('d-none');
-        }
-    });
-
-    // Validación y envío del formulario
-    form.on('submit', function (e) {
-        e.preventDefault();
-        if (this.checkValidity()) {
-            guardarServicio($(this));
-        }
-        $(this).addClass('was-validated');
-    });
-}
-
-function cargarTerapeutasDisponibles() {
+// Funciones de carga de modales
+function cargarModalNuevoServicio() {
     $.ajax({
-        url: '/Presentador/ObtenerTerapeutas',
+        url: '/Presentador/ObtenerFormularioServicio',
         type: 'GET',
-        success: function (response) {
-            if (response.success) {
-                const select = $('select[name="TerapeutaId"]');
-                select.empty();
-                select.append('<option value="">Seleccione una terapeuta...</option>');
-
-                response.data.forEach(terapeuta => {
-                    // Solo mostrar terapeutas activas
-                    if (terapeuta.estado === 'ACTIVO') {
-                        select.append(`
-                            <option value="${terapeuta.terapeutaId}" 
-                                    data-ciudad="${terapeuta.documentoIdentidad}">
-                                ${terapeuta.nombreCompleto} - ${terapeuta.documentoIdentidad}
-                            </option>
-                        `);
-                    }
-                });
-            } else {
-                window.alertService.error('Error', 'No se pudieron cargar las terapeutas');
+        success: function(response) {
+            if (response.success === false) {
+                window.alertService.error('Error', response.message);
+                return;
             }
+            // Si es exitoso, el response será el HTML de la vista parcial
+            $('#modalSection').html(response);
+            const modal = new bootstrap.Modal(document.getElementById('modalNuevoServicio'));
+            modal.show();
+        },
+        error: function() {
+            window.alertService.error('Error', 'No se pudo cargar el formulario');
         }
     });
 }
 
-function guardarServicio(form) {
-    const formData = new FormData(form[0]);
-    const horas = parseInt(formData.get('DuracionHoras'));
-    const montoTerapeuta = parseFloat($('#montoTerapeuta').val());
-    const montoTerapeutaPorHora = montoTerapeuta / horas;
-
-    const data = {
-        // No necesitamos enviar PresentadorId, se obtiene del usuario logueado
-        fechaServicio: formData.get('FechaServicio'),
-        tipoUbicacion: formData.get('TipoUbicacion'),
-        direccion: formData.get('Direccion'),
-        montoTotal: parseFloat(formData.get('MontoTotal')),
-        gastosTransporte: formData.get('TipoUbicacion') === 'DOMICILIO' ?
-            parseFloat(formData.get('GastosTransporte')) : null,
-        notasTransporte: formData.get('NotasTransporte'),
-        terapeutas: [{
-            terapeutaId: parseInt(formData.get('TerapeutaId')),
-            montoTerapeuta: montoTerapeuta
-        }],
-        notas: formData.get('Notas'),
-        duracionHoras: horas
-    };
-
-    // Validaciones
-    const errores = [];
-
-    if (montoTerapeutaPorHora < 1000) {
-        errores.push(`El monto por hora para la terapeuta debe ser al menos $1,000 (actual: $${montoTerapeutaPorHora.toFixed(2)})`);
-    }
-
-    if (data.tipoUbicacion === 'DOMICILIO' &&
-        data.gastosTransporte === 0 &&
-        !data.notasTransporte) {
-        errores.push('Debe indicar el motivo cuando los gastos de transporte son $0');
-    }
-
-    // Validar campos requeridos
-    if (!data.TerapeutaId) {
-        errores.push('Debe seleccionar una terapeuta');
-    }
-
-    if (!data.TipoUbicacion) {
-        errores.push('Debe seleccionar el tipo de ubicación');
-    }
-
-    if (data.TipoUbicacion === 'DOMICILIO' && !data.Direccion) {
-        errores.push('La dirección es requerida para servicios a domicilio');
-    }
-
-    if (!data.MontoTotal || data.MontoTotal < 1500) {
-        errores.push('El monto total debe ser mayor a $1,500');
-    }
-
-    if (!data.DuracionHoras || data.DuracionHoras < 1 || data.DuracionHoras > 24) {
-        errores.push('La duración debe estar entre 1 y 24 horas');
-    }
-
-    if (data.montoTotal < 1500) {
-        errores.push('El monto total debe ser mayor a $1,500');
-    }
-
-    if (data.terapeutas[0].montoTerapeuta < 0) {
-        errores.push('El monto para la terapeuta no puede ser negativo');
-    }
-
-    // Si hay errores, mostrarlos y detener el proceso
-    if (errores.length > 0) {
-        window.alertService.error('Error de Validación', errores.join('<br>'));
-        return;
-    }
-
-    // Llamada a la API
+function cargarModalTerapeutas() {
     $.ajax({
-        url: '/Presentador/CrearServicio',
+        url: '/Presentador/ObtenerModalTerapeutas',
+        type: 'GET',
+        success: function(response) {
+            if (response.success === false) {
+                window.alertService.error('Error', response.message);
+                return;
+            }
+            // Si es exitoso, el response será el HTML de la vista parcial
+            $('#modalSection').html(response);
+            const modal = new bootstrap.Modal(document.getElementById('modalTerapeutas'));
+            modal.show();
+        },
+        error: function() {
+            window.alertService.error('Error', 'No se pudo cargar el listado de terapeutas');
+        }
+    });
+}
+
+function cargarModalDetalle(id) {
+    $.get(`/Presentador/ObtenerDetalleServicio/${id}`, function (response) {
+        $('#modalSection').html(response);
+        $('#modalDetalleServicio').modal('show');
+    });
+}
+
+function cargarModalEditar(id) {
+    $.get(`/Presentador/ObtenerFormularioServicio/${id}`, function (response) {
+        $('#modalSection').html(response);
+        $('#modalEditarServicio').modal('show');
+    });
+}
+
+function cargarModalComprobantes(id) {
+    $.get(`/Presentador/ObtenerFormularioComprobante/${id}`, function (response) {
+        $('#modalSection').html(response);
+        $('#modalComprobantes').modal('show');
+    });
+}
+
+function cargarModalServiciosExtra(id) {
+    $.get(`/Presentador/ObtenerFormularioServiciosExtra/${id}`, function (response) {
+        $('#modalSection').html(response);
+        $('#modalServiciosExtra').modal('show');
+    });
+}
+
+// Definición de eventos para la tabla
+window.accionesEvents = {
+    'click .btn-detalle-servicio': function (e, value, row) {
+        cargarModalDetalle(row.id);
+    },
+    'click .btn-editar-servicio': function (e, value, row) {
+        cargarModalEditar(row.id);
+    },
+    'click .btn-comprobante': function (e, value, row) {
+        cargarModalComprobantes(row.id);
+    },
+    'click .btn-servicios-extra': function (e, value, row) {
+        cargarModalServiciosExtra(row.id);
+    }
+};
+
+function confirmarEliminacionServicio(id) {
+    window.alertService.confirm(
+        'Eliminar Servicio',
+        '¿Está seguro de eliminar este servicio? Esta acción no se puede deshacer.',
+        () => {
+            $.ajax({
+                url: `/Presentador/EliminarServicio/${id}`,
+                type: 'DELETE',
+                success: function (response) {
+                    if (response.success) {
+                        window.alertService.successWithTimer(
+                            'Éxito',
+                            'Servicio eliminado correctamente',
+                            1500,
+                            () => tablaServicios.bootstrapTable('refresh')
+                        );
+                    } else {
+                        window.alertService.error('Error', response.message);
+                    }
+                }
+            });
+        }
+    );
+}
+
+function mostrarModalCancelacion(id) {
+    Swal.fire({
+        title: 'Cancelar Servicio',
+        html: `
+            <div class="form-group">
+                <label class="form-label">Motivo de cancelación</label>
+                <input type="text" id="motivoCancelacion" class="form-control" required>
+            </div>
+            <div class="form-group mt-3">
+                <label class="form-label">Notas adicionales</label>
+                <textarea id="notasCancelacion" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group mt-3">
+                <label class="form-label">Monto comisión por cancelación</label>
+                <input type="number" id="montoComisionCancelacion" class="form-control" value="0" min="0">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Cancelar Servicio',
+        cancelButtonText: 'Cerrar',
+        preConfirm: () => {
+            const motivo = document.getElementById('motivoCancelacion').value;
+            if (!motivo) {
+                Swal.showValidationMessage('El motivo de cancelación es requerido');
+                return false;
+            }
+            return {
+                motivoCancelacion: motivo,
+                notasCancelacion: document.getElementById('notasCancelacion').value,
+                montoComisionCancelacion: parseFloat(document.getElementById('montoComisionCancelacion').value) || 0
+            };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            cancelarServicio(id, result.value);
+        }
+    });
+}
+
+function cancelarServicio(id, datos) {
+    $.ajax({
+        url: `/Presentador/CancelarServicio/${id}`,
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify(data),
+        data: JSON.stringify(datos),
         success: function (response) {
             if (response.success) {
-                Swal.close(); // Cerrar el modal
                 window.alertService.successWithTimer(
                     'Éxito',
-                    'Servicio creado correctamente',
+                    'Servicio cancelado correctamente',
                     1500,
-                    () => {
-                        // Actualizar tabla y contadores
-                        aplicarFiltros();
-                        actualizarResumen();
-                    }
+                    () => tablaServicios.bootstrapTable('refresh')
                 );
             } else {
                 window.alertService.error('Error', response.message);
             }
-        },
-        error: function (xhr) {
-            let errorMessage = 'Error al crear el servicio';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            }
-            window.alertService.error('Error', errorMessage);
         }
     });
 }
-
