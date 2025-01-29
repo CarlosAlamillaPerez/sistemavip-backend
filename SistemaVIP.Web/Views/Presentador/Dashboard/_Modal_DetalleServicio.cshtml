@@ -1,1 +1,201 @@
-﻿
+﻿@model SistemaVIP.Core.DTOs.Servicio.ServicioDto
+
+<div class="modal-body">
+    <!-- Cabecera con estado del servicio -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5>Servicio #@Model.Id</h5>
+        <span class="badge @(Model.Estado switch {
+            "PENDIENTE" => "bg-secondary",
+            "EN_PROCESO" => "bg-primary",
+            "FINALIZADO" => "bg-success",
+            "POR_CONFIRMAR" => "bg-info",
+            "PAGADO" => "bg-success",
+            "LIQUIDADO" => "bg-success",
+            "CANCELADO" => "bg-danger",
+            _ => "bg-secondary"
+        })">@Model.Estado</span>
+    </div>
+
+    <!-- Información básica -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información General</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Fecha del Servicio</label>
+                    <p class="form-control-plaintext">@Model.FechaServicio.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Duración</label>
+                    <p class="form-control-plaintext">@Model.DuracionHoras hora(s)</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Ubicación</label>
+                    <p class="form-control-plaintext">
+                        @if (Model.TipoUbicacion == "CONSULTORIO")
+                        {
+                            <i class="fas fa-hospital"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-home"></i>
+                        }
+                        @Model.TipoUbicacion
+                    </p>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Direccion))
+                {
+                    <div class="col-12">
+                        <label class="form-label">Dirección</label>
+                        <p class="form-control-plaintext">@Model.Direccion</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Terapeuta y Montos -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-dollar-sign"></i> Detalles Financieros</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                @foreach (var terapeuta in Model.Terapeutas)
+                {
+                    <div class="col-md-6">
+                        <label class="form-label">Terapeuta</label>
+                        <p class="form-control-plaintext">@terapeuta.NombreTerapeuta</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Monto Terapeuta</label>
+                        <p class="form-control-plaintext">$@terapeuta.MontoTerapeuta.ToString()</p>
+                    </div>
+                }
+                <div class="col-md-6">
+                    <label class="form-label">Monto Total</label>
+                    <p class="form-control-plaintext">$@Model.MontoTotal.ToString("N2")</p>
+                </div>
+                @if (Model.GastosTransporte.HasValue)
+                {
+                    <div class="col-md-6">
+                        <label class="form-label">Gastos de Transporte</label>
+                        <p class="form-control-plaintext">$@Model.GastosTransporte.Value.ToString("N2")</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Links de Confirmación/Finalización -->
+    @if (Model.Estado == "PENDIENTE" || Model.Estado == "EN_PROCESO")
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-link"></i> Links del Servicio</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Estado == "PENDIENTE" && Model.Terapeutas.Any())
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Link de Confirmación</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control"
+                                   value="@Url.Action("Confirmacion", "Servicio", new { link = Model.Terapeutas[0].LinkConfirmacion }, Context.Request.Scheme)"
+                                   readonly>
+                            <button class="btn btn-outline-primary btn-copy"
+                                    data-clipboard-text="@Url.Action("Confirmacion", "Servicio", new { link = Model.Terapeutas[0].LinkConfirmacion }, Context.Request.Scheme)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Compartir este link con la terapeuta para iniciar el servicio</small>
+                    </div>
+                }
+                @if (Model.Estado == "EN_PROCESO" && Model.Terapeutas.Any())
+                {
+                    <div>
+                        <label class="form-label">Link de Finalización</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control"
+                                   value="@Url.Action("Finalizacion", "Servicio", new { link = Model.Terapeutas[0].LinkFinalizacion }, Context.Request.Scheme)"
+                                   readonly>
+                            <button class="btn btn-outline-primary btn-copy"
+                                    data-clipboard-text="@Url.Action("Finalizacion", "Servicio", new { link = Model.Terapeutas[0].LinkFinalizacion }, Context.Request.Scheme)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Compartir este link con la terapeuta para finalizar el servicio</small>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Comprobantes de Pago si existen -->
+    @if (Model.Terapeutas.Any() && Model.Terapeutas[0].ComprobantesPago?.Any() == true)
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-receipt"></i> Comprobantes de Pago</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                @if (Model.Estado == "FINALIZADO")
+                                {
+                                    <th>Acciones</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var comprobante in Model.Terapeutas[0].ComprobantesPago)
+                            {
+                                <tr>
+                                    <td>@comprobante.TipoComprobante</td>
+                                    <td>$@comprobante.Monto.ToString("N2")</td>
+                                    <td><span class="badge bg-@(comprobante.Estado == "PAGADO" ? "success" : "info")">@comprobante.Estado</span></td>
+                                    <td>@comprobante.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                    @if (Model.Estado == "FINALIZADO")
+                                    {
+                                        <td>
+                                            <button class="btn btn-sm btn-danger btn-eliminar-comprobante"
+                                                    data-id="@comprobante.Id"
+                                                    title="Eliminar comprobante">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Notas -->
+    @if (!string.IsNullOrEmpty(Model.Notas))
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-sticky-note"></i> Notas</h6>
+            </div>
+            <div class="card-body">
+                <p class="form-control-plaintext">@Model.Notas</p>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+</div>

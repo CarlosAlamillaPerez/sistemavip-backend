@@ -1,0 +1,135 @@
+﻿@model SistemaVIP.Core.DTOs.Servicio.ServicioDto
+
+<form id="formEditarServicio" data-servicio-id="@Model.Id" data-estado="@Model.Estado" class="needs-validation" novalidate>
+    <div class="modal-body">
+        <!-- Información del Estado -->
+        <div class="alert @(Model.Estado switch {
+            "PENDIENTE" => "alert-secondary",
+            "EN_PROCESO" => "alert-primary",
+            "FINALIZADO" => "alert-success",
+            _ => "alert-info"
+        }) mb-4">
+            <i class="fas fa-info-circle"></i>
+            Estado actual: <strong>@Model.Estado</strong>
+        </div>
+
+        <div class="row g-3">
+            <!-- Fecha de Servicio (No editable) -->
+            <div class="col-md-6">
+                <label class="form-label">Fecha de Servicio</label>
+                <input type="datetime-local" class="form-control"
+                       value="@Model.FechaServicio.ToString("yyyy-MM-ddTHH:mm")"
+                       disabled>
+            </div>
+
+            <!-- Duración -->
+            <div class="col-md-6">
+                <label class="form-label">Duración (horas)</label>
+                <input type="number" class="form-control" name="DuracionHoras"
+                       value="@Model.DuracionHoras" min="1" max="24"
+                @(CanEdit(Model.Estado, "duracionHoras", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+            </div>
+
+            <!-- Tipo de Ubicación -->
+            <div class="col-12">
+                <label class="form-label">Tipo de Ubicación</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="TipoUbicacion" id="ubicacionConsultorio"
+                           value="CONSULTORIO" @(Model.TipoUbicacion == "CONSULTORIO" ? "checked" : "")
+                    @(CanEdit(Model.Estado, "tipoUbicacion", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+                    <label class="btn btn-outline-primary" for="ubicacionConsultorio">
+                        <i class="fas fa-hospital"></i> Consultorio
+                    </label>
+
+                    <input type="radio" class="btn-check" name="TipoUbicacion" id="ubicacionDomicilio"
+                           value="DOMICILIO" @(Model.TipoUbicacion == "DOMICILIO" ? "checked" : "")
+                    @(CanEdit(Model.Estado, "tipoUbicacion", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+                    <label class="btn btn-outline-primary" for="ubicacionDomicilio">
+                        <i class="fas fa-home"></i> Domicilio
+                    </label>
+                </div>
+            </div>
+
+            <!-- Dirección (Solo visible y editable si es domicilio) -->
+            <div class="col-12" id="seccionDireccion" style="@(Model.TipoUbicacion == "DOMICILIO" ? "" : "display: none;")">
+                <label class="form-label">Dirección</label>
+                <input type="text" class="form-control" name="Direccion"
+                       value="@Model.Direccion"
+                @(CanEdit(Model.Estado, "direccion", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+            </div>
+
+            <!-- Montos -->
+            <div class="col-md-6">
+                <label class="form-label">Monto Total</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" name="MontoTotal"
+                           value="@Model.MontoTotal" min="1500" step="100"
+                    @(CanEdit(Model.Estado, "montoTotal", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Monto Terapeuta</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" name="MontoTerapeuta"
+                           value="@Model.Terapeutas[0].MontoTerapeuta" min="0" step="100"
+                    @(CanEdit(Model.Estado, "montoTerapeuta", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+                </div>
+            </div>
+
+            <!-- Gastos de Transporte (Solo para domicilio) -->
+            @if (Model.TipoUbicacion == "DOMICILIO")
+            {
+                <div class="col-md-6">
+                    <label class="form-label">Gastos de Transporte</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" name="GastosTransporte"
+                               value="@Model.GastosTransporte" min="0" step="50"
+                        @(CanEdit(Model.Estado, "gastosTransporte", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Notas de Transporte</label>
+                    <textarea class="form-control" name="NotasTransporte" rows="2"
+                    @(CanEdit(Model.Estado, "notasTransporte", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>@Model.NotasTransporte</textarea>
+                </div>
+            }
+
+            <!-- Notas Generales -->
+            <div class="col-12">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" name="Notas" rows="3"
+                @(CanEdit(Model.Estado, "notas", Model.Terapeutas[0].ComprobantesPago?.Any() ?? false) ? "" : "disabled")>@Model.Notas</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </div>
+</form>
+
+@functions {
+    private bool CanEdit(string estado, string campo, bool tieneComprobantes)
+    {
+        if (tieneComprobantes) return false;
+
+        return campo switch
+        {
+            "tipoUbicacion" => estado == "PENDIENTE",
+            "direccion" => estado == "PENDIENTE",
+            "montoTotal" => new[] { "PENDIENTE", "EN_PROCESO", "FINALIZADO" }.Contains(estado),
+            "gastosTransporte" => estado == "PENDIENTE",
+            "notasTransporte" => estado == "PENDIENTE",
+            "montoTerapeuta" => new[] { "PENDIENTE", "EN_PROCESO", "FINALIZADO" }.Contains(estado),
+            "notas" => new[] { "PENDIENTE", "EN_PROCESO", "FINALIZADO" }.Contains(estado),
+            "duracionHoras" => new[] { "PENDIENTE", "EN_PROCESO", "FINALIZADO" }.Contains(estado),
+            _ => false
+        };
+    }
+}
