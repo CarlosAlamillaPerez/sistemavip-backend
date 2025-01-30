@@ -7,7 +7,7 @@ $(document).ready(function () {
     // Inicializar eventos cuando se abre el modal
     $(document).on('shown.bs.modal', '#modalComprobantes', function () {
         servicioId = $(this).data('servicio-id');
-        inicializarFormulario();
+        _inicializarFormulario();
     });
 
     // Cambio en origen de pago
@@ -42,13 +42,13 @@ $(document).ready(function () {
     // Manejo del formulario
     $(document).on('submit', '#formComprobante', function (e) {
         e.preventDefault();
-        if (!comprimiendo && validarFormulario()) {
+        if (!comprimiendo && validarFormulario__()) {
             guardarComprobante($(this));
         }
     });
 });
 
-function inicializarFormulario() {
+function _inicializarFormulario() {
     const $form = $('#formComprobante');
     $form.get(0).reset();
     $form.removeClass('was-validated');
@@ -68,7 +68,7 @@ function toggleCamposTransferencia(mostrar) {
     }
 }
 
-function validarFormulario() {
+function validarFormulario__() {
     const $form = $('#formComprobante');
 
     if (!$form[0].checkValidity()) {

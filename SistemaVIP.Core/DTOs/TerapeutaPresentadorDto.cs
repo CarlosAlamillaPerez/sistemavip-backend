@@ -62,5 +62,6 @@ namespace SistemaVIP.Core.DTOs.TerapeutaPresentador
         public string Email { get; set; }
         public string Estado { get; set; }
         public DateTime FechaAsignacion { get; set; }
+        public string DocumentoIdentidad { get; set; }
     }
 }

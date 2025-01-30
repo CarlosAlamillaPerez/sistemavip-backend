@@ -6,7 +6,7 @@ $(document).ready(function () {
 
     // Inicializar eventos cuando se abre el modal
     $(document).on('shown.bs.modal', '#modalNuevoServicio', function () {
-        inicializarFormulario();
+        inicializarFormulario_();
     });
 
     // Manejar cambio de tipo de ubicación
@@ -23,13 +23,18 @@ $(document).ready(function () {
     // Manejo del formulario
     $(document).on('submit', '#formNuevoServicio', function (e) {
         e.preventDefault();
-        if (validarFormulario()) {
+        if (_validarFormulario()) {
             guardarServicio($(this));
         }
     });
+
+    $('[name="MontoTotal"], [name="DuracionHoras"], #montoComision').on('input', function () {
+        calcularMontos();
+        validarMontosEnTiempoReal();
+    });
 });
 
-function inicializarFormulario() {
+function inicializarFormulario_() {
     const $form = $('#formNuevoServicio');
     $form.get(0).reset();
     $form.removeClass('was-validated');
@@ -94,25 +99,18 @@ function calcularMontos() {
     const montoTerapeuta = montoTotal - comision;
     $('#montoTerapeuta').val(montoTerapeuta.toFixed(2));
 
-    // Validar monto mínimo terapeuta por hora
-    const montoTerapeutaPorHora = montoTerapeuta / horas;
-    if (montoTerapeutaPorHora < 1000) {
-        $('#alertaMontoTerapeuta').html(
-            '<i class="fas fa-exclamation-triangle"></i> El monto por hora para la terapeuta no puede ser menor a $1,000'
-        ).removeClass('d-none').addClass('text-danger');
-    } else {
-        $('#alertaMontoTerapeuta').addClass('d-none');
-    }
-
     // Calcular y mostrar comisión por hora
     const comisionPorHora = comision / horas;
     $('#indicadorComisionHora')
         .text(`Comisión por hora: $${comisionPorHora.toFixed(2)}`)
         .removeClass('text-success text-danger')
         .addClass(comisionPorHora < 500 ? 'text-danger' : 'text-success');
+
+    // Ejecutar validación en tiempo real
+    validarMontosEnTiempoReal();
 }
 
-function validarFormulario() {
+function _validarFormulario() {
     const $form = $('#formNuevoServicio');
 
     if (!$form[0].checkValidity()) {
@@ -198,4 +196,41 @@ function guardarServicio($form) {
             window.alertService.error('Error', 'Hubo un problema al procesar la solicitud');
         }
     });
+}
+
+function validarMontosEnTiempoReal() {
+    const montoTotal = parseFloat($('[name="MontoTotal"]').val()) || 0;
+    const montoTerapeuta = parseFloat($('#montoTerapeuta').val()) || 0;
+    const horas = parseInt($('[name="DuracionHoras"]').val()) || 1;
+    const montoTerapeutaPorHora = montoTerapeuta / horas;
+
+    // Limpiar alertas previas
+    $('#alertaMontos').remove();
+
+    let errores = [];
+    let tieneError = false;
+
+    if (montoTotal < 1500) {
+        errores.push('El monto total debe ser mayor a $1,500');
+        tieneError = true;
+    }
+
+    if (montoTerapeutaPorHora < 1000) {
+        errores.push(`El monto por hora para la terapeuta debe ser al menos $1,000 (actual: $${montoTerapeutaPorHora.toFixed(2)})`);
+        tieneError = true;
+    }
+
+    // Mostrar alertas solo si hay errores
+    if (tieneError) {
+        const alertaHtml = `
+            <div id="alertaMontos" class="alert alert-warning mt-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                ${errores.join('<br>')}
+            </div>
+        `;
+        $('#montoComision').closest('.col-md-6').after(alertaHtml);
+    }
+
+    // Habilitar/deshabilitar botón de submit
+    $('button[type="submit"]').prop('disabled', tieneError);
 }

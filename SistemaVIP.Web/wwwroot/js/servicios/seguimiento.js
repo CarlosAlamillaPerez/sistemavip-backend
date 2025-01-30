@@ -18,7 +18,7 @@
     };
 
     // Inicialización
-    inicializarTabla();
+    inicializarTabla_();
     cargarPresentadores();
     inicializarFiltros();
 
@@ -40,7 +40,7 @@
     });
 });
 
-function inicializarTabla() {
+function inicializarTabla_() {
     $('#tablaServicios').bootstrapTable({
         pagination: true,
         search: true,

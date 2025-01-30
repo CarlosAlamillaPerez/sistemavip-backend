@@ -5,7 +5,7 @@ let tablaCatalogo = null;
 $(document).ready(function () {
     // Aseguramos que las dependencias estén cargadas
     if ($().bootstrapTable) {
-        inicializarTabla();
+        inicializarTabla__();
     } else {
         console.error('Bootstrap Table no está disponible');
     }
@@ -33,7 +33,7 @@ $(document).ready(function () {
 });
 
 // Función de inicialización de la tabla
-function inicializarTabla() {
+function inicializarTabla__() {
     if (!$.fn.bootstrapTable) {
         console.error('Bootstrap Table no está cargado');
         return;

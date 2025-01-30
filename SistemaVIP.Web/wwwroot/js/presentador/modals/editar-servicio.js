@@ -6,7 +6,7 @@ $(document).ready(function () {
 
     // Inicializar eventos cuando se abre el modal
     $(document).on('shown.bs.modal', '#modalEditarServicio', function () {
-        inicializarFormulario();
+        inicializarFormulario__();
     });
 
     // Manejar el envío del formulario
@@ -29,7 +29,7 @@ $(document).ready(function () {
     });
 });
 
-function inicializarFormulario() {
+function inicializarFormulario__() {
     const $form = $('#formEditarServicio');
 
     // Guardar valores originales para comparación

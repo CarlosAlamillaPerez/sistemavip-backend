@@ -3,14 +3,10 @@
     let tablaServicios = null;
 
     // Inicialización
-    inicializarTabla();
+    inicializarTabla_servicio();
     inicializarFiltros();
     inicializarEventos();
 
-    // Event listeners principales
-    //$('#btnNuevoServicio').on('click', () => {
-    //    cargarModalNuevoServicio();
-    //});
     $(document).on('click', '#btnNuevoServicio', function () {
         cargarModalNuevoServicio();
     });
@@ -52,15 +48,30 @@
 });
 
 // Funciones de inicialización
-function inicializarTabla() {
-    $('#tablaServicios').bootstrapTable({
-        url: '/Presentador/ObtenerServicios',
-        method: 'GET',
+function inicializarTabla_servicio() {
+    console.log('Inicializando tabla...');
+
+    if (!$.fn.bootstrapTable) {
+        console.error('Bootstrap Table no está inicializado');
+        return;
+    }
+
+    const $tabla = $('#tablaServicios');
+    if ($tabla.length === 0) {
+        console.error('No se encontró el elemento tablaServicios');
+        return;
+    }
+
+    // Inicializar la tabla primero con la configuración base
+    tablaServicios = $tabla.bootstrapTable({
+        data: [], // Inicialmente vacío
         pagination: true,
         search: true,
         pageSize: 10,
         pageList: [10, 25, 50, 100],
         locale: 'es-MX',
+        showRefresh: true,
+        sidePagination: 'client',
         columns: [{
             field: 'id',
             title: 'ID',
@@ -71,21 +82,24 @@ function inicializarTabla() {
             sortable: true,
             formatter: formatearFecha
         }, {
-            field: 'terapeuta',
+            field: 'terapeutas',
             title: 'Terapeuta',
-            sortable: true
+            sortable: true,
+            formatter: function (value) {
+                return value && value.length > 0 ?
+                    value[0].nombreTerapeuta : '';
+            }
         }, {
             field: 'tipoUbicacion',
             title: 'Ubicación',
             formatter: formatearUbicacion
         }, {
+            field: 'duracionHoras',
+            title: 'Duración',
+            formatter: (value) => `${value} hora(s)`
+        }, {
             field: 'montoTotal',
             title: 'Monto Total',
-            formatter: formatearMonto,
-            sortable: true
-        }, {
-            field: 'comision',
-            title: 'Comisión',
             formatter: formatearMonto,
             sortable: true
         }, {
@@ -101,7 +115,35 @@ function inicializarTabla() {
         }]
     });
 
-    tablaServicios = $('#tablaServicios');
+    // Función para cargar los datos
+    function cargarDatos() {
+        $.ajax({
+            url: '/Presentador/ObtenerServicios',
+            type: 'GET',
+            contentType: 'application/json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function (response) {
+                console.log('Datos obtenidos:', response);
+                if (response.success && response.data) {
+                    tablaServicios.bootstrapTable('load', response.data);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error obteniendo datos:', error);
+                window.alertService.error('Error', 'No se pudieron cargar los servicios');
+            }
+        });
+    }
+
+    // Cargar datos iniciales
+    cargarDatos();
+
+    // Agregar listener para refrescar
+    $('#btn-refrescar').on('click', function () {
+        cargarDatos();
+    });
 }
 
 function inicializarFiltros() {
@@ -308,30 +350,110 @@ function cargarModalTerapeutas() {
 }
 
 function cargarModalDetalle(id) {
-    $.get(`/Presentador/ObtenerDetalleServicio/${id}`, function (response) {
-        $('#modalSection').html(response);
-        $('#modalDetalleServicio').modal('show');
+    $.ajax({
+        url: `/Presentador/ObtenerDetalleServicio/${id}`,
+        type: 'GET',
+        success: function (response) {
+            if (response.success === false) {
+                window.alertService.error('Error', response.message);
+                return;
+            }
+            Swal.fire({
+                title: `Detalle del Servicio #${id}`,
+                html: response,
+                width: '800px',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-servicio-container',
+                    popup: 'swal-servicio-popup'
+                }
+            });
+        },
+        error: function () {
+            window.alertService.error('Error', 'No se pudo cargar el detalle del servicio');
+        }
     });
 }
 
 function cargarModalEditar(id) {
-    $.get(`/Presentador/ObtenerFormularioServicio/${id}`, function (response) {
-        $('#modalSection').html(response);
-        $('#modalEditarServicio').modal('show');
+    $.ajax({
+        url: `/Presentador/ObtenerFormularioServicio/${id}`,
+        type: 'GET',
+        success: function (response) {
+            if (response.success === false) {
+                window.alertService.error('Error', response.message);
+                return;
+            }
+            Swal.fire({
+                title: 'Editar Servicio',
+                html: response,
+                width: '800px',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-servicio-container',
+                    popup: 'swal-servicio-popup'
+                }
+            });
+        },
+        error: function () {
+            window.alertService.error('Error', 'No se pudo cargar el formulario de edición');
+        }
     });
 }
 
 function cargarModalComprobantes(id) {
-    $.get(`/Presentador/ObtenerFormularioComprobante/${id}`, function (response) {
-        $('#modalSection').html(response);
-        $('#modalComprobantes').modal('show');
+    $.ajax({
+        url: `/Presentador/ObtenerFormularioComprobante/${id}`,
+        type: 'GET',
+        success: function (response) {
+            if (response.success === false) {
+                window.alertService.error('Error', response.message);
+                return;
+            }
+            Swal.fire({
+                title: 'Comprobantes de Pago',
+                html: response,
+                width: '800px',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-servicio-container',
+                    popup: 'swal-servicio-popup'
+                }
+            });
+        },
+        error: function () {
+            window.alertService.error('Error', 'No se pudo cargar el formulario de comprobantes');
+        }
     });
 }
 
 function cargarModalServiciosExtra(id) {
-    $.get(`/Presentador/ObtenerFormularioServiciosExtra/${id}`, function (response) {
-        $('#modalSection').html(response);
-        $('#modalServiciosExtra').modal('show');
+    $.ajax({
+        url: `/Presentador/ObtenerFormularioServiciosExtra/${id}`,
+        type: 'GET',
+        success: function (response) {
+            if (response.success === false) {
+                window.alertService.error('Error', response.message);
+                return;
+            }
+            Swal.fire({
+                title: 'Servicios Extra',
+                html: response,
+                width: '800px',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-servicio-container',
+                    popup: 'swal-servicio-popup'
+                }
+            });
+        },
+        error: function () {
+            window.alertService.error('Error', 'No se pudo cargar el formulario de servicios extra');
+        }
     });
 }
 

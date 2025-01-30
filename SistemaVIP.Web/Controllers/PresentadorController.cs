@@ -64,19 +64,27 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ObtenerServicios(string estado = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        public async Task<IActionResult> ObtenerServicios(string estado = null, int? terapeutaId = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/user/{userId}");
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "Usuario no identificado" });
+                }
 
+                var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/user/{userId}");
                 var servicios = await _apiService.GetAsync<List<ServicioDto>>($"api/Servicio/presentador/{presentador.Id}");
 
-                // Aplicar filtros si existen
+                // Aplicar filtros
                 if (!string.IsNullOrEmpty(estado))
                 {
                     servicios = servicios.Where(s => s.Estado == estado).ToList();
+                }
+                if (terapeutaId.HasValue)
+                {
+                    servicios = servicios.Where(s => s.Terapeutas.Any(t => t.TerapeutaId == terapeutaId)).ToList();
                 }
                 if (fechaInicio.HasValue && fechaFin.HasValue)
                 {
@@ -99,6 +107,20 @@ namespace SistemaVIP.Web.Controllers
         {
             try
             {
+                // Obtener el ID del usuario actual
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "Usuario no identificado" });
+                }
+
+                // Obtener el presentador asociado al usuario
+                var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/user/{userId}");
+
+                // Asignar el ID del presentador al DTO
+                dto.PresentadorId = presentador.Id;
+
+                // Crear el servicio
                 var servicio = await _apiService.PostAsync<ServicioDto>("api/Servicio", dto);
                 return Json(new { success = true, data = servicio, message = "Servicio creado exitosamente" });
             }

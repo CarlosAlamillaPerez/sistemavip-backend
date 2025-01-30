@@ -1,3 +1,20 @@
+.swal-servicio-container {
+    z-index: 1060 !important;
+}
+
+.swal-servicio-popup {
+    padding: 1rem;
+}
+
+/* Para modales más grandes */
+@media (min-width: 768px) {
+    .swal-servicio-popup {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+
 /* Contenedor principal */
 .servicios-container {
     padding: 1rem;

@@ -51,7 +51,8 @@ namespace SistemaVIP.Infrastructure.Services
                     Telefono = tp.Terapeuta.Telefono,
                     Email = tp.Terapeuta.Email,
                     Estado = tp.Estado,
-                    FechaAsignacion = tp.FechaAsignacion
+                    FechaAsignacion = tp.FechaAsignacion,
+                    DocumentoIdentidad = tp.Terapeuta.DocumentoIdentidad
                 })
                 .ToListAsync();
         }
