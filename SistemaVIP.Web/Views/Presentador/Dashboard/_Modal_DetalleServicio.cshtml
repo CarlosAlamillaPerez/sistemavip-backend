@@ -93,14 +93,16 @@
     </div>
 
     <!-- Links de Confirmación/Finalización -->
-    @if (Model.Estado == "PENDIENTE" || Model.Estado == "EN_PROCESO")
+    @if (Model.Terapeutas.Any())
     {
+        var estadoTerapeuta = Model.Terapeutas[0].Estado;
+
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="mb-0"><i class="fas fa-link"></i> Links del Servicio</h6>
             </div>
             <div class="card-body">
-                @if (Model.Estado == "PENDIENTE" && Model.Terapeutas.Any())
+                @if (estadoTerapeuta == "PENDIENTE")
                 {
                     <div class="mb-3">
                         <label class="form-label">Link de Confirmación</label>
@@ -116,7 +118,7 @@
                         <small class="text-muted">Compartir este link con la terapeuta para iniciar el servicio</small>
                     </div>
                 }
-                @if (Model.Estado == "EN_PROCESO" && Model.Terapeutas.Any())
+                @if (estadoTerapeuta == "EN_PROCESO")
                 {
                     <div>
                         <label class="form-label">Link de Finalización</label>

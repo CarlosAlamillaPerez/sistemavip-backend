@@ -1,4 +1,6 @@
 ﻿$(document).ready(function () {
+    // Validar estado al cargar la página
+    verificarEstadoServicio();
     $('#btnConfirmar').on('click', function (e) {
         e.preventDefault();
         confirmarServicio();
@@ -34,7 +36,7 @@ async function confirmarServicio() {
         };
 
         const response = await $.ajax({
-            url: '/api/Servicio/confirmar', 
+            url: '/api/Servicio/confirmar',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data)
@@ -47,7 +49,8 @@ async function confirmarServicio() {
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
-                window.close();  // Cerrar la ventana/tab después del mensaje
+                // Verificar estado nuevamente antes de cerrar
+                verificarEstadoServicio();
             });
         }
 
@@ -61,6 +64,36 @@ async function confirmarServicio() {
             icon: 'error',
             title: 'Error',
             text: errorMessage
+        });
+    }
+}
+
+
+async function verificarEstadoServicio() {
+    try {
+        const linkConfirmacion = window.linkConfirmacion;
+        const response = await $.ajax({
+            url: `/Servicio/confirmar/${linkConfirmacion}`,
+            type: 'GET'
+        });
+
+        // Si el servicio ya está en proceso, ocultar botón y mostrar mensaje
+        if (response.estado === 'EN_PROCESO') {
+            $('#btnConfirmar').hide();
+            Swal.fire({
+                icon: 'info',
+                title: 'En Proceso',
+                text: 'Este servicio ya fue confirmado y está en proceso.',
+                showConfirmButton: true
+            }).then(() => {
+                window.close();
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo verificar el estado del servicio.'
         });
     }
 }

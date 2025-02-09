@@ -184,8 +184,18 @@ function guardarServicio($form) {
                     () => {
                         // Cerrar modal
                         $('#modalNuevoServicio').modal('hide');
-                        // Actualizar tabla de servicios
-                        $('#tablaServicios').bootstrapTable('refresh');
+                        // Actualizar vista parcial de servicios
+                        $.ajax({
+                            url: '/Presentador/ObtenerServicios',
+                            type: 'GET',
+                            success: function (response) {
+                                if (response.success) {
+                                    // Asegurarnos que los datos contengan toda la información necesaria
+                                    const serviciosCompletos = response.data;
+                                    tablaServicios.bootstrapTable('load', serviciosCompletos);
+                                }
+                            }
+                        });
                     }
                 );
             } else {

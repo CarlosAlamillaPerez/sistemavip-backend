@@ -5,7 +5,6 @@
     // Inicialización
     inicializarTabla_servicio();
     inicializarFiltros();
-    inicializarEventos();
 
     $(document).on('click', '#btnNuevoServicio', function () {
         cargarModalNuevoServicio();
@@ -104,8 +103,13 @@ function inicializarTabla_servicio() {
             sortable: true
         }, {
             field: 'estado',
-            title: 'Estado',
-            formatter: formatearEstado,
+            title: 'Estado Servicio',
+            formatter: formatearEstadoServicio,
+            sortable: true
+        }, {
+            field: 'terapeutas',
+            title: 'Estado Terapeuta',
+            formatter: formatearEstadoTerapeuta,
             sortable: true
         }, {
             field: 'acciones',
@@ -127,7 +131,9 @@ function inicializarTabla_servicio() {
             success: function (response) {
                 console.log('Datos obtenidos:', response);
                 if (response.success && response.data) {
-                    tablaServicios.bootstrapTable('load', response.data);
+                    // Asegurarnos que los datos contengan toda la información necesaria
+                    const serviciosCompletos = response.data;
+                    tablaServicios.bootstrapTable('load', serviciosCompletos);
                 }
             },
             error: function (xhr, status, error) {
@@ -154,12 +160,6 @@ function inicializarFiltros() {
     $('#fecha-hasta').val(hoy.format('YYYY-MM-DD'));
 
     cargarTerapeutas();
-    aplicarFiltros();
-}
-
-function inicializarEventos() {
-    $('#filtro-estado, #filtro-terapeuta').on('change', aplicarFiltros);
-    $('#fecha-desde, #fecha-hasta').on('change', validarFechas);
 }
 
 // Funciones de carga de datos
@@ -202,7 +202,7 @@ function formatearUbicacion(value) {
     return `${iconos[value] || ''} ${value}`;
 }
 
-function formatearEstado(value) {
+function formatearEstadoServicio(value) {
     const estados = {
         'PENDIENTE': 'secondary',
         'POR_CONFIRMAR': 'info',
@@ -218,8 +218,31 @@ function formatearEstado(value) {
     </span>`;
 }
 
+function formatearEstadoTerapeuta(terapeutas) {
+    // Validar que existan terapeutas
+    if (!terapeutas || !Array.isArray(terapeutas) || !terapeutas.length) {
+        return '<span class="badge bg-secondary">SIN ASIGNAR</span>';
+    }
+
+    // Tomar la primera terapeuta (asumiendo que es un servicio por terapeuta)
+    const terapeuta = terapeutas[0];
+
+    const estados = {
+        'PENDIENTE': 'secondary',
+        'EN_PROCESO': 'primary',
+        'FINALIZADO': 'success',
+        'CANCELADO': 'danger'
+    };
+
+    return `<span class="badge bg-${estados[terapeuta.estado] || 'secondary'}">
+        ${terapeuta.estado.replace('_', ' ')}
+    </span>`;
+}
+
 function formatearAcciones(value, row) {
     const acciones = [];
+    const estadoTerapeuta = row.terapeutas && row.terapeutas.length > 0 ?
+        row.terapeutas[0].estado : null;
 
     // Botón de detalle siempre visible
     acciones.push(`
@@ -229,21 +252,23 @@ function formatearAcciones(value, row) {
         </button>
     `);
 
-    if (row.estado === 'PENDIENTE') {
+    // Botones de eliminar y cancelar solo si la terapeuta está en PENDIENTE
+    if (estadoTerapeuta === 'PENDIENTE') {
         acciones.push(`
-        <button class="btn btn-sm btn-danger btn-eliminar-servicio" 
-                data-id="${row.id}" title="Eliminar servicio">
-            <i class="fas fa-trash"></i>
-        </button>
-        <button class="btn btn-sm btn-warning btn-cancelar-servicio" 
-                data-id="${row.id}" title="Cancelar servicio">
-            <i class="fas fa-ban"></i>
-        </button>
-    `);
+            <button class="btn btn-sm btn-danger btn-eliminar-servicio" 
+                    data-id="${row.id}" title="Eliminar servicio">
+                <i class="fas fa-trash"></i>
+            </button>
+            <button class="btn btn-sm btn-warning btn-cancelar-servicio" 
+                    data-id="${row.id}" title="Cancelar servicio">
+                <i class="fas fa-ban"></i>
+            </button>
+        `);
     }
 
-    // Botón de edición según estado
-    if (['PENDIENTE', 'EN_PROCESO', 'FINALIZADO'].includes(row.estado)) {
+    // Botón de edición según estados
+    if (['PENDIENTE', 'EN_PROCESO', 'FINALIZADO'].includes(row.estado) &&
+        ['PENDIENTE', 'EN_PROCESO'].includes(estadoTerapeuta)) {
         acciones.push(`
             <button class="btn btn-sm btn-primary btn-editar-servicio" 
                     data-id="${row.id}" title="Editar servicio">
@@ -252,7 +277,7 @@ function formatearAcciones(value, row) {
         `);
     }
 
-    // Botón de comprobante para estados específicos
+    // Botón de comprobante
     if (['FINALIZADO', 'POR_CONFIRMAR'].includes(row.estado)) {
         acciones.push(`
             <button class="btn btn-sm btn-success btn-comprobante" 
@@ -263,7 +288,7 @@ function formatearAcciones(value, row) {
     }
 
     // Botón de servicios extra
-    if (['EN_PROCESO', 'FINALIZADO'].includes(row.estado)) {
+    if (['EN_PROCESO', 'FINALIZADO'].includes(estadoTerapeuta)) {
         acciones.push(`
             <button class="btn btn-sm btn-warning btn-servicios-extra" 
                     data-id="${row.id}" title="Servicios Extra">
@@ -275,37 +300,33 @@ function formatearAcciones(value, row) {
     return acciones.join(' ');
 }
 
-// Funciones de filtrado
-function aplicarFiltros() {
-    const filtros = {
-        estado: $('#filtro-estado').val(),
-        terapeutaId: $('#filtro-terapeuta').val(),
-        fechaInicio: $('#fecha-desde').val(),
-        fechaFin: $('#fecha-hasta').val()
-    };
-
-    tablaServicios.bootstrapTable('refresh', {
-        query: filtros
-    });
+function formatearTerapeuta(value, row) {
+    if (row.terapeutas && row.terapeutas.length > 0) {
+        return row.terapeutas[0].nombreTerapeuta;
+    }
+    return '-';
 }
 
-function validarFechas() {
-    const fechaInicio = moment($('#fecha-desde').val());
-    const fechaFin = moment($('#fecha-hasta').val());
+function formatearDuracion(value) {
+    return value ? `${value} hora(s)` : '-';
+}
 
-    if (fechaFin.isBefore(fechaInicio)) {
-        window.alertService.error('Error', 'La fecha final debe ser mayor a la fecha inicial');
-        return false;
+function formatearComision(value, row) {
+    if (row.terapeutas && row.terapeutas.length > 0) {
+        const montoTotal = row.montoTotal || 0;
+        const montoTerapeuta = row.terapeutas[0].montoTerapeuta || 0;
+        const comision = montoTotal - montoTerapeuta;
+        return formatearMonto(comision);
     }
+    return '-';
+}
 
-    const diferencia = fechaFin.diff(fechaInicio, 'days');
-    if (diferencia > 31) {
-        window.alertService.error('Error', 'El rango máximo permitido es de 31 días');
-        return false;
-    }
-
-    aplicarFiltros();
-    return true;
+function formatearMonto(value) {
+    if (!value && value !== 0) return '-';
+    return `$${parseFloat(value).toLocaleString('es-MX', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
 }
 
 // Funciones de carga de modales
@@ -313,7 +334,7 @@ function cargarModalNuevoServicio() {
     $.ajax({
         url: '/Presentador/ObtenerFormularioServicio',
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success === false) {
                 window.alertService.error('Error', response.message);
                 return;
@@ -323,7 +344,7 @@ function cargarModalNuevoServicio() {
             const modal = new bootstrap.Modal(document.getElementById('modalNuevoServicio'));
             modal.show();
         },
-        error: function() {
+        error: function () {
             window.alertService.error('Error', 'No se pudo cargar el formulario');
         }
     });
@@ -333,7 +354,7 @@ function cargarModalTerapeutas() {
     $.ajax({
         url: '/Presentador/ObtenerModalTerapeutas',
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success === false) {
                 window.alertService.error('Error', response.message);
                 return;
@@ -343,7 +364,7 @@ function cargarModalTerapeutas() {
             const modal = new bootstrap.Modal(document.getElementById('modalTerapeutas'));
             modal.show();
         },
-        error: function() {
+        error: function () {
             window.alertService.error('Error', 'No se pudo cargar el listado de terapeutas');
         }
     });
@@ -488,7 +509,18 @@ function confirmarEliminacionServicio(id) {
                             'Éxito',
                             'Servicio eliminado correctamente',
                             1500,
-                            () => tablaServicios.bootstrapTable('refresh')
+                            () => {
+                                $.ajax({
+                                    url: '/Presentador/ObtenerServicios',
+                                    type: 'GET',
+                                    success: function (response) {
+                                        if (response.success) {
+                                            const serviciosCompletos = response.data;
+                                            tablaServicios.bootstrapTable('load', serviciosCompletos);
+                                        }
+                                    }
+                                });
+                            }
                         );
                     } else {
                         window.alertService.error('Error', response.message);
@@ -550,7 +582,18 @@ function cancelarServicio(id, datos) {
                     'Éxito',
                     'Servicio cancelado correctamente',
                     1500,
-                    () => tablaServicios.bootstrapTable('refresh')
+                    () => {
+                        $.ajax({
+                            url: '/Presentador/ObtenerServicios',
+                            type: 'GET',
+                            success: function (response) {
+                                if (response.success) {
+                                    const serviciosCompletos = response.data;
+                                    tablaServicios.bootstrapTable('load', serviciosCompletos);
+                                }
+                            }
+                        });
+                    }
                 );
             } else {
                 window.alertService.error('Error', response.message);
@@ -558,3 +601,5 @@ function cancelarServicio(id, datos) {
         }
     });
 }
+
+

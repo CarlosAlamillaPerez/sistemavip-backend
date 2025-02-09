@@ -1,41 +1,4 @@
 ﻿<div class="servicios-container">
-    <!-- Filtros -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Estado</label>
-                <select class="form-select" id="filtro-estado">
-                    <option value="">Todos</option>
-                    <option value="PENDIENTE">Pendiente</option>
-                    <option value="EN_PROCESO">En Proceso</option>
-                    <option value="POR_CONFIRMAR">Por Confirmar</option>
-                    <option value="FINALIZADO">Finalizado</option>
-                    <option value="PAGADO">Pagado</option>
-                    <option value="CANCELADO">Cancelado</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Terapeuta</label>
-                <select class="form-select" id="filtro-terapeuta">
-                    <option value="">Todas</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Fecha Desde</label>
-                <input type="date" class="form-control" id="fecha-desde" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Fecha Hasta</label>
-                <input type="date" class="form-control" id="fecha-hasta" />
-            </div>
-        </div>
-    </div>
 
     <!-- Tabla de Servicios -->
     <div class="table-responsive">
@@ -51,12 +14,13 @@
                 <tr>
                     <th data-field="id" data-sortable="true">ID</th>
                     <th data-field="fechaServicio" data-sortable="true">Fecha</th>
-                    <th data-field="terapeuta" data-sortable="true">Terapeuta</th>
+                    <th data-field="terapeuta" data-formatter="formatearTerapeuta" data-sortable="true">Terapeuta</th>
                     <th data-field="tipoUbicacion">Ubicación</th>
-                    <th data-field="duracion">Duración</th>
-                    <th data-field="montoTotal" data-sortable="true">Monto Total</th>
-                    <th data-field="comision" data-sortable="true">Comisión</th>
-                    <th data-field="estado" data-sortable="true">Estado</th>
+                    <th data-field="duracionHoras" data-formatter="formatearDuracion">Duración</th>
+                    <th data-field="montoTotal" data-formatter="formatearMonto" data-sortable="true">Monto Total</th>
+                    <th data-field="comision" data-formatter="formatearComision" data-sortable="true">Comisión</th>
+                    <th data-field="estado" data-sortable="true">Estado Servicio</th>
+                    <th data-field="terapeutas" data-formatter="formatearEstadoTerapeuta" data-sortable="true">Estado Terapeuta</th>
                     <th data-field="acciones" data-formatter="formatearAcciones">Acciones</th>
                 </tr>
             </thead>

@@ -1,12 +1,15 @@
 ﻿// finalizacion.js
 $(document).ready(function () {
+    // Validar estado al cargar la página
+    verificarEstadoServicio();
+
     $('#btnFinalizar').on('click', function (e) {
         e.preventDefault();
         finalizarServicio();
     });
 });
 
-async function finalizarServicio() {
+async function verificarEstadoServicio() {
     try {
         if (!navigator.geolocation) {
             Swal.fire({
@@ -17,6 +20,27 @@ async function finalizarServicio() {
             return;
         }
 
+        const linkFinalizacion = window.linkFinalizacion;
+        const response = await $.ajax({
+            url: `/api/Servicio/finalizar/${linkFinalizacion}`,
+            type: 'GET'
+        });
+
+        // Si el servicio ya está finalizado, ocultar botón y mostrar mensaje
+        if (response.estado === 'FINALIZADO') {
+            $('#btnFinalizar').hide();
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo verificar el estado del servicio.'
+        });
+    }
+}
+
+async function finalizarServicio() {
+    try {
         // Mostrar loading mientras obtenemos ubicación
         Swal.showLoading();
 
@@ -35,7 +59,7 @@ async function finalizarServicio() {
         };
 
         const response = await $.ajax({
-            url: '/Servicio/finalizar',
+            url: '/api/Servicio/finalizar',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data)
@@ -47,9 +71,9 @@ async function finalizarServicio() {
                 title: 'Servicio Finalizado',
                 text: 'Gracias ♥ Bbe.',
                 showConfirmButton: false,
-                timer: 1500
+                timer: 3000  // Cambio de 1500 a 3000
             }).then(() => {
-                window.close();
+                location.reload();
             });
         }
 

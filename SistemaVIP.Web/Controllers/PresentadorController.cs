@@ -75,25 +75,35 @@ namespace SistemaVIP.Web.Controllers
                 }
 
                 var presentador = await _apiService.GetAsync<PresentadorDto>($"api/Presentador/user/{userId}");
+
+                // Primero obtenemos la lista de servicios
                 var servicios = await _apiService.GetAsync<List<ServicioDto>>($"api/Servicio/presentador/{presentador.Id}");
 
-                // Aplicar filtros
+                // Obtenemos el detalle completo de cada servicio
+                var serviciosDetallados = new List<ServicioDto>();
+                foreach (var servicio in servicios)
+                {
+                    var servicioDetallado = await _apiService.GetAsync<ServicioDto>($"api/Servicio/{servicio.Id}");
+                    serviciosDetallados.Add(servicioDetallado);
+                }
+
+                // Aplicar filtros sobre los servicios detallados
                 if (!string.IsNullOrEmpty(estado))
                 {
-                    servicios = servicios.Where(s => s.Estado == estado).ToList();
+                    serviciosDetallados = serviciosDetallados.Where(s => s.Estado == estado).ToList();
                 }
                 if (terapeutaId.HasValue)
                 {
-                    servicios = servicios.Where(s => s.Terapeutas.Any(t => t.TerapeutaId == terapeutaId)).ToList();
+                    serviciosDetallados = serviciosDetallados.Where(s => s.Terapeutas.Any(t => t.TerapeutaId == terapeutaId)).ToList();
                 }
                 if (fechaInicio.HasValue && fechaFin.HasValue)
                 {
-                    servicios = servicios.Where(s =>
+                    serviciosDetallados = serviciosDetallados.Where(s =>
                         s.FechaServicio >= fechaInicio.Value &&
                         s.FechaServicio <= fechaFin.Value).ToList();
                 }
 
-                return Json(new { success = true, data = servicios });
+                return Json(new { success = true, data = serviciosDetallados });
             }
             catch (Exception ex)
             {

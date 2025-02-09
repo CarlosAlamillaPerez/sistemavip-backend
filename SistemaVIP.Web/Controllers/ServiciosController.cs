@@ -162,7 +162,8 @@ namespace SistemaVIP.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConfirmarInicio(string linkConfirmacion, ConfirmacionServicioDto dto)
+        [Route("api/Servicio/confirmar")]
+        public async Task<IActionResult> ConfirmarInicio([FromBody] ConfirmacionServicioDto dto)
         {
             try
             {
@@ -174,6 +175,95 @@ namespace SistemaVIP.Web.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        [Route("Servicio/Finalizacion")]
+        public async Task<IActionResult> Finalizacion(Guid link)
+        {
+            try
+            {
+                _logger.LogInformation("Iniciando finalización para link: {link}", link);
+
+                // Obtener el servicio terapeuta para obtener el ID del servicio
+                var servicioTerapeuta = await _apiService.GetAsync<ServicioTerapeutaDto>($"api/Servicio/finalizar/{link}");
+
+                if (servicioTerapeuta == null)
+                {
+                    _logger.LogWarning("Link de finalización no válido: {link}", link);
+                    return NotFound("Link de finalización no válido");
+                }
+
+                // Obtener el servicio completo
+                var servicioCompleto = await _apiService.GetAsync<ServicioDto>($"api/Servicio/{servicioTerapeuta.ServicioId}");
+
+                // Mapear la información para la vista
+                var servicioDetalle = new ConfirmacionServicioDetalleDto
+                {
+                    Id = servicioCompleto.Id,
+                    NombreTerapeuta = servicioTerapeuta.NombreTerapeuta,
+                    NombrePresentador = servicioCompleto.NombrePresentador,
+                    MontoTerapeuta = servicioTerapeuta.MontoTerapeuta ?? 0,
+                    DuracionHoras = servicioCompleto.DuracionHoras,
+                    TipoUbicacion = servicioCompleto.TipoUbicacion,
+                    Direccion = servicioCompleto.Direccion,
+                    Estado = servicioTerapeuta.Estado,
+                    LinkFinalizacion = link
+                };
+
+                ViewBag.LinkFinalizacion = link;
+                return View("~/Views/Servicios/Finalizacion.cshtml", servicioDetalle);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar vista de finalización para link: {link}", link);
+                return View("~/Views/Shared/Error.cshtml", new ErrorViewModel
+                {
+                    Message = "Ha ocurrido un error al cargar la finalización. Por favor, intente nuevamente."
+                });
+            }
+        }
+
+        [HttpPost]
+        [Route("api/Servicio/finalizar")]
+        public async Task<IActionResult> FinalizarServicio([FromBody] FinalizacionServicioDto dto)
+        {
+            try
+            {
+                var resultado = await _apiService.PostAsync<ServicioTerapeutaDto>(
+                    "api/Servicio/finalizar",
+                    dto);
+                return Json(new { success = true, data = resultado });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        [Route("api/Servicio/finalizar/{link}")]
+        public async Task<ActionResult<ServicioTerapeutaDto>> GetByLinkFinalizacion(Guid link)
+        {
+            try
+            {
+                var servicioTerapeuta = await _apiService.GetAsync<ServicioTerapeutaDto>($"api/Servicio/finalizar/{link}");
+
+                if (servicioTerapeuta == null)
+                    return NotFound();
+
+                // Aquí obtenemos el servicio completo para tener el estado actualizado
+                var servicioCompleto = await _apiService.GetAsync<ServicioDto>($"api/Servicio/{servicioTerapeuta.ServicioId}");
+
+                return Ok(servicioTerapeuta);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error obteniendo detalles de finalización");
+                return NotFound();
             }
         }
 
