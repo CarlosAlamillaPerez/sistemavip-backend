@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaVIP.Core.DTOs;
 using SistemaVIP.Core.DTOs.Servicio;
 using SistemaVIP.Web.Attributes;
 using SistemaVIP.Web.Interfaces;
+using SistemaVIP.Web.Models;
 using System.Security.Claims;
 
 namespace SistemaVIP.Web.Controllers
@@ -78,6 +80,84 @@ namespace SistemaVIP.Web.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+        public class AllowAnonymousOnlyAttribute : AuthorizeAttribute
+        {
+            public AllowAnonymousOnlyAttribute()
+            {
+                AuthenticationSchemes = string.Empty;
+            }
+        }
+
+
+        [HttpGet]
+        [AllowAnonymous]
+        [Route("Servicio/confirmar/{link}")]
+        public async Task<ActionResult<ConfirmacionServicioDetalleDto>> GetByLinkConfirmacion(Guid link)
+        {
+            try
+            {
+                var servicioDetalle = await _apiService.GetAsync<ConfirmacionServicioDetalleDto>($"api/Servicio/confirmar/{link}");
+
+                if (servicioDetalle == null)
+                    return NotFound();
+
+                return Ok(servicioDetalle);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error obteniendo detalles de confirmación");
+                return NotFound();
+            }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        [Route("Servicio/ConfirmarInicio")]
+        public async Task<IActionResult> ConfirmarInicio(Guid link)
+        {
+            try
+            {
+                _logger.LogInformation("Iniciando confirmación para link: {link}", link);
+
+                // Primero obtener el servicio terapeuta para obtener el ID del servicio
+                var servicioTerapeuta = await _apiService.GetAsync<ServicioTerapeutaDto>($"api/Servicio/confirmar/{link}");
+
+                if (servicioTerapeuta == null)
+                {
+                    _logger.LogWarning("Link de confirmación no válido: {link}", link);
+                    return NotFound("Link de confirmación no válido");
+                }
+
+                // Ahora obtener el servicio completo
+                var servicioCompleto = await _apiService.GetAsync<ServicioDto>($"api/Servicio/{servicioTerapeuta.ServicioId}");
+
+                // Mapear la información para la vista
+                var servicioDetalle = new ConfirmacionServicioDetalleDto
+                {
+                    Id = servicioCompleto.Id,
+                    NombreTerapeuta = servicioTerapeuta.NombreTerapeuta,
+                    NombrePresentador = servicioCompleto.NombrePresentador,
+                    MontoTerapeuta = servicioTerapeuta.MontoTerapeuta ?? 0,
+                    DuracionHoras = servicioCompleto.DuracionHoras,
+                    TipoUbicacion = servicioCompleto.TipoUbicacion,
+                    Direccion = servicioCompleto.Direccion,
+                    LinkConfirmacion = link
+                };
+
+                ViewBag.LinkConfirmacion = link;
+                return View("~/Views/Servicios/Confirmacion.cshtml", servicioDetalle);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar vista de confirmación para link: {link}", link);
+                return View("~/Views/Shared/Error.cshtml", new ErrorViewModel
+                {
+                    Message = "Ha ocurrido un error al cargar la confirmación. Por favor, intente nuevamente."
+                });
             }
         }
 

@@ -363,6 +363,7 @@ function cargarModalDetalle(id) {
                 html: response,
                 width: '800px',
                 showCloseButton: true,
+                showCancelButton: true,
                 showConfirmButton: false,
                 customClass: {
                     container: 'swal-servicio-container',

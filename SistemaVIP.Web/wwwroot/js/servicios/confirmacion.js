@@ -34,7 +34,7 @@ async function confirmarServicio() {
         };
 
         const response = await $.ajax({
-            url: '/Servicio/confirmar',
+            url: '/api/Servicio/confirmar', 
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data)

@@ -178,14 +178,36 @@ namespace SistemaVIP.Infrastructure.Services
             return await GetByIdAsync(id);
         }
 
-        public async Task<ServicioTerapeutaDto> GetServicioTerapeutaByLinkConfirmacionAsync(Guid linkConfirmacion)
+        public async Task<dynamic> GetServicioTerapeutaByLinkConfirmacionAsync(Guid linkConfirmacion, bool detalleCompleto = false)
         {
             var servicioTerapeuta = await _context.ServiciosTerapeutas
                 .Include(st => st.Servicio)
+                    .ThenInclude(s => s.Presentador)
                 .Include(st => st.Terapeuta)
                 .FirstOrDefaultAsync(st => st.LinkConfirmacion == linkConfirmacion);
 
-            return servicioTerapeuta == null ? null : MapToServicioTerapeutaDto(servicioTerapeuta);
+            if (servicioTerapeuta == null)
+                return null;
+
+            if (detalleCompleto)
+            {
+                return new ConfirmacionServicioDetalleDto
+                {
+                    Id = servicioTerapeuta.Id,
+                    NombreTerapeuta = $"{servicioTerapeuta.Terapeuta.Nombre} {servicioTerapeuta.Terapeuta.Apellido}",
+                    NombrePresentador = $"{servicioTerapeuta.Servicio.Presentador.Nombre} {servicioTerapeuta.Servicio.Presentador.Apellido}",
+                    MontoTerapeuta = servicioTerapeuta.MontoTerapeuta ?? 0,
+                    DuracionHoras = servicioTerapeuta.Servicio.DuracionHoras,
+                    TipoUbicacion = servicioTerapeuta.Servicio.TipoUbicacion,
+                    Direccion = servicioTerapeuta.Servicio.Direccion,
+                    FechaServicio = servicioTerapeuta.Servicio.FechaServicio,
+                    LinkConfirmacion = servicioTerapeuta.LinkConfirmacion,
+                    LinkFinalizacion = servicioTerapeuta.LinkFinalizacion,
+                    Estado = servicioTerapeuta.Estado
+                };
+            }
+
+            return MapToServicioTerapeutaDto(servicioTerapeuta);
         }
 
         public async Task<ServicioTerapeutaDto> GetServicioTerapeutaByLinkFinalizacionAsync(Guid linkFinalizacion)

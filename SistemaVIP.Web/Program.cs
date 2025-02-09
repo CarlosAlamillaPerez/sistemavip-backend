@@ -6,18 +6,30 @@ using Microsoft.EntityFrameworkCore;
 using SistemaVIP.Core.Models;
 using SistemaVIP.Infrastructure.Persistence.Context;
 using SistemaVIP.Web.Middleware;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowWeb", builder =>
+//    {
+//        builder
+//            .WithOrigins("https://localhost:7198") // Ajusta este puerto al de tu aplicación web
+//            .AllowAnyMethod()
+//            .AllowAnyHeader()
+//            .AllowCredentials();
+//    });
+//});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowWeb", builder =>
     {
         builder
-            .WithOrigins("https://localhost:7198") // Ajusta este puerto al de tu aplicación web
+            .SetIsOriginAllowed(_ => true)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
@@ -53,14 +65,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Auth/Login";
     options.LogoutPath = "/Auth/Logout";
     options.AccessDeniedPath = "/Auth/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(7); // 1 año
-    options.Cookie.Name = "SistemaVIP.Auth";
-    options.Cookie.HttpOnly = true;
-
     options.Events = new CookieAuthenticationEvents
     {
         OnRedirectToLogin = context =>
         {
+            // Comprobar si la ruta es de confirmación o finalización
+            if (context.Request.Path.StartsWithSegments("/Servicio/ConfirmarInicio") ||
+                context.Request.Path.StartsWithSegments("/Servicio/Finalizacion"))
+            {
+                // No redirigir, permitir el acceso
+                return Task.CompletedTask;
+            }
+
             if (context.Request.Path.StartsWithSegments("/api"))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -83,6 +99,10 @@ builder.Services.AddSession(options =>
 
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 builder.Services.AddScoped<IApiService, ApiService>();
 
 var app = builder.Build();
@@ -97,9 +117,10 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseErrorHandling();
 app.UseStaticFiles();
+app.UseForwardedHeaders();
 
 app.UseRouting();
-app.UseCors("AllowWeb");
+//app.UseCors("AllowWeb");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();

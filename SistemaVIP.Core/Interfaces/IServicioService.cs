@@ -18,8 +18,9 @@ namespace SistemaVIP.Core.Interfaces
 
         // Operaciones específicas de servicio
         Task<ServicioDto> CancelarServicioAsync(int id, CancelacionServicioDto cancelacionDto, string userId);
-        Task<ServicioTerapeutaDto> GetServicioTerapeutaByLinkConfirmacionAsync(Guid linkConfirmacion);
+        Task<object> GetServicioTerapeutaByLinkConfirmacionAsync(Guid linkConfirmacion, bool detalleCompleto = false);
         Task<ServicioTerapeutaDto> GetServicioTerapeutaByLinkFinalizacionAsync(Guid linkFinalizacion);
+
 
         // Confirmación y finalización de servicios
         Task<ServicioTerapeutaDto> ConfirmarInicioServicioAsync(ConfirmacionServicioDto confirmacionDto);

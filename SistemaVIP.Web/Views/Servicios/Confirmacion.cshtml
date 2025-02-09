@@ -1,5 +1,9 @@
-﻿<!-- Views/Servicio/Confirmacion.cshtml -->
+﻿@* <!-- Views/Servicio/Confirmacion.cshtml -->
 @model SistemaVIP.Core.DTOs.Servicio.ConfirmacionServicioDetalleDto
+@{
+    Layout = "_LayoutPublic";
+    ViewData["Title"] = "Confirmar Inicio de Servicio";
+}
 
 <!DOCTYPE html>
 <html lang="es">
@@ -39,8 +43,51 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/servicios/confirmacion.js"></script>
-    <script>
-        window.linkConfirmacion = '@Model.LinkConfirmacion';
-    </script>
+    @section Scripts {
+        <script>
+            // Pasar el link al JS
+            window.linkConfirmacion = '@ViewBag.LinkConfirmacion';
+        </script>
+        <script src="~/js/confirmacion.js"></script>
+    }
 </body>
-</html>
+</html> *@
+
+
+@model SistemaVIP.Core.DTOs.Servicio.ConfirmacionServicioDetalleDto
+@{
+    Layout = "_LayoutPublic";
+    ViewData["Title"] = "Confirmar Inicio de Servicio";
+}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body text-center">
+            <h3 class="mb-4">¡Hola, @Model.NombreTerapeuta!</h3>
+            <p class="lead">
+                Acabas de aceptar el servicio de <strong>@Model.NombrePresentador</strong>
+            </p>
+            <div class="alert alert-info">
+                <h4 class="mb-3">Detalles del Servicio:</h4>
+                <p class="h5">Monto a cobrar: $@Model.MontoTerapeuta.ToString("N2")</p>
+                <p>Duración: @Model.DuracionHoras hora(s)</p>
+                <p>Ubicación: @Model.TipoUbicacion</p>
+                @if (!string.IsNullOrEmpty(Model.Direccion))
+                {
+                    <p>Dirección: @Model.Direccion</p>
+                }
+            </div>
+
+            <button class="btn btn-primary btn-lg mt-3" id="btnConfirmar">
+                Confirmar Inicio de Servicio
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.linkConfirmacion = '@ViewBag.LinkConfirmacion';
+    </script>
+    <script src="~/js/servicios/confirmacion.js"></script>
+}

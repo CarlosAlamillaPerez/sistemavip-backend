@@ -72,13 +72,13 @@ namespace SistemaVIP.API.Controllers
 
         [HttpGet("confirmar/{linkConfirmacion}")]
         [AllowAnonymous]
-        public async Task<ActionResult<ServicioTerapeutaDto>> GetByLinkConfirmacion(Guid linkConfirmacion)
+        public async Task<ActionResult<ConfirmacionServicioDetalleDto>> GetByLinkConfirmacion(Guid linkConfirmacion)
         {
-            var servicioTerapeuta = await _servicioService.GetServicioTerapeutaByLinkConfirmacionAsync(linkConfirmacion);
-            if (servicioTerapeuta == null)
+            var servicioDetalle = await _servicioService.GetServicioTerapeutaByLinkConfirmacionAsync(linkConfirmacion);
+            if (servicioDetalle == null)
                 return NotFound();
 
-            return Ok(servicioTerapeuta);
+            return Ok(servicioDetalle);
         }
 
         [HttpPost("confirmar")]

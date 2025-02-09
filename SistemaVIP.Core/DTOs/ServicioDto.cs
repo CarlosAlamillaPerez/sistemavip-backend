@@ -171,5 +171,6 @@ namespace SistemaVIP.Core.DTOs.Servicio
         public Guid LinkConfirmacion { get; set; }
         public Guid LinkFinalizacion { get; set; }
         public string Estado { get; set; }
+
     }
 }

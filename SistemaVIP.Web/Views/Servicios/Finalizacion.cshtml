@@ -1,4 +1,4 @@
-﻿<!-- Views/Servicio/Finalizacion.cshtml -->
+﻿@* <!-- Views/Servicio/Finalizacion.cshtml -->
 @model SistemaVIP.Core.DTOs.Servicio.ConfirmacionServicioDetalleDto
 <!DOCTYPE html>
 <html lang="es">
@@ -29,4 +29,29 @@
         window.linkFinalizacion = '@Model.LinkFinalizacion';
     </script>
 </body>
-</html>
+</html> *@
+
+@model SistemaVIP.Core.DTOs.Servicio.ConfirmacionServicioDetalleDto
+@{
+    Layout = "_LayoutPublic";
+    ViewData["Title"] = "Finalización de Servicio";
+}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body text-center">
+            <h3 class="mb-4">Hola @Model.NombreTerapeuta</h3>
+            <p class="lead">¿Finalizaste el servicio?</p>
+            <button class="btn btn-primary btn-lg mt-3" id="btnFinalizar">
+                Confirmar Finalización
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.linkFinalizacion = '@Model.LinkFinalizacion';
+    </script>
+    <script src="~/js/servicios/finalizacion.js"></script>
+}

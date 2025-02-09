@@ -1,4 +1,7 @@
 ﻿@model SistemaVIP.Core.DTOs.Servicio.ServicioDto
+@{
+    var baseUrl = Context.Request.Scheme + "://" + Context.Request.Host;
+}
 
 <div class="modal-body">
     <!-- Cabecera con estado del servicio -->
@@ -103,10 +106,10 @@
                         <label class="form-label">Link de Confirmación</label>
                         <div class="input-group">
                             <input type="text" class="form-control"
-                                   value="@Url.Action("Confirmacion", "Servicio", new { link = Model.Terapeutas[0].LinkConfirmacion }, Context.Request.Scheme)"
+                                   value="@(baseUrl + Url.Action("ConfirmarInicio", "Servicio", new { link = Model.Terapeutas[0].LinkConfirmacion }))"
                                    readonly>
                             <button class="btn btn-outline-primary btn-copy"
-                                    data-clipboard-text="@Url.Action("Confirmacion", "Servicio", new { link = Model.Terapeutas[0].LinkConfirmacion }, Context.Request.Scheme)">
+                                    data-clipboard-text="@Url.Action("ConfirmarInicio", "Servicio", new { link = Model.Terapeutas[0].LinkConfirmacion }, Context.Request.Scheme)">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
@@ -194,10 +197,6 @@
             </div>
         </div>
     }
-</div>
-
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
 </div>
 
 @section Scripts {
